@@ -78,3 +78,6 @@ CMakeUserPresets.json
 
 # Build
 build/
+
+# .DS_Store
+.DS_Store
