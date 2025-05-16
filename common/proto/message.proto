@@ -2,9 +2,15 @@ syntax = "proto3";
 
 // 요청 종류 (op 코드)
 enum OpCode {
-  OP_PING = 0;
-  OP_MOVE = 1;
-  OP_CHAT = 2;
+  PING = 0;
+  ECHO_MSG = 1;
+  MOVE = 2;
+  CHAT = 3;
+}
+
+// 디버그용 echo 메시지 데이터 구조체
+message EchoData {
+  string msg = 1; // 메시지 내용
 }
 
 // 기물 옮김 데이터 구조체
@@ -22,8 +28,9 @@ message ChatData {
 message Message {
   OpCode op = 1;
   oneof data {
-    MoveData move = 2;
-    ChatData chat = 3;
+    EchoData echo = 2;
+    MoveData move = 3;
+    ChatData chat = 4;
     // 다른 데이터 구조체 추가 가능
   }
 } 

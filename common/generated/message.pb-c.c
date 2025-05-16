@@ -7,6 +7,51 @@
 #endif
 
 #include "message.pb-c.h"
+void   echo_data__init
+                     (EchoData         *message)
+{
+  static const EchoData init_value = ECHO_DATA__INIT;
+  *message = init_value;
+}
+size_t echo_data__get_packed_size
+                     (const EchoData *message)
+{
+  assert(message->base.descriptor == &echo_data__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t echo_data__pack
+                     (const EchoData *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &echo_data__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t echo_data__pack_to_buffer
+                     (const EchoData *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &echo_data__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+EchoData *
+       echo_data__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (EchoData *)
+     protobuf_c_message_unpack (&echo_data__descriptor,
+                                allocator, len, data);
+}
+void   echo_data__free_unpacked
+                     (EchoData *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &echo_data__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 void   move_data__init
                      (MoveData         *message)
 {
@@ -142,6 +187,44 @@ void   message__free_unpacked
   assert(message->base.descriptor == &message__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+static const ProtobufCFieldDescriptor echo_data__field_descriptors[1] =
+{
+  {
+    "msg",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(EchoData, msg),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned echo_data__field_indices_by_name[] = {
+  0,   /* field[0] = msg */
+};
+static const ProtobufCIntRange echo_data__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor echo_data__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "EchoData",
+  "EchoData",
+  "EchoData",
+  "",
+  sizeof(EchoData),
+  1,
+  echo_data__field_descriptors,
+  echo_data__field_indices_by_name,
+  1,  echo_data__number_ranges,
+  (ProtobufCMessageInit) echo_data__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
 static const ProtobufCFieldDescriptor move_data__field_descriptors[2] =
 {
   {
@@ -231,7 +314,7 @@ const ProtobufCMessageDescriptor chat_data__descriptor =
   (ProtobufCMessageInit) chat_data__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor message__field_descriptors[3] =
+static const ProtobufCFieldDescriptor message__field_descriptors[4] =
 {
   {
     "op",
@@ -246,8 +329,20 @@ static const ProtobufCFieldDescriptor message__field_descriptors[3] =
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "move",
+    "echo",
     2,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(Message, data_case),
+    offsetof(Message, echo),
+    &echo_data__descriptor,
+    NULL,
+    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "move",
+    3,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(Message, data_case),
@@ -259,7 +354,7 @@ static const ProtobufCFieldDescriptor message__field_descriptors[3] =
   },
   {
     "chat",
-    3,
+    4,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(Message, data_case),
@@ -271,14 +366,15 @@ static const ProtobufCFieldDescriptor message__field_descriptors[3] =
   },
 };
 static const unsigned message__field_indices_by_name[] = {
-  2,   /* field[2] = chat */
-  1,   /* field[1] = move */
+  3,   /* field[3] = chat */
+  1,   /* field[1] = echo */
+  2,   /* field[2] = move */
   0,   /* field[0] = op */
 };
 static const ProtobufCIntRange message__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 3 }
+  { 0, 4 }
 };
 const ProtobufCMessageDescriptor message__descriptor =
 {
@@ -288,27 +384,29 @@ const ProtobufCMessageDescriptor message__descriptor =
   "Message",
   "",
   sizeof(Message),
-  3,
+  4,
   message__field_descriptors,
   message__field_indices_by_name,
   1,  message__number_ranges,
   (ProtobufCMessageInit) message__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCEnumValue op_code__enum_values_by_number[3] =
+static const ProtobufCEnumValue op_code__enum_values_by_number[4] =
 {
-  { "OP_PING", "OP_CODE__OP_PING", 0 },
-  { "OP_MOVE", "OP_CODE__OP_MOVE", 1 },
-  { "OP_CHAT", "OP_CODE__OP_CHAT", 2 },
+  { "PING", "OP_CODE__PING", 0 },
+  { "ECHO_MSG", "OP_CODE__ECHO_MSG", 1 },
+  { "MOVE", "OP_CODE__MOVE", 2 },
+  { "CHAT", "OP_CODE__CHAT", 3 },
 };
 static const ProtobufCIntRange op_code__value_ranges[] = {
-{0, 0},{0, 3}
+{0, 0},{0, 4}
 };
-static const ProtobufCEnumValueIndex op_code__enum_values_by_name[3] =
+static const ProtobufCEnumValueIndex op_code__enum_values_by_name[4] =
 {
-  { "OP_CHAT", 2 },
-  { "OP_MOVE", 1 },
-  { "OP_PING", 0 },
+  { "CHAT", 3 },
+  { "ECHO_MSG", 1 },
+  { "MOVE", 2 },
+  { "PING", 0 },
 };
 const ProtobufCEnumDescriptor op_code__descriptor =
 {
@@ -317,9 +415,9 @@ const ProtobufCEnumDescriptor op_code__descriptor =
   "OpCode",
   "OpCode",
   "",
-  3,
+  4,
   op_code__enum_values_by_number,
-  3,
+  4,
   op_code__enum_values_by_name,
   1,
   op_code__value_ranges,

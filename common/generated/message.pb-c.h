@@ -15,6 +15,7 @@ PROTOBUF_C__BEGIN_DECLS
 #endif
 
 
+typedef struct _EchoData EchoData;
 typedef struct _MoveData MoveData;
 typedef struct _ChatData ChatData;
 typedef struct _Message Message;
@@ -26,13 +27,30 @@ typedef struct _Message Message;
  * 요청 종류 (op 코드)
  */
 typedef enum _OpCode {
-  OP_CODE__OP_PING = 0,
-  OP_CODE__OP_MOVE = 1,
-  OP_CODE__OP_CHAT = 2
+  OP_CODE__PING = 0,
+  OP_CODE__ECHO_MSG = 1,
+  OP_CODE__MOVE = 2,
+  OP_CODE__CHAT = 3
     PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(OP_CODE)
 } OpCode;
 
 /* --- messages --- */
+
+/*
+ * 디버그용 echo 메시지 데이터 구조체
+ */
+struct  _EchoData
+{
+  ProtobufCMessage base;
+  /*
+   * 메시지 내용
+   */
+  char *msg;
+};
+#define ECHO_DATA__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&echo_data__descriptor) \
+    , (char *)protobuf_c_empty_string }
+
 
 /*
  * 기물 옮김 데이터 구조체
@@ -72,8 +90,9 @@ struct  _ChatData
 
 typedef enum {
   MESSAGE__DATA__NOT_SET = 0,
-  MESSAGE__DATA_MOVE = 2,
-  MESSAGE__DATA_CHAT = 3
+  MESSAGE__DATA_ECHO = 2,
+  MESSAGE__DATA_MOVE = 3,
+  MESSAGE__DATA_CHAT = 4
     PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(MESSAGE__DATA)
 } Message__DataCase;
 
@@ -86,6 +105,7 @@ struct  _Message
   OpCode op;
   Message__DataCase data_case;
   union {
+    EchoData *echo;
     MoveData *move;
     /*
      * 다른 데이터 구조체 추가 가능
@@ -95,9 +115,28 @@ struct  _Message
 };
 #define MESSAGE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&message__descriptor) \
-    , OP_CODE__OP_PING, MESSAGE__DATA__NOT_SET, {0} }
+    , OP_CODE__PING, MESSAGE__DATA__NOT_SET, {0} }
 
 
+/* EchoData methods */
+void   echo_data__init
+                     (EchoData         *message);
+size_t echo_data__get_packed_size
+                     (const EchoData   *message);
+size_t echo_data__pack
+                     (const EchoData   *message,
+                      uint8_t             *out);
+size_t echo_data__pack_to_buffer
+                     (const EchoData   *message,
+                      ProtobufCBuffer     *buffer);
+EchoData *
+       echo_data__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   echo_data__free_unpacked
+                     (EchoData *message,
+                      ProtobufCAllocator *allocator);
 /* MoveData methods */
 void   move_data__init
                      (MoveData         *message);
@@ -157,6 +196,9 @@ void   message__free_unpacked
                       ProtobufCAllocator *allocator);
 /* --- per-message closures --- */
 
+typedef void (*EchoData_Closure)
+                 (const EchoData *message,
+                  void *closure_data);
 typedef void (*MoveData_Closure)
                  (const MoveData *message,
                   void *closure_data);
@@ -173,6 +215,7 @@ typedef void (*Message_Closure)
 /* --- descriptors --- */
 
 extern const ProtobufCEnumDescriptor    op_code__descriptor;
+extern const ProtobufCMessageDescriptor echo_data__descriptor;
 extern const ProtobufCMessageDescriptor move_data__descriptor;
 extern const ProtobufCMessageDescriptor chat_data__descriptor;
 extern const ProtobufCMessageDescriptor message__descriptor;
