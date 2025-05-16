@@ -1,13 +1,14 @@
 #!/bin/bash
 
-# 사용법: ./run.sh [client|server]
+# 사용법: ./run.sh [client|server] [--port 포트번호]
 
-if [ $# -ne 1 ]; then
-  echo "사용법: $0 [client|server]"
+if [ $# -lt 1 ]; then
+  echo "사용법: $0 [client|server] [--port 포트번호]"
   exit 1
 fi
 
 TARGET=$1
+shift
 
 case $TARGET in
   client)
@@ -27,4 +28,4 @@ if [ ! -x "$EXEC" ]; then
   exit 1
 fi
 
-$EXEC 
+$EXEC "$@" 
