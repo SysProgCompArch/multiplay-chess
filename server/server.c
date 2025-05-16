@@ -110,12 +110,17 @@ int main() {
                 char buf[1024];
                 ssize_t nbytes;
                 while ((nbytes = recv(fd, buf, sizeof(buf), 0)) > 0) {
+                    // heartbeat 메시지 처리
+                    if (nbytes == 8 && strncmp(buf, "__ping__", 8) == 0) {
+                        send(fd, "__ping__", 8, 0);
+                        continue;
+                    }
+
                     printf("[fd=%d] Received: %.*s\n", fd, (int)nbytes, buf);
                     
                     // 에코 응답 (뒤에 ' from server' 추가)
                     char sendbuf[1200];
                     int sendlen = snprintf(sendbuf, sizeof(sendbuf), "%.*s from server", (int)nbytes, buf);
-
                     send(fd, sendbuf, sendlen, 0);
                     printf("[fd=%d] Sent: %.*s\n", fd, sendlen, sendbuf);
                 }
