@@ -9,8 +9,15 @@ FetchContent_Declare(
     GIT_TAG master # 또는 특정 버전 태그(예: v1.5.0)로 변경 가능
 )
 
+# protobuf 라이브러리도 필요합니다
+FetchContent_Declare(
+    protobuf
+    GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
+    GIT_TAG v3.21.12 # 안정적인 버전 선택
+)
+
 # 의존성 사용 가능하게 만들기
-FetchContent_MakeAvailable(protobuf_c)
+FetchContent_MakeAvailable(protobuf protobuf_c)
 
 add_library(common STATIC
     common.c
