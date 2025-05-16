@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+// 요청 종류 (op 코드)
+enum OpCode {
+  OP_PING = 0;
+  OP_MOVE = 1;
+  OP_CHAT = 2;
+}
+
+// 기물 옮김 데이터 구조체
+message MoveData {
+  string target = 1; // 옮길 대상 기물 위치 (예: "a2")
+  string dest = 2;   // 옮길 새 위치 (예: "a3")
+}
+
+// 채팅 메시지 데이터 구조체
+message ChatData {
+  string msg = 1; // 채팅 메시지 내용
+}
+
+// 메시지 구조체 (확장 가능)
+message Message {
+  OpCode op = 1;
+  oneof data {
+    MoveData move = 2;
+    ChatData chat = 3;
+    // 다른 데이터 구조체 추가 가능
+  }
+} 

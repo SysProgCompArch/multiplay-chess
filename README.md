@@ -94,7 +94,14 @@ multiplay-chess/
 
 ## 🛠️ 빌드 및 실행 방법
 
-### 1. 전체 빌드 및 개별 타겟 빌드 (build.sh 사용)
+### 1. 의존성 설치
+
+- protobuf-c 라이브러리 필요
+  ```sh
+  sudo apt install protobuf-c-compiler libprotobuf-c-dev
+  ```
+
+### 2. 전체 빌드 및 개별 타겟 빌드 (build.sh 사용)
 
 `build.sh` 스크립트는 인자에 따라 아래와 같이 동작합니다:
 
@@ -115,7 +122,7 @@ multiplay-chess/
 
 ---
 
-### 2. 실행 방법
+### 3. 실행 방법
 
 - 클라이언트 실행:
   ```sh
@@ -136,3 +143,37 @@ multiplay-chess/
 - 기존의 `make` 명령도 사용 가능하지만, 위의 방법을 권장합니다.
 
 ---
+
+## Protocol Buffers (protobuf-c) 사용 안내
+Protocol Buffers(protobuf)는 Google에서 개발한 데이터 직렬화 형식입니다. 이 프로젝트에서는 protobuf-c를 사용하여 C 언어로 구현된 클라이언트-서버 간의 통신 메시지를 정의하고 직렬화합니다.
+
+### 주요 특징
+
+- **효율적인 직렬화**: JSON이나 XML보다 더 작은 크기로 데이터를 직렬화할 수 있습니다.
+- **타입 안전성**: 컴파일 시점에 메시지 구조를 검증합니다.
+- **언어 독립성**: 다양한 프로그래밍 언어에서 사용 가능합니다.
+- **자동 코드 생성**: .proto 파일로부터 C 코드를 자동 생성합니다.
+
+### 메시지 스펙 정의
+
+[메시지 스펙 정의 보기](common/protocol.md)
+
+### 디렉토리 구조
+
+- `common/proto/` : `.proto` 파일 위치
+- `common/generated/` : `protoc-c`로 생성된 C 소스/헤더 파일 위치
+
+기본적으로 프로젝트에서 사용하는 메시지 스펙은 `common/proto/message.proto` 파일에 정의되어 있습니다. 이 파일을 수정하여 새로운 메시지 타입을 추가할 수 있습니다.
+
+### .proto 파일 추가 및 컴파일
+
+새 `.proto` 파일을 추가하려면 다음 단계를 따르세요:
+
+1. `.proto` 파일을 `common/proto/`에 추가
+2. 아래 명령어로 C 파일 생성 (`protobuf-c` 설치 필요, 하단 의존성 섹션 참고)
+
+```bash
+protoc-c -I common/proto --c_out=common/generated/ common/proto/message.proto
+```
+
+또는 빌드 스크립트를 실행하면 자동으로 컴파일됩니다.
