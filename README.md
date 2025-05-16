@@ -96,7 +96,7 @@ multiplay-chess/
 
 ### 1. 의존성 설치
 
-- protobuf-c 라이브러리 필요
+- protobuf-c 관련 라이브러리 필요
   ```sh
   sudo apt install protobuf-c-compiler libprotobuf-c-dev
   ```
