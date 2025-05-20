@@ -11,6 +11,9 @@
 
 #include <sys/epoll.h>
 #include <fcntl.h>
+#include <stdint.h>
+#include <protobuf-c/protobuf-c.h>
+#include "message.pb-c.h"
 
 #define DEFAULT_PORT 8080
 #define MAX_EVENTS 1024
@@ -103,6 +106,49 @@ int setup_epoll(int listener)
     return epfd;
 }
 
+// 모든 데이터를 전송할 때까지 반복하여 전송한다
+static ssize_t send_all(int sockfd, const void *buf, size_t len)
+{
+    size_t total = 0;
+    const uint8_t *p = buf;
+    while (total < len)
+    {
+        ssize_t sent = send(sockfd, p + total, len - total, 0);
+        if (sent <= 0)
+        {
+            if (sent < 0 && errno == EINTR)
+                continue;
+            perror("send");
+            return -1;
+        }
+        total += sent;
+    }
+    return total;
+}
+
+// 지정된 바이트 수만큼 수신할 때까지 반복하여 수신한다
+static ssize_t recv_all(int sockfd, void *buf, size_t len)
+{
+    size_t total = 0;
+    uint8_t *p = buf;
+    while (total < len)
+    {
+        ssize_t recvd = recv(sockfd, p + total, len - total, 0);
+        if (recvd < 0)
+        {
+            if (errno == EINTR)
+                continue;
+            return -1;
+        }
+        else if (recvd == 0)
+        {
+            return 0;
+        }
+        total += recvd;
+    }
+    return total;
+}
+
 // 새 클라이언트 연결을 accept하고 epoll에 등록
 void handle_new_connection(int listener, int epfd)
 {
@@ -114,7 +160,6 @@ void handle_new_connection(int listener, int epfd)
         {
             if (errno == EWOULDBLOCK || errno == EAGAIN)
             {
-                // 처리할 연결이 더 없으면 빠져나감
                 break;
             }
             else
@@ -123,9 +168,9 @@ void handle_new_connection(int listener, int epfd)
                 break;
             }
         }
-        set_nonblocking(conn);
+        // connection sockets remain blocking for protobuf framing
 
-        // 새 소켓을 epoll에 등록 (엣지 트리거가 아니므로 EPOLLIN만)
+        // 새 소켓을 epoll에 등록
         ev.events = EPOLLIN;
         ev.data.fd = conn;
         if (epoll_ctl(epfd, EPOLL_CTL_ADD, conn, &ev) == -1)
@@ -140,43 +185,83 @@ void handle_new_connection(int listener, int epfd)
     }
 }
 
-// 클라이언트 소켓에서 데이터 수신 및 처리, 에코 응답, 연결 종료 처리
+// 클라이언트 소켓에서 protobuf 메시지 수신 및 처리, 에코 응답, 연결 종료 처리
 void handle_client_event(int fd, int epfd)
 {
-    char buf[1024];
-    ssize_t nbytes;
-    while ((nbytes = recv(fd, buf, sizeof(buf), 0)) > 0)
+    // length-prefix protobuf 메시지 수신
+    uint8_t lenbuf[4];
+    ssize_t r = recv_all(fd, lenbuf, 4);
+    if (r <= 0)
     {
-        // heartbeat 메시지 처리
-        if (nbytes == 8 && strncmp(buf, "__ping__", 8) == 0)
-        {
-            send(fd, "__ping__", 8, 0);
-            continue;
-        }
-
-        printf("[fd=%d] Received: %.*s\n", fd, (int)nbytes, buf);
-
-        // 에코 응답 (뒤에 ' from server' 추가)
-        char sendbuf[1200];
-        int sendlen = snprintf(sendbuf, sizeof(sendbuf), "%.*s from server", (int)nbytes, buf);
-        send(fd, sendbuf, sendlen, 0);
-        printf("[fd=%d] Sent: %.*s\n", fd, sendlen, sendbuf);
-    }
-
-    if (nbytes == 0)
-    {
-        // 클라이언트가 연결을 닫음
         printf("[fd=%d] Client disconnected\n", fd);
         close(fd);
         epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
+        return;
     }
-    else if (nbytes == -1 && errno != EWOULDBLOCK && errno != EAGAIN)
+    uint32_t msg_len;
+    memcpy(&msg_len, lenbuf, 4);
+    msg_len = ntohl(msg_len);
+    uint8_t *buf = malloc(msg_len);
+    if (!buf)
     {
-        // 에러 발생
-        perror("recv");
+        perror("malloc");
+        return;
+    }
+    r = recv_all(fd, buf, msg_len);
+    if (r <= 0)
+    {
+        free(buf);
+        printf("[fd=%d] Client disconnected during payload\n", fd);
         close(fd);
         epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
+        return;
     }
+    // 메시지 역직렬화
+    Message *req = message__unpack(NULL, msg_len, buf);
+    free(buf);
+    if (!req)
+    {
+        fprintf(stderr, "[fd=%d] Failed to unpack message\n", fd);
+        return;
+    }
+    // PING 처리
+    if (req->op == OP_CODE__PING)
+    {
+        Message resp = MESSAGE__INIT;
+        resp.op = OP_CODE__PING;
+        size_t plen = message__get_packed_size(&resp);
+        uint8_t *sb = malloc(4 + plen);
+        uint32_t nl = htonl(plen);
+        memcpy(sb, &nl, 4);
+        message__pack(&resp, sb + 4);
+        send_all(fd, sb, 4 + plen);
+        free(sb);
+    }
+    // Echo 처리
+    else if (req->op == OP_CODE__ECHO_MSG && req->data_case == MESSAGE__DATA_ECHO)
+    {
+        printf("[fd=%d] ECHO_MSG\n");
+        printf("[fd=%d] Received: %s\n", fd, req->echo->msg);
+        EchoData echo_data = ECHO_DATA__INIT;
+        echo_data.msg = req->echo->msg;
+        Message resp = MESSAGE__INIT;
+        resp.op = OP_CODE__ECHO_MSG;
+        resp.data_case = MESSAGE__DATA_ECHO;
+        resp.echo = &echo_data;
+        size_t plen = message__get_packed_size(&resp);
+        uint8_t *sb = malloc(4 + plen);
+        uint32_t nl = htonl(plen);
+        memcpy(sb, &nl, 4);
+        message__pack(&resp, sb + 4);
+        send_all(fd, sb, 4 + plen);
+        printf("[fd=%d] Sent: %s\n", fd, echo_data.msg);
+        free(sb);
+    }
+    else
+    {
+        printf("[fd=%d] Unsupported op=%d\n", fd, req->op);
+    }
+    message__free_unpacked(req, NULL);
 }
 
 // epoll 이벤트 루프: 새 연결 및 클라이언트 이벤트를 반복적으로 처리
