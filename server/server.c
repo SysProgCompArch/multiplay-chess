@@ -240,7 +240,7 @@ void handle_client_event(int fd, int epfd)
     // Echo 처리
     else if (req->op == OP_CODE__ECHO_MSG && req->data_case == MESSAGE__DATA_ECHO)
     {
-        printf("[fd=%d] ECHO_MSG\n");
+        printf("[fd=%d] ECHO_MSG\n", fd);
         printf("[fd=%d] Received: %s\n", fd, req->echo->msg);
         EchoData echo_data = ECHO_DATA__INIT;
         echo_data.msg = req->echo->msg;
