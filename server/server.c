@@ -240,10 +240,25 @@ void handle_client_event(int fd, int epfd)
     // Echo 처리
     else if (req->op == OP_CODE__ECHO_MSG && req->data_case == MESSAGE__DATA_ECHO)
     {
-        printf("[fd=%d] ECHO_MSG\n", fd);
         printf("[fd=%d] Received: %s\n", fd, req->echo->msg);
+        // 보낼 메시지에 ' from server' 추가
+        const char *orig = req->echo->msg;
+        const char *suffix = " from server";
+        size_t orig_len = strlen(orig);
+        size_t suffix_len = strlen(suffix);
+        size_t new_len = orig_len + suffix_len;
+        char *send_str = malloc(new_len + 1);
+        if (!send_str)
+        {
+            perror("malloc");
+            message__free_unpacked(req, NULL);
+            return;
+        }
+        memcpy(send_str, orig, orig_len);
+        memcpy(send_str + orig_len, suffix, suffix_len);
+        send_str[new_len] = '\0';
         EchoData echo_data = ECHO_DATA__INIT;
-        echo_data.msg = req->echo->msg;
+        echo_data.msg = send_str;
         Message resp = MESSAGE__INIT;
         resp.op = OP_CODE__ECHO_MSG;
         resp.data_case = MESSAGE__DATA_ECHO;
@@ -254,8 +269,9 @@ void handle_client_event(int fd, int epfd)
         memcpy(sb, &nl, 4);
         message__pack(&resp, sb + 4);
         send_all(fd, sb, 4 + plen);
-        printf("[fd=%d] Sent: %s\n", fd, echo_data.msg);
+        printf("[fd=%d] Sent: %s\n", fd, send_str);
         free(sb);
+        free(send_str);
     }
     else
     {
