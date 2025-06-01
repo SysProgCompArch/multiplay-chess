@@ -33,5 +33,12 @@ target_sources(common PRIVATE ${GENERATED_SRC} ${GENERATED_HDR})
 # include 경로에 generated 폴더 추가
 target_include_directories(common PUBLIC ${GENERATED_DIR})
 
-target_include_directories(common PUBLIC /usr/include/protobuf-c)
-target_link_libraries(common PUBLIC protobuf-c)
+# protobuf-c 설정
+target_include_directories(common PUBLIC ${PROTOBUF_C_INCLUDE_DIRS})
+target_link_libraries(common PUBLIC ${PROTOBUF_C_LIBRARIES})
+target_compile_options(common PUBLIC ${PROTOBUF_C_CFLAGS_OTHER})
+
+# ncursesw 설정
+target_include_directories(common PUBLIC ${NCURSES_INCLUDE_DIRS})
+target_link_libraries(common PUBLIC ${NCURSES_LIBRARIES})
+target_compile_options(common PUBLIC ${NCURSES_CFLAGS_OTHER})
