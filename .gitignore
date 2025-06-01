@@ -84,3 +84,5 @@ build/
 
 # External library .git folder
 external/cJSON/.git
+
+.cache
