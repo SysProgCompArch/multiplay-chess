@@ -96,9 +96,9 @@ multiplay-chess/
 
 ### 1. 의존성 설치
 
-- protobuf-c 관련 라이브러리 필요
+- 라이브러리 설치 필요
   ```sh
-  sudo apt install protobuf-c-compiler libprotobuf-c-dev
+  sudo apt install protobuf-c-compiler libprotobuf-c-dev libncurses-dev
   ```
 
 ### 2. 전체 빌드 및 개별 타겟 빌드 (build.sh 사용)
@@ -145,6 +145,7 @@ multiplay-chess/
 ---
 
 ## Protocol Buffers (protobuf-c) 사용 안내
+
 Protocol Buffers(protobuf)는 Google에서 개발한 데이터 직렬화 형식입니다. 이 프로젝트에서는 protobuf-c를 사용하여 C 언어로 구현된 클라이언트-서버 간의 통신 메시지를 정의하고 직렬화합니다.
 
 ### 주요 특징

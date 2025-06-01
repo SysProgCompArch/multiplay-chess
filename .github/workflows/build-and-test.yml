@@ -13,16 +13,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install protobuf-c-compiler
-        run: sudo apt-get update && sudo apt-get install -y protobuf-c-compiler libprotobuf-c-dev
+      - name: Install Dependencies
+        run: sudo apt-get update && sudo apt-get install -y protobuf-c-compiler libprotobuf-c-dev libncurses-dev
 
       - name: Run CMake
         run: |
-            cmake -S . -B build
-            cmake --build build -j 2
+          cmake -S . -B build
+          cmake --build build -j 2
 
       # - name: Run tests
       #   run: |
       #     cd build
       #     ctest --output-on-failure
-
