@@ -8,7 +8,7 @@ bool san_pgn_load(const char* filename, game_moves_t* out) {
     FILE* f = fopen(filename, "r");
     if (!f) return false;
 
-    // ÆÄÀÏ ÀüÃ¼ ÀĞ±â
+    // íŒŒì¼ ì „ì²´ ì½ê¸°
     fseek(f, 0, SEEK_END);
     long sz = ftell(f);
     fseek(f, 0, SEEK_SET);
@@ -16,26 +16,26 @@ bool san_pgn_load(const char* filename, game_moves_t* out) {
     fread(buf, 1, sz, f);
     buf[sz] = '\0'; fclose(f);
 
-    // Çì´õ([..]) °Ç³Ê¶Ù°í ºó ÁÙ µÚ ÅØ½ºÆ® ½ÃÀÛ
+    // í—¤ë”([..]) ê±´ë„ˆë›°ê³  ë¹ˆ ì¤„ ë’¤ í…ìŠ¤íŠ¸ ì‹œì‘
     char* p = buf;
     while (*p) {
         if (p[0] == '\n' && p[1] != '[') { p++; break; }
         p++;
     }
 
-    // ÅäÅ«È­
+    // í† í°í™”
     const char* delim = " \r\n\t";
     char* tok = strtok(p, delim);
     int cap = 128;
     move_t* arr = malloc(sizeof(move_t) * cap);
     int cnt = 0;
 
-    // ÀÓ½Ã °ÔÀÓ »óÅÂ: ½ÃÀÛÀ§Ä¡
+    // ì„ì‹œ ê²Œì„ ìƒíƒœ: ì‹œì‘ìœ„ì¹˜
     game_t G;
     init_startpos(&G);
 
     while (tok) {
-        // ¼ö¹øÈ£/°á°ú¹«½Ã
+        // ìˆ˜ë²ˆí˜¸/ê²°ê³¼ë¬´ì‹œ
         if (strchr(tok, '.') || strcmp(tok, "1-0") == 0
             || strcmp(tok, "0-1") == 0
             || strcmp(tok, "1/2-1/2") == 0) {
@@ -51,14 +51,14 @@ bool san_pgn_load(const char* filename, game_moves_t* out) {
             return false;
         }
 
-        // ¹è¿­¿¡ ÀúÀå
+        // ë°°ì—´ì— ì €ì¥
         if (cnt >= cap) {
             cap *= 2;
             arr = realloc(arr, sizeof(move_t) * cap);
         }
         arr[cnt++] = (move_t){ sx,sy,dx,dy,promo };
 
-        // °ÔÀÓ »óÅÂ ¾÷µ¥ÀÌÆ®
+        // ê²Œì„ ìƒíƒœ ì—…ë°ì´íŠ¸
         apply_move(&G, sx, sy, dx, dy);
 
         tok = strtok(NULL, delim);

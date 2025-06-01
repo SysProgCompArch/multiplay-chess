@@ -11,7 +11,7 @@
 extern WINDOW* board_win, * main_screen_win;
 extern piecestate_t chessboard[8][8];
 
-// game_t ¡æ Àü¿ª chessboard ¹è¿­·Î º¹»ç
+// game_t â†’ ì „ì—­ chessboard ë°°ì—´ë¡œ ë³µì‚¬
 static void update_global_board(const game_t* G) {
     for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
@@ -20,7 +20,7 @@ static void update_global_board(const game_t* G) {
     }
 }
 
-// ¸ŞÀÎ ¸®ÇÃ·¹ÀÌ UI (move ¹øÈ£, Á¶ÀÛ ¾È³»)
+// ë©”ì¸ ë¦¬í”Œë ˆì´ UI (move ë²ˆí˜¸, ì¡°ì‘ ì•ˆë‚´)
 static void draw_replay_ui(int idx, int total) {
     werase(main_screen_win);
     box(main_screen_win, 0, 0);
@@ -30,36 +30,36 @@ static void draw_replay_ui(int idx, int total) {
     wrefresh(main_screen_win);
 }
 
-// ½ÇÁ¦ ¸®ÇÃ·¹ÀÌ ¸ğµå
+// ì‹¤ì œ ë¦¬í”Œë ˆì´ ëª¨ë“œ
 void replay_mode(const char* pgnfile) {
-    // 1) PGN ·Îµå
+    // 1) PGN ë¡œë“œ
     game_moves_t gm;
     if (!san_pgn_load(pgnfile, &gm)) {
-        // ·Îµå ½ÇÆĞ ½Ã °£´ÜÈ÷ ¹İÈ¯
+        // ë¡œë“œ ì‹¤íŒ¨ ì‹œ ê°„ë‹¨íˆ ë°˜í™˜
         return;
     }
 
-    // 2) °ÔÀÓ »óÅÂ ÃÊ±âÈ­
+    // 2) ê²Œì„ ìƒíƒœ ì´ˆê¸°í™”
     game_t G;
-    init_startpos(&G);  // ½ÃÀÛÀ§Ä¡ ¼¼ÆÃ :contentReference[oaicite:4]{index=4}
+    init_startpos(&G);  // ì‹œì‘ìœ„ì¹˜ ì„¸íŒ… :contentReference[oaicite:4]{index=4}
     update_global_board(&G);
-    draw_board();        // ÃÊ±âÆÇ ±×¸®±â
+    draw_board();        // ì´ˆê¸°íŒ ê·¸ë¦¬ê¸°
     draw_replay_ui(0, gm.count);
 
-    // 3) Å° ÀÔ·ÂÀ¸·Î ¾Õ/µÚ ÀÌµ¿
+    // 3) í‚¤ ì…ë ¥ìœ¼ë¡œ ì•/ë’¤ ì´ë™
     int idx = 0;
     int ch;
-    // È­»ìÇ¥Å° ÀÎ½Ä
+    // í™”ì‚´í‘œí‚¤ ì¸ì‹
     keypad(stdscr, TRUE);
     while ((ch = getch()) != 'q') {
         if (ch == KEY_RIGHT && idx < gm.count) {
-            // ´ÙÀ½ ¼ö Àû¿ë
+            // ë‹¤ìŒ ìˆ˜ ì ìš©
             move_t mv = gm.moves[idx];
             apply_move(&G, mv.sx, mv.sy, mv.dx, mv.dy);  // :contentReference[oaicite:5]{index=5}
             idx++;
         }
         else if (ch == KEY_LEFT && idx > 0) {
-            // µÚ·Î ÇÑ ¼ö: ÀüÃ¼ ¸®¼Â ÈÄ idx-1±îÁö ÀçÀû¿ë
+            // ë’¤ë¡œ í•œ ìˆ˜: ì „ì²´ ë¦¬ì…‹ í›„ idx-1ê¹Œì§€ ì¬ì ìš©
             init_startpos(&G);
             for (int i = 0; i < idx - 1; i++) {
                 move_t mv = gm.moves[i];
@@ -71,12 +71,12 @@ void replay_mode(const char* pgnfile) {
             continue;
         }
 
-        // »óÅÂ ¾÷µ¥ÀÌÆ® & ´Ù½Ã ±×¸®±â
+        // ìƒíƒœ ì—…ë°ì´íŠ¸ & ë‹¤ì‹œ ê·¸ë¦¬ê¸°
         update_global_board(&G);
         draw_board();
         draw_replay_ui(idx, gm.count);
     }
 
-    // 4) Á¤¸®
+    // 4) ì •ë¦¬
     san_pgn_free(&gm);
 }
