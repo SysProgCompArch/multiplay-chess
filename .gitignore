@@ -82,7 +82,4 @@ build/
 # .DS_Store
 .DS_Store
 
-# External library .git folder
-external/cJSON/.git
-
 .cache
