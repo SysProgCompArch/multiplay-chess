@@ -1,6 +1,12 @@
 add_library(common STATIC
     common.c
     common.h
+    piece.c
+    piece.h
+    rule.c
+    rule.h
+    utils.c
+    utils.h
 )
 
 # Proto 파일 경로와 출력 디렉토리 지정
