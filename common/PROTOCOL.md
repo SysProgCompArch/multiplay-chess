@@ -15,17 +15,18 @@ syntax = "proto3";
 
 enum OpCode {
   PING = 0;   // 핑/퐁(하트비트)
-  MOVE = 1;   // 기물 옮김
-  CHAT = 2;   // 채팅 메시지
+  CHAT = 1;   // 채팅 메시지
+  MOVE = 2;   // 기물 옮김
+  ... // 추가 가능
+}
+
+message ChatData {
+  string msg = 1; // 채팅 메시지 내용
 }
 
 message MoveData {
   string target = 1; // 옮길 대상 기물 위치 (예: "a2")
   string dest = 2;   // 옮길 새 위치 (예: "a3")
-}
-
-message ChatData {
-  string msg = 1; // 채팅 메시지 내용
 }
 
 message Message {
@@ -36,6 +37,8 @@ message Message {
     // 다른 데이터 구조체 추가 가능
   }
 }
+
+...
 ```
 
 > 실제 파일 위치: `common/proto/message.proto`
