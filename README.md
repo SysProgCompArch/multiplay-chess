@@ -136,12 +136,13 @@ multiplay-chess/
 
 ---
 
-### 4. 로그 시스템 사용법
+### 4. 로그 시스템 사용법 (다중 클라이언트 지원)
 
-ncurses를 사용하는 환경에서는 표준 출력이 보이지 않기 때문에, 파일 기반 로그 시스템을 구현했습니다.
+ncurses를 사용하는 환경에서는 표준 출력이 보이지 않기 때문에, 파일 기반 로그 시스템을 구현했습니다. 여러 클라이언트를 동시에 실행할 때 각 클라이언트의 로그를 구분하여 확인할 수 있습니다.
 
 #### 로그 파일 위치
-- **클라이언트 로그**: `chess_client.log` (실행 디렉터리)
+- **단일 클라이언트**: `chess_client.log` (기존 방식)
+- **다중 클라이언트**: `chess_client_[PID].log` (PID별 분리)
 
 #### 로그 레벨
 - `DEBUG`: 상세한 디버그 정보
@@ -150,12 +151,35 @@ ncurses를 사용하는 환경에서는 표준 출력이 보이지 않기 때문
 - `ERROR`: 오류 메시지
 - `FATAL`: 심각한 오류 메시지
 
-#### 실시간 로그 모니터링
+#### 🚀 다중 클라이언트 실행
 
-1. **개선된 컬러 로그 모니터링** (권장):
+1. **편리한 다중 클라이언트 실행**:
    ```bash
-   # 모든 로그를 색상과 함께 표시
+   # 2개 클라이언트 실행 (기본값)
+   ./run_multiple_clients.sh
+   
+   # 3개 클라이언트 실행
+   ./run_multiple_clients.sh 3
+   
+   # 4개 클라이언트를 2초 간격으로 실행
+   ./run_multiple_clients.sh 4 -d 2
+   
+   # 로그 모니터링 창 없이 실행
+   ./run_multiple_clients.sh 2 --no-logs
+   
+   # 도움말 보기
+   ./run_multiple_clients.sh --help
+   ```
+
+#### 🔍 실시간 로그 모니터링
+
+1. **다중 클라이언트 로그 모니터링** (권장):
+   ```bash
+   # 모든 클라이언트 로그를 색상과 함께 표시
    ./watch_logs.sh
+   
+   # 단일 로그 파일만 모니터링
+   ./watch_logs.sh --single
    
    # 에러/경고만 보기
    ./watch_logs.sh --error    # ERROR, FATAL만
@@ -167,6 +191,7 @@ ncurses를 사용하는 환경에서는 표준 출력이 보이지 않기 때문
    ```
 
 2. **색상 구분**:
+   - 🟠 **주황색**: 클라이언트 PID 표시 (● Client PID:1234 ────)
    - 🔴 **빨간색**: ERROR, FATAL 메시지
    - 🟡 **노란색**: WARN 메시지  
    - 🟢 **초록색**: INFO 메시지
@@ -175,38 +200,49 @@ ncurses를 사용하는 환경에서는 표준 출력이 보이지 않기 때문
    - 🟣 **자주색**: 파일명:라인번호
    - ⚪ **회색**: 함수명
 
-3. **기본 tail 사용**:
+3. **수동 로그 모니터링**:
    ```bash
-   # 색상 없이 기본 모니터링
-   tail -f chess_client.log
+   # 특정 클라이언트 로그만 보기
+   tail -f chess_client_1234.log
+   
+   # 모든 클라이언트 로그 동시 보기
+   tail -f chess_client*.log
    
    # 특정 레벨만 필터링
-   tail -f chess_client.log | grep ERROR
-   tail -f chess_client.log | grep -E "(WARN|ERROR|FATAL)"
+   tail -f chess_client*.log | grep ERROR
+   tail -f chess_client*.log | grep -E "(WARN|ERROR|FATAL)"
    ```
 
-4. **로그 파일 검색**:
+4. **로그 파일 검색 및 분석**:
    ```bash
    # 특정 함수의 로그만 보기
-   grep "connect_to_server" chess_client.log
+   grep "connect_to_server" chess_client*.log
    
    # 네트워크 관련 로그만 보기
-   grep -i "network\|connect\|socket" chess_client.log
+   grep -i "network\|connect\|socket" chess_client*.log
+   
+   # 특정 PID의 에러 로그만 보기
+   grep "ERROR\|FATAL" chess_client_1234.log
+   
+   # 모든 클라이언트의 에러 통계 보기
+   grep -c "ERROR\|FATAL" chess_client*.log
    ```
 
-#### 개발자를 위한 팁
+#### 🛠️ 개발자를 위한 팁
 
-- 클라이언트를 실행하기 전에 다른 터미널에서 `./watch_logs.sh`를 실행하세요
-- 문제가 발생하면 로그 파일에서 `ERROR`나 `FATAL` 메시지를 확인하세요
-- 네트워크 연결 문제는 `connect_to_server` 함수 로그를 확인하세요
+- **테스트 시나리오**: 
+  - 여러 클라이언트를 동시에 실행하여 서버 부하 테스트
+  - 각 클라이언트별로 다른 동작 패턴 확인
+  - 네트워크 연결 문제 디버깅
 
----
+- **로그 분석**:
+  - 클라이언트 실행 전에 `./watch_logs.sh`를 먼저 실행하세요
+  - 문제 발생 시 해당 PID의 로그 파일에서 `ERROR`나 `FATAL` 메시지를 확인하세요
+  - 네트워크 연결 문제는 `connect_to_server` 함수 로그를 확인하세요
 
-### 5. 참고 사항
-
-- common 라이브러리에 변경이 있으면, 클라이언트/서버 빌드시 자동으로 반영됩니다.
-- 외부 라이브러리나 테스트 코드가 추가되면, CMake 설정을 확장해 관리할 수 있습니다.
-- 기존의 `make` 명령도 사용 가능하지만, 위의 방법을 권장합니다.
+- **로그 파일 관리**:
+  - 테스트 후 불필요한 로그 파일 정리: `rm chess_client*.log`
+  - 로그 파일이 너무 커지면 정기적으로 정리하세요
 
 ## Protocol Buffers (protobuf-c) 사용 안내
 

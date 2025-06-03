@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "client_state.h"
 #include "client_network.h"
@@ -25,13 +26,16 @@ void signal_handler(int signum)
 int main()
 {
     // 로거 초기화 (ncurses 초기화 전에)
-    if (logger_init("chess_client.log") != 0)
+    char log_filename[256];
+    snprintf(log_filename, sizeof(log_filename), "chess_client_%d.log", getpid());
+
+    if (logger_init(log_filename) != 0)
     {
         fprintf(stderr, "Failed to initialize logger\n");
         return 1;
     }
 
-    LOG_INFO("Chess client starting...");
+    LOG_INFO("Chess client starting... (PID: %d)", getpid());
 
     // 신호 처리기 등록
     signal(SIGINT, signal_handler);
