@@ -47,6 +47,7 @@ void draw_game_screen();
 
 // 다이얼로그
 bool get_username_dialog();
+void show_error_dialog(const char *title, const char *message);
 
 // 체스 보드 관련
 void draw_chess_board(WINDOW *board_win);

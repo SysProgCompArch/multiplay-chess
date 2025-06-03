@@ -96,9 +96,75 @@ bool get_username_dialog()
     {
         client_state_t *client = get_client_state();
         strncpy(client->username, input, sizeof(client->username) - 1);
-        strncpy(client->game_state.local_player, input, sizeof(client->game_state.local_player) - 1);
         return true;
     }
 
     return false;
+}
+
+// 에러 다이얼로그 표시
+void show_error_dialog(const char *title, const char *message)
+{
+    int rows, cols;
+    getmaxyx(stdscr, rows, cols);
+
+    int dialog_width = 60;
+    int dialog_height = 10;
+    int start_y = (rows - dialog_height) / 2;
+    int start_x = (cols - dialog_width) / 2;
+
+    WINDOW *dialog = newwin(dialog_height, dialog_width, start_y, start_x);
+
+    // 배경을 어둡게 만들기 위해 색상 설정
+    wbkgd(dialog, COLOR_PAIR(COLOR_PAIR_BORDER));
+    draw_border(dialog);
+
+    // 제목 표시
+    mvwprintw(dialog, 1, (dialog_width - strlen(title)) / 2, "%s", title);
+
+    // 구분선
+    mvwprintw(dialog, 2, 2, "========================================================");
+
+    // 메시지 표시 (여러 줄 지원)
+    char *msg_copy = strdup(message);
+    char *line = strtok(msg_copy, "\n");
+    int line_num = 4;
+
+    while (line && line_num < dialog_height - 2)
+    {
+        int msg_len = strlen(line);
+        if (msg_len > dialog_width - 4)
+        {
+            // 긴 메시지는 잘라서 표시
+            char truncated[dialog_width - 3];
+            strncpy(truncated, line, dialog_width - 7);
+            truncated[dialog_width - 7] = '\0';
+            strcat(truncated, "...");
+            mvwprintw(dialog, line_num, 2, "%s", truncated);
+        }
+        else
+        {
+            mvwprintw(dialog, line_num, 2, "%s", line);
+        }
+        line = strtok(NULL, "\n");
+        line_num++;
+    }
+
+    free(msg_copy);
+
+    // 확인 버튼 안내
+    mvwprintw(dialog, dialog_height - 2, (dialog_width - 20) / 2, "Press any key to close");
+
+    wrefresh(dialog);
+
+    // 키 입력 대기
+    timeout(-1); // 블로킹 모드로 변경
+    getch();
+    timeout(1000); // 다시 타임아웃 모드로 복원
+
+    delwin(dialog);
+
+    // 화면 다시 그리기
+    clear();
+    refresh();
 }

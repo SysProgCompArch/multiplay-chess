@@ -53,49 +53,52 @@ void *network_thread(void *arg)
     LOG_INFO("Network thread started");
     client_state_t *client = get_client_state();
 
+    // 초기 연결 시도
     add_chat_message_safe("System", "Connecting to server...");
+    client->last_reconnect_attempt = 0; // 초기 연결은 즉시 시도
 
-    client->socket_fd = connect_to_server();
-    if (client->socket_fd < 0)
-    {
-        LOG_ERROR("Failed to connect to server");
-        add_chat_message_safe("System", "Failed to connect to server");
-        pthread_mutex_lock(&network_mutex);
-        client->connected = false;
-        pthread_mutex_unlock(&network_mutex);
-        return NULL;
-    }
-
-    pthread_mutex_lock(&network_mutex);
-    client->connected = true;
-    pthread_mutex_unlock(&network_mutex);
-
-    LOG_INFO("Connection established, sending ping");
-    add_chat_message_safe("System", "Connected to server!");
-
-    // 서버에 ping 메시지 전송
-    ClientMessage ping_msg = CLIENT_MESSAGE__INIT;
-    PingRequest ping_req = PING_REQUEST__INIT;
-    ping_req.message = "Hello Server!";
-    ping_msg.msg_case = CLIENT_MESSAGE__MSG_PING; // 메시지 타입 지정
-    ping_msg.ping = &ping_req;
-
-    if (send_client_message(client->socket_fd, &ping_msg) < 0)
-    {
-        LOG_ERROR("Failed to send ping message");
-        add_chat_message_safe("System", "Failed to send ping");
-    }
-
-    // 메시지 수신 루프
-    LOG_INFO("Starting message receive loop");
     while (network_thread_running)
     {
+        // 연결되지 않은 상태이고 재연결이 필요한 경우
+        if (!client->connected)
+        {
+            if (should_attempt_reconnect())
+            {
+                start_reconnect();
+            }
+            else
+            {
+                // 1초 대기 후 다시 확인
+                usleep(1000000); // 1초
+                continue;
+            }
+        }
+
+        if (!client->connected)
+        {
+            // 재연결 실패 시 1초 대기
+            usleep(1000000);
+            continue;
+        }
+
+        // 메시지 수신 루프
         ServerMessage *msg = receive_server_message(client->socket_fd);
         if (!msg)
         {
-            LOG_WARN("Failed to receive server message, breaking loop");
+            LOG_WARN("Failed to receive server message, connection lost");
             // 연결 종료 또는 오류
-            break;
+            pthread_mutex_lock(&network_mutex);
+            client->connected = false;
+            pthread_mutex_unlock(&network_mutex);
+
+            if (client->socket_fd >= 0)
+            {
+                close(client->socket_fd);
+                client->socket_fd = -1;
+            }
+
+            add_chat_message_safe("System", "Connection lost. Reconnecting...");
+            continue;
         }
 
         LOG_DEBUG("Received server message, dispatching to handler");
@@ -109,13 +112,110 @@ void *network_thread(void *arg)
     client->connected = false;
     pthread_mutex_unlock(&network_mutex);
 
-    close(client->socket_fd);
-    client->socket_fd = -1;
+    if (client->socket_fd >= 0)
+    {
+        close(client->socket_fd);
+        client->socket_fd = -1;
+    }
 
     add_chat_message_safe("System", "Disconnected from server");
     LOG_INFO("Network thread terminated");
 
     return NULL;
+}
+
+// 재연결 시작
+void start_reconnect()
+{
+    LOG_INFO("Attempting to reconnect to server");
+    client_state_t *client = get_client_state();
+
+    pthread_mutex_lock(&network_mutex);
+    client->reconnecting = true;
+    client->last_reconnect_attempt = time(NULL);
+    pthread_mutex_unlock(&network_mutex);
+
+    // 처음 연결 시도인지 확인
+    static bool first_connect = true;
+    if (first_connect)
+    {
+        first_connect = false;
+        // 초기 연결 시도 메시지는 이미 출력됨
+    }
+    else
+    {
+        add_chat_message_safe("System", "Reconnecting...");
+    }
+
+    client->socket_fd = connect_to_server();
+    if (client->socket_fd < 0)
+    {
+        LOG_ERROR("Connection failed");
+        pthread_mutex_lock(&network_mutex);
+        client->connected = false;
+        client->reconnecting = false;
+        pthread_mutex_unlock(&network_mutex);
+
+        if (first_connect)
+        {
+            add_chat_message_safe("System", "Failed to connect to server");
+        }
+        return;
+    }
+
+    pthread_mutex_lock(&network_mutex);
+    client->connected = true;
+    client->reconnecting = false;
+    pthread_mutex_unlock(&network_mutex);
+
+    LOG_INFO("Connection successful, sending ping");
+    if (first_connect)
+    {
+        add_chat_message_safe("System", "Connected to server!");
+    }
+    else
+    {
+        add_chat_message_safe("System", "Reconnected to server!");
+    }
+
+    // 서버에 ping 메시지 전송하여 연결 확인
+    ClientMessage ping_msg = CLIENT_MESSAGE__INIT;
+    PingRequest ping_req = PING_REQUEST__INIT;
+    ping_req.message = first_connect ? "Hello Server!" : "Reconnection ping";
+    ping_msg.msg_case = CLIENT_MESSAGE__MSG_PING;
+    ping_msg.ping = &ping_req;
+
+    if (send_client_message(client->socket_fd, &ping_msg) < 0)
+    {
+        LOG_ERROR("Failed to send ping message");
+        add_chat_message_safe("System", "Connection verification failed");
+        pthread_mutex_lock(&network_mutex);
+        client->connected = false;
+        pthread_mutex_unlock(&network_mutex);
+        close(client->socket_fd);
+        client->socket_fd = -1;
+    }
+}
+
+// 재연결을 시도해야 하는지 확인
+bool should_attempt_reconnect()
+{
+    client_state_t *client = get_client_state();
+    time_t current_time = time(NULL);
+
+    // 이미 재연결 중이면 시도하지 않음
+    if (client->reconnecting)
+    {
+        return false;
+    }
+
+    // 마지막 재연결 시도 시간으로부터 RECONNECT_INTERVAL초가 지났는지 확인
+    if (current_time - client->last_reconnect_attempt >= RECONNECT_INTERVAL)
+    {
+        return true;
+    }
+
+    return false;
 }
 
 // 매칭 시작

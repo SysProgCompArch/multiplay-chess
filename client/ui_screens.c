@@ -3,6 +3,36 @@
 #include <time.h>
 #include <string.h>
 
+// 재연결 상태 표시
+void draw_connection_status()
+{
+    client_state_t *client = get_client_state();
+    int rows, cols;
+    getmaxyx(stdscr, rows, cols);
+
+    pthread_mutex_lock(&network_mutex);
+    if (client->reconnecting)
+    {
+        // 화면 우상단에 "Reconnecting..." 표시
+        attron(COLOR_PAIR(COLOR_PAIR_BORDER));
+        mvprintw(0, cols - 20, "Reconnecting...     ");
+        attroff(COLOR_PAIR(COLOR_PAIR_BORDER));
+    }
+    else if (!client->connected)
+    {
+        // 화면 우상단에 "Disconnected" 표시
+        attron(COLOR_PAIR(COLOR_PAIR_BORDER));
+        mvprintw(0, cols - 20, "Disconnected        ");
+        attroff(COLOR_PAIR(COLOR_PAIR_BORDER));
+    }
+    else
+    {
+        // 연결된 경우 상태 표시 지우기
+        mvprintw(0, cols - 20, "                    ");
+    }
+    pthread_mutex_unlock(&network_mutex);
+}
+
 // 메인 화면 그리기
 void draw_main_screen()
 {
@@ -26,6 +56,10 @@ void draw_main_screen()
     mvwprintw(main_win, 12, (MAIN_MENU_WIDTH - 35) / 2, "Press 1, 2, 3 or use mouse");
 
     wrefresh(main_win);
+
+    // 연결 상태 표시
+    draw_connection_status();
+    refresh();
 }
 
 // 매칭 화면 그리기
@@ -63,6 +97,10 @@ void draw_matching_screen()
     mvwprintw(match_win, 8, (MATCH_DIALOG_WIDTH - 30) / 2, "Press ESC to cancel");
 
     wrefresh(match_win);
+
+    // 연결 상태 표시
+    draw_connection_status();
+    refresh();
 }
 
 // 체스 말 ASCII 문자 반환
@@ -261,6 +299,9 @@ void draw_game_screen()
     wrefresh(chat_win);
     wrefresh(input_win);
     wrefresh(menu_win);
+
+    // 연결 상태 표시
+    draw_connection_status();
     refresh();
 }
 

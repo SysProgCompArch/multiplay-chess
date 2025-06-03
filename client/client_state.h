@@ -11,6 +11,10 @@
 #define SERVER_HOST "127.0.0.1"
 #define SERVER_PORT 8080
 
+// 상수 정의
+#define MAX_CHAT_NAME 32
+#define MAX_PLAYER_NAME 32
+
 // 화면 상태 enum
 typedef enum
 {
@@ -22,8 +26,8 @@ typedef enum
 // 클라이언트 상태 정보
 typedef struct
 {
-    char username[32];
-    char opponent_name[32];
+    char username[MAX_CHAT_NAME];
+    char opponent_name[MAX_PLAYER_NAME];
     int socket_fd;
     bool connected;
     bool is_white;
@@ -32,6 +36,10 @@ typedef struct
     game_state_t game_state;
     int selected_x, selected_y; // 선택된 기물 위치
     bool piece_selected;        // 기물이 선택되었는지 여부
+
+    // 재연결 관련
+    bool reconnecting;
+    time_t last_reconnect_attempt;
 } client_state_t;
 
 // 전역 상태 접근 함수들

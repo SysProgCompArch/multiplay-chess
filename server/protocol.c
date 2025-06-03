@@ -141,8 +141,25 @@ void handle_client_message(int fd, int epfd)
         //     break;
 
     default:
-        printf("[fd=%d] Unsupported msg_case=%d\n", fd, req->msg_case);
-        result = -1;
+        printf("[fd=%d] Unsupported msg_case=%d, sending error response\n", fd, req->msg_case);
+
+        // 에러 응답 생성 및 전송
+        ServerMessage error_resp = SERVER_MESSAGE__INIT;
+        ErrorResponse error = ERROR_RESPONSE__INIT;
+        error.message = "Unsupported message type";
+        error_resp.msg_case = SERVER_MESSAGE__MSG_ERROR;
+        error_resp.error = &error;
+
+        result = send_server_message(fd, &error_resp);
+        if (result < 0)
+        {
+            printf("[fd=%d] Failed to send error response, closing connection\n", fd);
+        }
+        else
+        {
+            printf("[fd=%d] Error response sent successfully\n", fd);
+            result = 0; // 에러 응답을 성공적으로 보냈으므로 연결 유지
+        }
         break;
     }
 

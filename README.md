@@ -152,25 +152,40 @@ ncurses를 사용하는 환경에서는 표준 출력이 보이지 않기 때문
 
 #### 실시간 로그 모니터링
 
-1. **별도 터미널에서 로그 확인**:
+1. **개선된 컬러 로그 모니터링** (권장):
    ```bash
-   # 실시간 로그 모니터링 (권장)
+   # 모든 로그를 색상과 함께 표시
    ./watch_logs.sh
    
-   # 또는 직접 tail 사용
-   tail -f chess_client.log
+   # 에러/경고만 보기
+   ./watch_logs.sh --error    # ERROR, FATAL만
+   ./watch_logs.sh --warn     # WARN 이상
+   ./watch_logs.sh --info     # INFO 이상
+   
+   # 도움말 보기
+   ./watch_logs.sh --help
    ```
 
-2. **특정 레벨만 필터링**:
+2. **색상 구분**:
+   - 🔴 **빨간색**: ERROR, FATAL 메시지
+   - 🟡 **노란색**: WARN 메시지  
+   - 🟢 **초록색**: INFO 메시지
+   - 🔵 **파란색**: DEBUG 메시지
+   - 🔵 **하늘색**: 타임스탬프
+   - 🟣 **자주색**: 파일명:라인번호
+   - ⚪ **회색**: 함수명
+
+3. **기본 tail 사용**:
    ```bash
-   # 에러만 보기
-   tail -f chess_client.log | grep ERROR
+   # 색상 없이 기본 모니터링
+   tail -f chess_client.log
    
-   # 워닝 이상만 보기  
+   # 특정 레벨만 필터링
+   tail -f chess_client.log | grep ERROR
    tail -f chess_client.log | grep -E "(WARN|ERROR|FATAL)"
    ```
 
-3. **로그 파일 검색**:
+4. **로그 파일 검색**:
    ```bash
    # 특정 함수의 로그만 보기
    grep "connect_to_server" chess_client.log
