@@ -83,3 +83,6 @@ build/
 .DS_Store
 
 .cache
+
+# log file
+*.log
