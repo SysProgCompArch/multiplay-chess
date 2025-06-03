@@ -1,12 +1,18 @@
 #include "handlers.h"
 #include "../client_state.h"
+#include "../logger.h"
 #include <stdio.h>
 
 // 서버 메시지 라우팅
 int dispatch_server_message(ServerMessage *msg)
 {
     if (!msg)
+    {
+        LOG_ERROR("Received null server message");
         return -1;
+    }
+
+    LOG_DEBUG("Dispatching server message type: %d", msg->msg_case);
 
     switch (msg->msg_case)
     {
@@ -26,6 +32,7 @@ int dispatch_server_message(ServerMessage *msg)
         return handle_error_response(msg);
 
     default:
+        LOG_WARN("Unknown server message type: %d", msg->msg_case);
         add_chat_message_safe("System", "Unknown server message");
         return 0;
     }

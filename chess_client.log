@@ -177,3 +177,62 @@
 [2025-06-03 19:06:15] [INFO] main.c:67 main() - Starting main game loop
 [2025-06-03 19:06:15] [INFO] client_network.c:171 start_reconnect() - Connection successful, sending ping
 [2025-06-03 19:06:15] [DEBUG] client_network.c:104 network_thread() - Received server message, dispatching to handler
+[2025-06-03 19:06:22] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 19:06:22] [DEBUG] main.c:85 main() - Mouse event: x=23, y=13, bstate=00000002
+[2025-06-03 19:08:39] [DEBUG] main.c:78 main() - Input received: 410
+[2025-06-03 19:08:40] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 19:08:40] [DEBUG] main.c:85 main() - Mouse event: x=144, y=40, bstate=00000001
+[2025-06-03 19:08:59] [DEBUG] main.c:78 main() - Input received: 410
+[2025-06-03 19:08:59] [DEBUG] main.c:78 main() - Input received: 410
+[2025-06-03 19:08:59] [DEBUG] main.c:78 main() - Input received: 410
+[2025-06-03 19:08:59] [DEBUG] main.c:78 main() - Input received: 410
+[2025-06-03 19:08:59] [DEBUG] main.c:78 main() - Input received: 410
+[2025-06-03 19:08:59] [DEBUG] main.c:78 main() - Input received: 410
+[2025-06-03 19:08:59] [DEBUG] main.c:78 main() - Input received: 410
+[2025-06-03 19:08:59] [DEBUG] main.c:78 main() - Input received: 410
+[2025-06-03 19:08:59] [DEBUG] main.c:78 main() - Input received: 410
+[2025-06-03 19:08:59] [DEBUG] main.c:78 main() - Input received: 410
+[2025-06-03 19:09:11] [DEBUG] main.c:78 main() - Input received: 410
+[2025-06-03 19:09:16] [DEBUG] main.c:78 main() - Input received: 410
+[2025-06-03 19:09:25] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 19:09:25] [DEBUG] main.c:85 main() - Mouse event: x=54, y=6, bstate=00000002
+[2025-06-03 19:09:25] [INFO] main.c:19 signal_handler() - SIGINT ignored to prevent game interruption
+[2025-06-03 19:09:29] [INFO] logger.c:34 logger_init() - === Logger initialized ===
+[2025-06-03 19:09:29] [INFO] main.c:34 main() - Chess client starting...
+[2025-06-03 19:09:29] [DEBUG] main.c:38 main() - Signal handler registered
+[2025-06-03 19:09:29] [DEBUG] main.c:42 main() - Client state initialized
+[2025-06-03 19:09:29] [INFO] main.c:46 main() - ncurses initialized
+[2025-06-03 19:09:29] [INFO] main.c:61 main() - Network thread started
+[2025-06-03 19:09:29] [INFO] client_network.c:53 network_thread() - Network thread started
+[2025-06-03 19:09:29] [INFO] client_network.c:130 start_reconnect() - Attempting to reconnect to server
+[2025-06-03 19:09:29] [INFO] client_network.c:18 connect_to_server() - Attempting to connect to server 127.0.0.1:8080
+[2025-06-03 19:09:29] [INFO] client_network.c:46 connect_to_server() - Successfully connected to server, socket fd: 4
+[2025-06-03 19:09:29] [INFO] client_network.c:171 start_reconnect() - Connection successful, sending ping
+[2025-06-03 19:09:29] [INFO] main.c:67 main() - Starting main game loop
+[2025-06-03 19:09:29] [DEBUG] client_network.c:104 network_thread() - Received server message, dispatching to handler
+[2025-06-03 19:10:03] [DEBUG] main.c:78 main() - Input received: 49
+[2025-06-03 19:10:03] [INFO] main.c:98 main() - User selected start matching
+[2025-06-03 19:10:06] [INFO] client_network.c:224 start_matching() - Starting matchmaking
+[2025-06-03 19:10:06] [INFO] client_network.c:232 start_matching() - Sending match request for player: ad
+[2025-06-03 19:10:06] [DEBUG] client_network.c:104 network_thread() - Received server message, dispatching to handler
+[2025-06-03 19:10:20] [DEBUG] main.c:78 main() - Input received: 27
+[2025-06-03 19:10:20] [INFO] main.c:127 main() - User cancelled matching
+[2025-06-03 19:10:20] [INFO] client_network.c:258 cancel_matching() - Cancelling matchmaking
+[2025-06-03 19:10:20] [DEBUG] main.c:78 main() - Input received: 27
+[2025-06-03 19:10:21] [DEBUG] main.c:78 main() - Input received: 27
+[2025-06-03 19:10:21] [DEBUG] main.c:78 main() - Input received: 27
+[2025-06-03 19:10:22] [DEBUG] main.c:78 main() - Input received: 27
+[2025-06-03 19:13:05] [WARN] client_network.c:88 network_thread() - Failed to receive server message, connection lost
+[2025-06-03 19:13:05] [INFO] client_network.c:130 start_reconnect() - Attempting to reconnect to server
+[2025-06-03 19:13:05] [INFO] client_network.c:18 connect_to_server() - Attempting to connect to server 127.0.0.1:8080
+[2025-06-03 19:13:05] [ERROR] logger.c:105 log_perror() - connect: Connection refused
+[2025-06-03 19:13:05] [ERROR] client_network.c:153 start_reconnect() - Connection failed
+[2025-06-03 19:13:10] [INFO] client_network.c:130 start_reconnect() - Attempting to reconnect to server
+[2025-06-03 19:13:10] [INFO] client_network.c:18 connect_to_server() - Attempting to connect to server 127.0.0.1:8080
+[2025-06-03 19:13:10] [ERROR] logger.c:105 log_perror() - connect: Connection refused
+[2025-06-03 19:13:10] [ERROR] client_network.c:153 start_reconnect() - Connection failed
+[2025-06-03 19:13:15] [INFO] client_network.c:130 start_reconnect() - Attempting to reconnect to server
+[2025-06-03 19:13:15] [INFO] client_network.c:18 connect_to_server() - Attempting to connect to server 127.0.0.1:8080
+[2025-06-03 19:13:15] [INFO] client_network.c:46 connect_to_server() - Successfully connected to server, socket fd: 4
+[2025-06-03 19:13:15] [INFO] client_network.c:171 start_reconnect() - Connection successful, sending ping
+[2025-06-03 19:13:15] [DEBUG] client_network.c:104 network_thread() - Received server message, dispatching to handler

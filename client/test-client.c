@@ -94,6 +94,12 @@ int main(int argc, char *argv[])
     printf("Connected to %s:%d\n", server_ip, port);
 
     char input[BUFFER_SIZE];
+    printf("Commands:\n");
+    printf("  <text>        - Send echo message\n");
+    printf("  !error        - Send invalid message type to test error response\n");
+    printf("  !quit         - Exit\n");
+    printf("\n");
+
     while (1)
     {
         printf("> ");
@@ -106,12 +112,31 @@ int main(int argc, char *argv[])
             input[len - 1] = '\0';
             len--;
         }
-        // EchoData 및 Message 초기화
-        EchoRequest echo_data = ECHO_REQUEST__INIT;
-        echo_data.message = input;
+
+        // 종료 명령어 체크
+        if (strcmp(input, "!quit") == 0)
+        {
+            printf("Goodbye!\n");
+            break;
+        }
+
         ClientMessage msg = CLIENT_MESSAGE__INIT;
-        msg.msg_case = CLIENT_MESSAGE__MSG_ECHO;
-        msg.echo = &echo_data;
+
+        // 에러 테스트 명령어 체크
+        if (strcmp(input, "!error") == 0)
+        {
+            printf("Sending invalid message type to test error response...\n");
+            // 잘못된 메시지 타입 설정 (존재하지 않는 타입)
+            msg.msg_case = 9999; // 유효하지 않은 메시지 타입
+        }
+        else
+        {
+            // 일반 echo 메시지
+            EchoRequest echo_data = ECHO_REQUEST__INIT;
+            echo_data.message = input;
+            msg.msg_case = CLIENT_MESSAGE__MSG_ECHO;
+            msg.echo = &echo_data;
+        }
 
         // 직렬화 및 전송
         size_t packed_len = client_message__get_packed_size(&msg);
@@ -166,14 +191,22 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Failed to unpack response message.\n");
             break;
         }
-        if (resp_msg->msg_case == SERVER_MESSAGE__MSG_ECHO_RES)
+
+        // 응답 타입에 따른 처리
+        switch (resp_msg->msg_case)
         {
-            printf("Received: %s\n", resp_msg->echo_res->message);
-        }
-        else
-        {
+        case SERVER_MESSAGE__MSG_ECHO_RES:
+            printf("Echo response: %s\n", resp_msg->echo_res->message);
+            break;
+        case SERVER_MESSAGE__MSG_ERROR:
+            printf("Error response: %s\n",
+                   resp_msg->error->message ? resp_msg->error->message : "No error message");
+            break;
+        default:
             printf("Received unexpected message: msg_case=%d\n", resp_msg->msg_case);
+            break;
         }
+
         server_message__free_unpacked(resp_msg, NULL);
     }
 
