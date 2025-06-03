@@ -11,7 +11,18 @@ add_library(common STATIC
 
 # Proto 파일 경로와 출력 디렉토리 지정
 set(PROTO_FILE ${CMAKE_CURRENT_SOURCE_DIR}/proto/message.proto)
-set(TIMESTAMP_PROTO_FILE /usr/include/google/protobuf/timestamp.proto)
+# timestamp.proto 파일을 여러 경로에서 찾기
+find_path(PROTOBUF_INCLUDE_DIR google/protobuf/timestamp.proto
+    PATHS
+        /usr/include
+        /usr/local/include
+        ${PROTOBUF_C_INCLUDE_DIRS}
+)
+if(PROTOBUF_INCLUDE_DIR)
+    set(TIMESTAMP_PROTO_FILE ${PROTOBUF_INCLUDE_DIR}/google/protobuf/timestamp.proto)
+else()
+    message(FATAL_ERROR "Could not find google/protobuf/timestamp.proto")
+endif()
 set(GENERATED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/generated)
 
 # 생성될 파일 이름 지정 (message.pb-c.c, message.pb-c.h)
@@ -27,7 +38,7 @@ set(TIMESTAMP_GENERATED_HDR ${GENERATED_DIR}/google/protobuf/timestamp.pb-c.h)
 add_custom_command(
     OUTPUT ${TIMESTAMP_GENERATED_SRC} ${TIMESTAMP_GENERATED_HDR}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${GENERATED_DIR}/google/protobuf
-    COMMAND protoc-c --c_out=${GENERATED_DIR} -I/usr/include ${TIMESTAMP_PROTO_FILE}
+    COMMAND protoc-c --c_out=${GENERATED_DIR} -I${PROTOBUF_INCLUDE_DIR} ${TIMESTAMP_PROTO_FILE}
     DEPENDS ${TIMESTAMP_PROTO_FILE}
     COMMENT "Generating C source from timestamp.proto"
 )
@@ -36,7 +47,7 @@ add_custom_command(
 add_custom_command(
     OUTPUT ${GENERATED_SRC} ${GENERATED_HDR}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${GENERATED_DIR}
-    COMMAND protoc-c --c_out=${GENERATED_DIR} -I${CMAKE_CURRENT_SOURCE_DIR}/proto -I/usr/include ${PROTO_FILE}
+    COMMAND protoc-c --c_out=${GENERATED_DIR} -I${CMAKE_CURRENT_SOURCE_DIR}/proto -I${PROTOBUF_INCLUDE_DIR} ${PROTO_FILE}
     DEPENDS ${PROTO_FILE} ${TIMESTAMP_GENERATED_SRC} ${TIMESTAMP_GENERATED_HDR}
     COMMENT "Generating C source from ${PROTO_FILE}"
 )
