@@ -1,6 +1,6 @@
 add_executable(server
     main.c
-    network.c
+    server_network.c
     protocol.c
     handlers/ping_handler.c
     handlers/echo_handler.c

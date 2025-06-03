@@ -3,7 +3,7 @@ add_executable(client
     logger.c
     game_state.c
     client_state.c
-    network.c
+    client_network.c
     ui_core.c
     ui_screens.c
     ui_input.c
