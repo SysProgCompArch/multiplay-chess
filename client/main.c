@@ -169,7 +169,21 @@ int main()
 
         // 화면 업데이트 (매번 수행)
         pthread_mutex_lock(&screen_mutex);
-        draw_main_screen();
+        switch (client->current_screen)
+        {
+        case SCREEN_MAIN:
+            draw_main_screen();
+            break;
+        case SCREEN_MATCHING:
+            draw_matching_screen();
+            break;
+        case SCREEN_GAME:
+            draw_game_screen();
+            break;
+        default:
+            draw_main_screen();
+            break;
+        }
         pthread_mutex_unlock(&screen_mutex);
         refresh();
     }
