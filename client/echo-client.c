@@ -107,15 +107,14 @@ int main(int argc, char *argv[])
             len--;
         }
         // EchoData 및 Message 초기화
-        EchoData echo_data = ECHO_DATA__INIT;
-        echo_data.msg = input;
-        Message msg = MESSAGE__INIT;
-        msg.op = OP_CODE__ECHO_MSG;
-        msg.data_case = MESSAGE__DATA_ECHO;
+        EchoRequest echo_data = ECHO_REQUEST__INIT;
+        echo_data.message = input;
+        ClientMessage msg = CLIENT_MESSAGE__INIT;
+        msg.msg_case = CLIENT_MESSAGE__MSG_ECHO;
         msg.echo = &echo_data;
 
         // 직렬화 및 전송
-        size_t packed_len = message__get_packed_size(&msg);
+        size_t packed_len = client_message__get_packed_size(&msg);
         uint8_t *sendbuf = malloc(4 + packed_len);
         if (!sendbuf)
         {
@@ -124,7 +123,7 @@ int main(int argc, char *argv[])
         }
         uint32_t netlen = htonl((uint32_t)packed_len);
         memcpy(sendbuf, &netlen, 4);
-        message__pack(&msg, sendbuf + 4);
+        client_message__pack(&msg, sendbuf + 4);
 
         if (send_all(sockfd, sendbuf, 4 + packed_len) < 0)
         {
@@ -160,22 +159,22 @@ int main(int argc, char *argv[])
         }
 
         // 역직렬화 및 출력
-        Message *resp_msg = message__unpack(NULL, resp_len, resp_buf);
+        ServerMessage *resp_msg = server_message__unpack(NULL, resp_len, resp_buf);
         free(resp_buf);
         if (!resp_msg)
         {
             fprintf(stderr, "Failed to unpack response message.\n");
             break;
         }
-        if (resp_msg->op == OP_CODE__ECHO_MSG && resp_msg->data_case == MESSAGE__DATA_ECHO)
+        if (resp_msg->msg_case == SERVER_MESSAGE__MSG_ECHO_RES)
         {
-            printf("Received: %s\n", resp_msg->echo->msg);
+            printf("Received: %s\n", resp_msg->echo_res->message);
         }
         else
         {
-            printf("Received unexpected message: op=%d\n", resp_msg->op);
+            printf("Received unexpected message: msg_case=%d\n", resp_msg->msg_case);
         }
-        message__free_unpacked(resp_msg, NULL);
+        server_message__free_unpacked(resp_msg, NULL);
     }
 
     close(sockfd);
