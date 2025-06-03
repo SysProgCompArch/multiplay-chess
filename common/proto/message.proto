@@ -1,36 +1,176 @@
 syntax = "proto3";
 
-// 요청 종류 (op 코드)
-enum OpCode {
-  PING = 0;
-  ECHO_MSG = 1;
-  CHAT = 2;
-  MOVE = 3;
+
+import "google/protobuf/timestamp.proto";
+
+// ===================================================================
+// 공통 타입 정의
+// ===================================================================
+
+// 메시지 버전(향후 스키마 바뀔 때 하위 호환용으로 활용)
+enum ProtocolVersion {
+  PV_UNKNOWN = 0;
+  PV_V1      = 1; // 처음 버전
 }
 
-// 디버그용 echo 메시지 데이터 구조체
-message EchoData {
-  string msg = 1; // 메시지 내용
+// 체스 기물 종류
+enum PieceType {
+  PT_NONE   = 0;
+  PT_PAWN   = 1;
+  PT_KNIGHT = 2;
+  PT_BISHOP = 3;
+  PT_ROOK   = 4;
+  PT_QUEEN  = 5;
+  PT_KING   = 6;
 }
 
-// 채팅 메시지 데이터 구조체
-message ChatData {
-  string msg = 1; // 채팅 메시지 내용
+// 상대편 색 정의
+enum Color {
+  COLOR_UNSPECIFIED = 0;
+  COLOR_WHITE       = 1;
+  COLOR_BLACK       = 2;
 }
 
-// 기물 옮김 데이터 구조체
-message MoveData {
-  string target = 1; // 옮길 대상 기물 위치 (예: "a2")
-  string dest = 2;   // 옮길 새 위치 (예: "a3")
-}
+// ===================================================================
+// 클라이언트 → 서버 요청 메시지 (ClientMessage)
+// ===================================================================
 
-// 메시지 구조체 (확장 가능)
-message Message {
-  OpCode op = 1;
-  oneof data {
-    EchoData echo = 2;
-    ChatData chat = 3;
-    MoveData move = 4;
-    // 다른 데이터 구조체 추가 가능
+// 사용자가 서버로 보내는 모든 요청을 하나로 묶은 래퍼(wrapper) 메시지
+message ClientMessage {
+  ProtocolVersion version = 1; // (optional) 프로토콜 버전
+
+  oneof msg {
+    PingRequest      ping      = 10;
+    EchoRequest      echo      = 11;
+    MatchGameRequest match_game = 20;
+    MoveRequest      make_move = 21;
+    ResignRequest    resign    = 22;
+    ChatRequest      chat      = 23;
   }
-} 
+}
+
+message PingRequest {
+  string message = 1;
+}
+
+message EchoRequest {
+  string message = 1;
+}
+
+// 게임 참가 요청
+message MatchGameRequest {
+  string player_id   = 1; // 예: UUID 혹은 로그인된 사용자 ID
+  string desired_game_id = 2; 
+  // 만약 신규 게임을 원하면 빈 문자열("")을 보낼 수도 있고,
+  // 이미 생성된 특정 게임에 참가할 때는 game_id를 지정합니다.
+}
+
+// 기물 이동 요청
+message MoveRequest {
+  string game_id    = 1; // 어떤 게임인지 식별
+  string player_id  = 2; // 요청 보낸 유저 ID
+  string from       = 3; // 이동 전 위치
+  string to         = 4; // 이동 후 위치
+  // 요청 시점 타임스탬프
+  google.protobuf.Timestamp timestamp = 5;
+}
+
+// 기권(Resign) 요청
+message ResignRequest {
+  string game_id   = 1;
+  string player_id = 2;
+}
+
+// 채팅 메시지 전송 예시
+message ChatRequest {
+  string game_id   = 1;
+  string player_id = 2;
+  string message   = 3;
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+
+// ===================================================================
+// 서버 → 클라이언트 응답/브로드캐스트 메시지 (ServerMessage)
+// ===================================================================
+
+// 서버가 클라이언트에게 보내는 모든 메시지를 하나로 묶은 래퍼(wrapper)
+message ServerMessage {
+  ProtocolVersion version = 1; // 프로토콜 버전
+
+  oneof msg {
+    PingResponse       ping_res         = 10;
+    EchoResponse       echo_res         = 11;
+    MatchGameResponse  match_game_res   = 20;
+    MoveResult         move_result      = 21;
+    MoveBroadcast      move_broadcast   = 22;
+    ResignBroadcast    resign_broadcast = 23;
+    ChatBroadcast      chat_broadcast   = 24;
+    ErrorResponse      error            = 99;
+    // 그 외 새 기능 추가 시 확장 가능
+  }
+}
+
+message PingResponse {
+  string message = 1;
+}
+
+message EchoResponse {
+  string message = 1;
+}
+
+// 게임 참가 요청에 대한 응답
+message MatchGameResponse {
+  string game_id      = 1;
+  bool success        = 2;
+  string message      = 3; // 실패 시 이유 등
+  // 게임에 이미 상대가 있어서 바로 시작되는 경우, 
+  // 상대 ID나 색(WHITE/BLACK)도 함께 알려줄 수 있음
+  Color assigned_color = 4;
+}
+
+// 단일 클라이언트에게 보내는 “내가 보낸 MoveRequest에 대한 결과”
+message MoveResult {
+  string game_id    = 1;
+  string player_id  = 2; // 요청 보낸 유저
+  bool success      = 3;
+  string message    = 4; // 예: “이동할 수 없는 기물입니다”
+  // (선택) 업데이트된 체스판 FEN이나 PGN 등을 포함할 수도 있음
+  string updated_fen = 5;
+  google.protobuf.Timestamp timestamp = 6;
+}
+
+// 제로 모든 관련 클라이언트(특히 상대편)에게 브로드캐스트되는 “이동 알림”
+message MoveBroadcast {
+  string game_id      = 1;
+  string player_id    = 2; // 실제로 이동을 수행한 플레이어
+  string from         = 3;
+  string to           = 4;
+  PieceType promotion = 5;
+
+  google.protobuf.Timestamp timestamp = 6;
+}
+
+// 기권 시 브로드캐스트 (모든 관여자에게 알림)
+message ResignBroadcast {
+  string game_id      = 1;
+  string player_id    = 2; // 기권한 플레이어
+  Color  winner_color = 3; // 승리자 색
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+// 채팅 메시지 브로드캐스트
+message ChatBroadcast {
+  string game_id   = 1;
+  string player_id = 2;
+  string message   = 3;
+  google.protobuf.Timestamp timestamp = 4;
+}
+
+// 오류를 통일해서 보낼 때
+message ErrorResponse {
+  string game_id    = 1; // 오류가 연관된 게임이 있으면
+  string player_id  = 2; // 오류를 받는 대상 클라이언트
+  int32  code       = 3; // 서버 내부 오류 코드 (예: 1=InvalidMove, 2=NotInGame 등)
+  string message    = 4; // 사람이 읽을 수 있는 오류 설명
+}

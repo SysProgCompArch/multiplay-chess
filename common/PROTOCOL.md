@@ -8,40 +8,7 @@
 
 ## 메시지 구조 (message.proto)
 
-모든 통신 메시지는 아래와 같은 protobuf 정의를 따릅니다.
-
-```proto
-syntax = "proto3";
-
-enum OpCode {
-  PING = 0;   // 핑/퐁(하트비트)
-  CHAT = 1;   // 채팅 메시지
-  MOVE = 2;   // 기물 옮김
-  ... // 추가 가능
-}
-
-message ChatData {
-  string msg = 1; // 채팅 메시지 내용
-}
-
-message MoveData {
-  string target = 1; // 옮길 대상 기물 위치 (예: "a2")
-  string dest = 2;   // 옮길 새 위치 (예: "a3")
-}
-
-message Message {
-  OpCode op = 1;
-  oneof data {
-    MoveData move = 2;
-    ChatData chat = 3;
-    // 다른 데이터 구조체 추가 가능
-  }
-}
-
-...
-```
-
-> 실제 파일 위치: `common/proto/message.proto`
+모든 통신 메시지는 `common/proto/message.proto` 파일에 정의된 protobuf 정의를 따릅니다.
 
 ---
 

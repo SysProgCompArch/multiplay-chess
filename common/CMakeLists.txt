@@ -11,6 +11,7 @@ add_library(common STATIC
 
 # Proto 파일 경로와 출력 디렉토리 지정
 set(PROTO_FILE ${CMAKE_CURRENT_SOURCE_DIR}/proto/message.proto)
+set(TIMESTAMP_PROTO_FILE /usr/include/google/protobuf/timestamp.proto)
 set(GENERATED_DIR ${CMAKE_CURRENT_SOURCE_DIR}/generated)
 
 # 생성될 파일 이름 지정 (message.pb-c.c, message.pb-c.h)
@@ -18,17 +19,30 @@ get_filename_component(PROTO_NAME ${PROTO_FILE} NAME_WE)
 set(GENERATED_SRC ${GENERATED_DIR}/${PROTO_NAME}.pb-c.c)
 set(GENERATED_HDR ${GENERATED_DIR}/${PROTO_NAME}.pb-c.h)
 
+# timestamp 관련 생성 파일
+set(TIMESTAMP_GENERATED_SRC ${GENERATED_DIR}/google/protobuf/timestamp.pb-c.c)
+set(TIMESTAMP_GENERATED_HDR ${GENERATED_DIR}/google/protobuf/timestamp.pb-c.h)
+
+# timestamp proto 파일로부터 C 코드 생성
+add_custom_command(
+    OUTPUT ${TIMESTAMP_GENERATED_SRC} ${TIMESTAMP_GENERATED_HDR}
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${GENERATED_DIR}/google/protobuf
+    COMMAND protoc-c --c_out=${GENERATED_DIR} -I/usr/include ${TIMESTAMP_PROTO_FILE}
+    DEPENDS ${TIMESTAMP_PROTO_FILE}
+    COMMENT "Generating C source from timestamp.proto"
+)
+
 # proto 파일로부터 C 코드 생성
 add_custom_command(
     OUTPUT ${GENERATED_SRC} ${GENERATED_HDR}
     COMMAND ${CMAKE_COMMAND} -E make_directory ${GENERATED_DIR}
-    COMMAND protoc-c --c_out=${GENERATED_DIR} -I${CMAKE_CURRENT_SOURCE_DIR}/proto ${PROTO_FILE}
-    DEPENDS ${PROTO_FILE}
+    COMMAND protoc-c --c_out=${GENERATED_DIR} -I${CMAKE_CURRENT_SOURCE_DIR}/proto -I/usr/include ${PROTO_FILE}
+    DEPENDS ${PROTO_FILE} ${TIMESTAMP_GENERATED_SRC} ${TIMESTAMP_GENERATED_HDR}
     COMMENT "Generating C source from ${PROTO_FILE}"
 )
 
 # 생성된 파일을 common 라이브러리에 추가
-target_sources(common PRIVATE ${GENERATED_SRC} ${GENERATED_HDR})
+target_sources(common PRIVATE ${GENERATED_SRC} ${GENERATED_HDR} ${TIMESTAMP_GENERATED_SRC} ${TIMESTAMP_GENERATED_HDR})
 
 # include 경로에 generated 폴더 추가
 target_include_directories(common PUBLIC ${GENERATED_DIR})
