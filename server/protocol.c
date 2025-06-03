@@ -1,6 +1,7 @@
 #include "protocol.h"
 #include "handlers/handlers.h"
-#include "network.h"
+#include "handlers/match_manager.h"
+#include "server_network.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -114,6 +115,19 @@ void handle_client_message(int fd, int epfd)
     if (!req)
     {
         printf("[fd=%d] Client disconnected\n", fd);
+
+        // 매칭 큐에서 플레이어 제거
+        remove_player_from_matching(fd);
+
+        // TODO: 진행 중인 게임이 있다면 상대방에게 알림
+        ActiveGame *game = find_game_by_player_fd(fd);
+        if (game)
+        {
+            printf("[fd=%d] Player disconnected from game %s\n", fd, game->game_id);
+            // 상대방에게 연결 해제 알림 (나중에 구현)
+            remove_game(game->game_id);
+        }
+
         close(fd);
         epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
         return;
@@ -129,6 +143,10 @@ void handle_client_message(int fd, int epfd)
 
     case CLIENT_MESSAGE__MSG_ECHO:
         result = handle_echo_message(fd, req);
+        break;
+
+    case CLIENT_MESSAGE__MSG_MATCH_GAME:
+        result = handle_match_game_message(fd, req);
         break;
 
         // 나중에 추가될 메시지 타입들

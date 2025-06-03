@@ -16,27 +16,38 @@ int handle_match_game_response(ServerMessage *msg)
     {
         if (msg->match_game_res->success)
         {
-            LOG_INFO("Match found! Game ID: %s, Assigned color: %s",
-                     msg->match_game_res->game_id ? msg->match_game_res->game_id : "unknown",
-                     msg->match_game_res->assigned_color == COLOR__COLOR_WHITE ? "WHITE" : "BLACK");
+            if (msg->match_game_res->assigned_color == COLOR__COLOR_UNSPECIFIED)
+            {
+                // 아직 매칭 대기 중
+                LOG_INFO("Added to matchmaking queue. Game ID: %s",
+                         msg->match_game_res->game_id ? msg->match_game_res->game_id : "unknown");
+                add_chat_message_safe("System", "Waiting for opponent...");
+            }
+            else
+            {
+                // 매칭 성공! 게임 시작
+                LOG_INFO("Match found! Game ID: %s, Assigned color: %s",
+                         msg->match_game_res->game_id ? msg->match_game_res->game_id : "unknown",
+                         msg->match_game_res->assigned_color == COLOR__COLOR_WHITE ? "WHITE" : "BLACK");
 
-            add_chat_message_safe("System", "Match found!");
+                add_chat_message_safe("System", "Match found! Game starting...");
 
-            // 클라이언트 상태 업데이트
-            client_state_t *client = get_client_state();
-            strcpy(client->opponent_name, "Opponent");
-            strcpy(client->game_state.opponent_player, "Opponent");
-            client->is_white = (msg->match_game_res->assigned_color == COLOR__COLOR_WHITE);
-            client->game_state.local_team = client->is_white ? TEAM_WHITE : TEAM_BLACK;
-            client->game_state.game_in_progress = true;
-            client->current_screen = SCREEN_GAME;
+                // 클라이언트 상태 업데이트
+                client_state_t *client = get_client_state();
+                strcpy(client->opponent_name, "Opponent");
+                strcpy(client->game_state.opponent_player, "Opponent");
+                client->is_white = (msg->match_game_res->assigned_color == COLOR__COLOR_WHITE);
+                client->game_state.local_team = client->is_white ? TEAM_WHITE : TEAM_BLACK;
+                client->game_state.game_in_progress = true;
+                client->current_screen = SCREEN_GAME;
+            }
         }
         else
         {
             LOG_WARN("Matchmaking failed: %s",
                      msg->match_game_res->message ? msg->match_game_res->message : "no reason provided");
 
-            add_chat_message_safe("System", "Matchmaking failed");
+            add_chat_message_safe("System", msg->match_game_res->message ? msg->match_game_res->message : "Matchmaking failed");
             client_state_t *client = get_client_state();
             client->current_screen = SCREEN_MAIN;
         }
@@ -44,6 +55,7 @@ int handle_match_game_response(ServerMessage *msg)
     else
     {
         LOG_ERROR("Received match game response but no response data");
+        add_chat_message_safe("System", "Invalid server response");
     }
 
     return 0;
