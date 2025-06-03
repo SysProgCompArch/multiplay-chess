@@ -1,5 +1,6 @@
 #include "server_network.h"
 #include "protocol.h"
+#include "logger.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,12 +32,13 @@ int parse_port_from_args(int argc, char *argv[])
             port = atoi(argv[i + 1]);
             if (port <= 0 || port > 65535)
             {
-                fprintf(stderr, "Invalid port number\n");
+                LOG_FATAL("Invalid port number: %d", port);
                 exit(EXIT_FAILURE);
             }
             i++; // 포트번호 인자 스킵
         }
     }
+    LOG_DEBUG("Port parsed from arguments: %d", port);
     return port;
 }
 
@@ -47,12 +49,15 @@ int create_and_bind_listener(int port)
     struct sockaddr_in serv_addr;
     if ((listener = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        perror("socket");
+        log_perror("socket");
         exit(EXIT_FAILURE);
     }
+    LOG_DEBUG("Socket created: fd=%d", listener);
+
     // 주소 재사용 옵션
     int opt = 1;
     setsockopt(listener, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    LOG_DEBUG("SO_REUSEADDR option set");
 
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
@@ -61,16 +66,21 @@ int create_and_bind_listener(int port)
 
     if (bind(listener, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
-        perror("bind");
+        log_perror("bind");
         exit(EXIT_FAILURE);
     }
+    LOG_DEBUG("Socket bound to port %d", port);
+
     if (listen(listener, BACKLOG) < 0)
     {
-        perror("listen");
+        log_perror("listen");
         exit(EXIT_FAILURE);
     }
+    LOG_DEBUG("Socket listening with backlog %d", BACKLOG);
+
     // 논블로킹 모드 설정 (추천)
     set_nonblocking(listener);
+    LOG_DEBUG("Listener socket set to non-blocking mode");
 
     return listener;
 }
@@ -81,9 +91,10 @@ int setup_epoll(int listener)
     int epfd = epoll_create1(0);
     if (epfd == -1)
     {
-        perror("epoll_create1");
+        log_perror("epoll_create1");
         exit(EXIT_FAILURE);
     }
+    LOG_DEBUG("Epoll instance created: fd=%d", epfd);
 
     // 리스닝 소켓을 epoll에 등록
     struct epoll_event ev;
@@ -91,9 +102,10 @@ int setup_epoll(int listener)
     ev.data.fd = listener;
     if (epoll_ctl(epfd, EPOLL_CTL_ADD, listener, &ev) == -1)
     {
-        perror("epoll_ctl: listener");
+        log_perror("epoll_ctl: listener");
         exit(EXIT_FAILURE);
     }
+    LOG_DEBUG("Listener socket registered to epoll");
 
     return epfd;
 }
@@ -102,6 +114,8 @@ int setup_epoll(int listener)
 void handle_new_connection(int listener, int epfd)
 {
     struct epoll_event ev;
+    int new_connections = 0;
+
     while (1)
     {
         int conn = accept(listener, NULL, NULL);
@@ -113,7 +127,7 @@ void handle_new_connection(int listener, int epfd)
             }
             else
             {
-                perror("accept");
+                log_perror("accept");
                 break;
             }
         }
@@ -124,13 +138,19 @@ void handle_new_connection(int listener, int epfd)
         ev.data.fd = conn;
         if (epoll_ctl(epfd, EPOLL_CTL_ADD, conn, &ev) == -1)
         {
-            perror("epoll_ctl: conn");
+            log_perror("epoll_ctl: conn");
             close(conn);
         }
         else
         {
-            printf("[fd=%d] New connection\n", conn);
+            LOG_INFO("New client connected: fd=%d", conn);
+            new_connections++;
         }
+    }
+
+    if (new_connections > 0)
+    {
+        LOG_DEBUG("Handled %d new connections", new_connections);
     }
 }
 
@@ -138,6 +158,8 @@ void handle_new_connection(int listener, int epfd)
 void event_loop(int listener, int epfd)
 {
     struct epoll_event events[MAX_EVENTS];
+    LOG_INFO("Starting event loop...");
+
     while (1)
     {
         int nready = epoll_wait(epfd, events, MAX_EVENTS, -1);
@@ -145,9 +167,11 @@ void event_loop(int listener, int epfd)
         {
             if (errno == EINTR)
                 continue;
-            perror("epoll_wait");
+            log_perror("epoll_wait");
             break;
         }
+
+        LOG_DEBUG("epoll_wait returned %d events", nready);
 
         for (int i = 0; i < nready; i++)
         {
@@ -156,18 +180,24 @@ void event_loop(int listener, int epfd)
             // 리스닝 소켓에 이벤트 발생 → 새 클라이언트 연결
             if (fd == listener)
             {
+                LOG_DEBUG("New connection event on listener");
                 handle_new_connection(listener, epfd);
             }
             else if (events[i].events & EPOLLIN)
             {
+                LOG_DEBUG("Client message event on fd=%d", fd);
                 handle_client_message(fd, epfd);
             }
         }
     }
+
+    LOG_INFO("Event loop terminated");
 }
 
 void cleanup(int listener, int epfd)
 {
+    LOG_INFO("Cleaning up network resources");
     close(listener);
     close(epfd);
+    LOG_DEBUG("Network resources cleaned up");
 }

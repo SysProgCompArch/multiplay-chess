@@ -1,6 +1,5 @@
 add_executable(client
     main.c
-    logger.c
     game_state.c
     client_state.c
     client_network.c

@@ -9,6 +9,8 @@ add_library(common STATIC
     utils.h
     network.c
     network.h
+    logger.c
+    logger.h
 )
 
 # Proto 파일 경로와 출력 디렉토리 지정

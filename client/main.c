@@ -25,11 +25,8 @@ void signal_handler(int signum)
 // 메인 함수
 int main()
 {
-    // 로거 초기화 (ncurses 초기화 전에)
-    char log_filename[256];
-    snprintf(log_filename, sizeof(log_filename), "chess_client_%d.log", getpid());
-
-    if (logger_init(log_filename) != 0)
+    // 로거 초기화 (ncurses 초기화 전에) - 파일 출력 모드
+    if (logger_init(LOG_OUTPUT_FILE, "chess_client") != 0)
     {
         fprintf(stderr, "Failed to initialize logger\n");
         return 1;
@@ -172,26 +169,15 @@ int main()
 
         // 화면 업데이트 (매번 수행)
         pthread_mutex_lock(&screen_mutex);
-
-        switch (client->current_screen)
-        {
-        case SCREEN_MAIN:
-            draw_main_screen();
-            break;
-        case SCREEN_MATCHING:
-            draw_matching_screen();
-            update_match_timer();
-            break;
-        case SCREEN_GAME:
-            draw_game_screen();
-            break;
-        }
-
+        draw_main_screen();
         pthread_mutex_unlock(&screen_mutex);
+        refresh();
     }
 
+    // 프로그램 종료 (도달하지 않음)
     cleanup_network();
     cleanup_ncurses();
     logger_cleanup();
+
     return 0;
 }

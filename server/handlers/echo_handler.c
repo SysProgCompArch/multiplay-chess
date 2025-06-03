@@ -1,6 +1,7 @@
 #include "../protocol.h"
 #include "handlers.h"
 #include "network.h"
+#include "logger.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,11 +11,11 @@ int handle_echo_message(int fd, ClientMessage *req)
 {
     if (req->msg_case != CLIENT_MESSAGE__MSG_ECHO)
     {
-        fprintf(stderr, "[fd=%d] Invalid message type for echo handler\n", fd);
+        LOG_ERROR("Invalid message type for echo handler: fd=%d, msg_case=%d", fd, req->msg_case);
         return -1;
     }
 
-    printf("[fd=%d] Echo: %s\n", fd, req->echo->message);
+    LOG_INFO("Echo received from fd=%d: %s", fd, req->echo->message ? req->echo->message : "(no message)");
 
     // Echo 응답 생성
     ServerMessage resp = SERVER_MESSAGE__INIT;
@@ -24,7 +25,7 @@ int handle_echo_message(int fd, ClientMessage *req)
     char *echo_message = malloc(strlen(req->echo->message) + 1);
     if (!echo_message)
     {
-        printf("[fd=%d] Failed to allocate memory for echo response\n", fd);
+        LOG_ERROR("Failed to allocate memory for echo response: fd=%d", fd);
         return -1;
     }
     strcpy(echo_message, req->echo->message);
@@ -40,10 +41,10 @@ int handle_echo_message(int fd, ClientMessage *req)
 
     if (result < 0)
     {
-        printf("[fd=%d] Failed to send echo response\n", fd);
+        LOG_ERROR("Failed to send echo response to fd=%d", fd);
         return -1;
     }
 
-    printf("[fd=%d] Echo response sent\n", fd);
+    LOG_DEBUG("Echo response sent to fd=%d", fd);
     return 0;
 }

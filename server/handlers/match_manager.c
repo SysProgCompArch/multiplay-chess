@@ -1,4 +1,5 @@
 #include "match_manager.h"
+#include "logger.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,14 +16,14 @@ int init_match_manager(void)
 
     if (pthread_mutex_init(&g_match_manager.mutex, NULL) != 0)
     {
-        perror("pthread_mutex_init");
+        log_perror("pthread_mutex_init");
         return -1;
     }
 
     g_match_manager.waiting_count = 0;
     g_match_manager.active_game_count = 0;
 
-    printf("Match manager initialized\n");
+    LOG_INFO("Match manager initialized");
     return 0;
 }
 
@@ -42,7 +43,7 @@ void cleanup_match_manager(void)
     pthread_mutex_unlock(&g_match_manager.mutex);
     pthread_mutex_destroy(&g_match_manager.mutex);
 
-    printf("Match manager cleaned up\n");
+    LOG_INFO("Match manager cleaned up");
 }
 
 // 게임 ID 생성
@@ -54,118 +55,90 @@ char *generate_game_id(void)
     // 간단한 게임 ID 생성 (타임스탬프 + 카운터)
     snprintf(game_id, sizeof(game_id), "game_%ld_%d", time(NULL) % 100000, counter++);
 
+    LOG_DEBUG("Generated game ID: %s", game_id);
     return game_id;
 }
 
 // 플레이어를 매칭에 추가
 MatchResult add_player_to_matching(int fd, const char *player_id)
 {
-    MatchResult result = {0};
-    result.status = MATCH_STATUS_ERROR;
-    result.error_message = "Unknown error";
+    MatchResult result = {MATCH_STATUS_ERROR, NULL, COLOR__COLOR_UNSPECIFIED, -1, "Unknown error"};
 
     if (!player_id)
     {
-        result.error_message = "Invalid player ID";
+        result.error_message = "Player ID is null";
+        LOG_ERROR("add_player_to_matching: Player ID is null for fd=%d", fd);
         return result;
     }
 
     pthread_mutex_lock(&g_match_manager.mutex);
 
-    // 이미 대기 중인 플레이어인지 확인
+    // 이미 대기 중인 플레이어가 있는지 확인
     for (int i = 0; i < MAX_WAITING_PLAYERS; i++)
     {
-        if (g_match_manager.waiting_players[i].is_active &&
-            g_match_manager.waiting_players[i].fd == fd)
+        WaitingPlayer *waiting_player = &g_match_manager.waiting_players[i];
+        if (waiting_player->is_active)
         {
-            result.error_message = "Player already in matching queue";
-            pthread_mutex_unlock(&g_match_manager.mutex);
-            return result;
-        }
-    }
-
-    // 이미 게임 중인 플레이어인지 확인
-    for (int i = 0; i < MAX_ACTIVE_GAMES; i++)
-    {
-        if (g_match_manager.active_games[i].is_active &&
-            (g_match_manager.active_games[i].white_player_fd == fd ||
-             g_match_manager.active_games[i].black_player_fd == fd))
-        {
-            result.error_message = "Player already in a game";
-            pthread_mutex_unlock(&g_match_manager.mutex);
-            return result;
-        }
-    }
-
-    // 대기 중인 다른 플레이어가 있는지 확인
-    for (int i = 0; i < MAX_WAITING_PLAYERS; i++)
-    {
-        if (g_match_manager.waiting_players[i].is_active)
-        {
-            // 매칭 성공! 게임 시작
-            WaitingPlayer *waiting_player = &g_match_manager.waiting_players[i];
+            LOG_DEBUG("Found waiting player %s (fd=%d), attempting to create game",
+                      waiting_player->player_id, waiting_player->fd);
 
             // 빈 게임 슬롯 찾기
-            int game_slot = -1;
             for (int j = 0; j < MAX_ACTIVE_GAMES; j++)
             {
                 if (!g_match_manager.active_games[j].is_active)
                 {
-                    game_slot = j;
-                    break;
+                    ActiveGame *game = &g_match_manager.active_games[j];
+
+                    // 색상 랜덤 배정 (간단하게 시간 기반)
+                    bool current_is_white = (time(NULL) % 2 == 0);
+
+                    // 게임 정보 설정
+                    strcpy(game->game_id, generate_game_id());
+                    game->game_start_time = time(NULL);
+                    game->is_active = true;
+
+                    if (current_is_white)
+                    {
+                        game->white_player_fd = fd;
+                        game->black_player_fd = waiting_player->fd;
+                        strcpy(game->white_player_id, player_id);
+                        strcpy(game->black_player_id, waiting_player->player_id);
+                        result.assigned_color = COLOR__COLOR_WHITE;
+                    }
+                    else
+                    {
+                        game->white_player_fd = waiting_player->fd;
+                        game->black_player_fd = fd;
+                        strcpy(game->white_player_id, waiting_player->player_id);
+                        strcpy(game->black_player_id, player_id);
+                        result.assigned_color = COLOR__COLOR_BLACK;
+                    }
+
+                    g_match_manager.active_game_count++;
+
+                    // 대기 목록에서 플레이어 제거
+                    waiting_player->is_active = false;
+                    g_match_manager.waiting_count--;
+
+                    // 결과 설정
+                    result.status = MATCH_STATUS_GAME_STARTED;
+                    result.game_id = game->game_id;
+                    result.opponent_fd = (result.assigned_color == COLOR__COLOR_WHITE) ? game->black_player_fd : game->white_player_fd;
+                    result.error_message = NULL;
+
+                    LOG_INFO("Match found! Game %s: %s(fd=%d) vs %s(fd=%d)",
+                             game->game_id,
+                             game->white_player_id, game->white_player_fd,
+                             game->black_player_id, game->black_player_fd);
+
+                    pthread_mutex_unlock(&g_match_manager.mutex);
+                    return result;
                 }
             }
 
-            if (game_slot == -1)
-            {
-                result.error_message = "No available game slots";
-                pthread_mutex_unlock(&g_match_manager.mutex);
-                return result;
-            }
-
-            // 새 게임 생성
-            ActiveGame *game = &g_match_manager.active_games[game_slot];
-            strcpy(game->game_id, generate_game_id());
-
-            // 랜덤하게 색상 배정 (첫 번째 플레이어가 흰색일 확률 50%)
-            if (rand() % 2 == 0)
-            {
-                // 대기 중인 플레이어가 흰색
-                game->white_player_fd = waiting_player->fd;
-                game->black_player_fd = fd;
-                strcpy(game->white_player_id, waiting_player->player_id);
-                strcpy(game->black_player_id, player_id);
-                result.assigned_color = COLOR__COLOR_BLACK;
-            }
-            else
-            {
-                // 새 플레이어가 흰색
-                game->white_player_fd = fd;
-                game->black_player_fd = waiting_player->fd;
-                strcpy(game->white_player_id, player_id);
-                strcpy(game->black_player_id, waiting_player->player_id);
-                result.assigned_color = COLOR__COLOR_WHITE;
-            }
-
-            game->game_start_time = time(NULL);
-            game->is_active = true;
-            g_match_manager.active_game_count++;
-
-            // 대기 목록에서 플레이어 제거
-            waiting_player->is_active = false;
-            g_match_manager.waiting_count--;
-
-            // 결과 설정
-            result.status = MATCH_STATUS_GAME_STARTED;
-            result.game_id = game->game_id;
-            result.opponent_fd = (result.assigned_color == COLOR__COLOR_WHITE) ? game->black_player_fd : game->white_player_fd;
-            result.error_message = NULL;
-
-            printf("Match found! Game %s: %s(fd=%d) vs %s(fd=%d)\n",
-                   game->game_id,
-                   game->white_player_id, game->white_player_fd,
-                   game->black_player_id, game->black_player_fd);
-
+            // 게임 슬롯이 부족함
+            result.error_message = "No available game slots";
+            LOG_WARN("No available game slots for matching");
             pthread_mutex_unlock(&g_match_manager.mutex);
             return result;
         }
@@ -188,7 +161,7 @@ MatchResult add_player_to_matching(int fd, const char *player_id)
             result.assigned_color = COLOR__COLOR_UNSPECIFIED;
             result.error_message = NULL;
 
-            printf("Player %s(fd=%d) added to waiting queue\n", player_id, fd);
+            LOG_INFO("Player %s(fd=%d) added to waiting queue", player_id, fd);
 
             pthread_mutex_unlock(&g_match_manager.mutex);
             return result;
@@ -196,6 +169,7 @@ MatchResult add_player_to_matching(int fd, const char *player_id)
     }
 
     result.error_message = "Matching queue is full";
+    LOG_WARN("Matching queue is full, cannot add player %s(fd=%d)", player_id, fd);
     pthread_mutex_unlock(&g_match_manager.mutex);
     return result;
 }
@@ -213,12 +187,13 @@ int remove_player_from_matching(int fd)
         {
             g_match_manager.waiting_players[i].is_active = false;
             g_match_manager.waiting_count--;
-            printf("Player removed from waiting queue (fd=%d)\n", fd);
+            LOG_INFO("Player removed from waiting queue (fd=%d)", fd);
             pthread_mutex_unlock(&g_match_manager.mutex);
             return 0;
         }
     }
 
+    LOG_DEBUG("Player not found in waiting queue (fd=%d)", fd);
     pthread_mutex_unlock(&g_match_manager.mutex);
     return -1; // 플레이어를 찾지 못함
 }
@@ -258,12 +233,13 @@ int remove_game(const char *game_id)
         {
             g_match_manager.active_games[i].is_active = false;
             g_match_manager.active_game_count--;
-            printf("Game %s removed\n", game_id);
+            LOG_INFO("Game %s removed", game_id);
             pthread_mutex_unlock(&g_match_manager.mutex);
             return 0;
         }
     }
 
+    LOG_DEBUG("Game %s not found for removal", game_id);
     pthread_mutex_unlock(&g_match_manager.mutex);
     return -1; // 게임을 찾지 못함
 }
@@ -273,31 +249,31 @@ void print_match_manager_status(void)
 {
     pthread_mutex_lock(&g_match_manager.mutex);
 
-    printf("=== Match Manager Status ===\n");
-    printf("Waiting players: %d/%d\n", g_match_manager.waiting_count, MAX_WAITING_PLAYERS);
-    printf("Active games: %d/%d\n", g_match_manager.active_game_count, MAX_ACTIVE_GAMES);
+    LOG_INFO("=== Match Manager Status ===");
+    LOG_INFO("Waiting players: %d/%d", g_match_manager.waiting_count, MAX_WAITING_PLAYERS);
+    LOG_INFO("Active games: %d/%d", g_match_manager.active_game_count, MAX_ACTIVE_GAMES);
 
-    printf("Waiting players:\n");
+    LOG_DEBUG("Waiting players:");
     for (int i = 0; i < MAX_WAITING_PLAYERS; i++)
     {
         if (g_match_manager.waiting_players[i].is_active)
         {
             WaitingPlayer *p = &g_match_manager.waiting_players[i];
-            printf("  - %s (fd=%d, waiting for %ld seconds)\n",
-                   p->player_id, p->fd, time(NULL) - p->wait_start_time);
+            LOG_DEBUG("  - %s (fd=%d, waiting for %ld seconds)",
+                      p->player_id, p->fd, time(NULL) - p->wait_start_time);
         }
     }
 
-    printf("Active games:\n");
+    LOG_DEBUG("Active games:");
     for (int i = 0; i < MAX_ACTIVE_GAMES; i++)
     {
         if (g_match_manager.active_games[i].is_active)
         {
             ActiveGame *g = &g_match_manager.active_games[i];
-            printf("  - %s: %s(fd=%d) vs %s(fd=%d), running for %ld seconds\n",
-                   g->game_id, g->white_player_id, g->white_player_fd,
-                   g->black_player_id, g->black_player_fd,
-                   time(NULL) - g->game_start_time);
+            LOG_DEBUG("  - %s: %s(fd=%d) vs %s(fd=%d), running for %ld seconds",
+                      g->game_id, g->white_player_id, g->white_player_fd,
+                      g->black_player_id, g->black_player_fd,
+                      time(NULL) - g->game_start_time);
         }
     }
 

@@ -1,6 +1,7 @@
 #include "../protocol.h"
 #include "handlers.h"
 #include "network.h"
+#include "logger.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -9,11 +10,11 @@ int handle_ping_message(int fd, ClientMessage *req)
 {
     if (req->msg_case != CLIENT_MESSAGE__MSG_PING)
     {
-        fprintf(stderr, "[fd=%d] Invalid message type for ping handler\n", fd);
+        LOG_ERROR("Invalid message type for ping handler: fd=%d, msg_case=%d", fd, req->msg_case);
         return -1;
     }
 
-    printf("[fd=%d] Ping: %s\n", fd, req->ping->message);
+    LOG_INFO("Ping received from fd=%d: %s", fd, req->ping->message ? req->ping->message : "(no message)");
 
     // Ping 응답 생성
     ServerMessage resp = SERVER_MESSAGE__INIT;
@@ -26,10 +27,10 @@ int handle_ping_message(int fd, ClientMessage *req)
     int result = send_server_message(fd, &resp);
     if (result < 0)
     {
-        printf("[fd=%d] Failed to send ping response\n", fd);
+        LOG_ERROR("Failed to send ping response to fd=%d", fd);
         return -1;
     }
 
-    printf("[fd=%d] Ping response sent\n", fd);
+    LOG_DEBUG("Ping response sent to fd=%d", fd);
     return 0;
 }

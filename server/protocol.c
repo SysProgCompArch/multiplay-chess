@@ -2,6 +2,7 @@
 #include "handlers/handlers.h"
 #include "handlers/match_manager.h"
 #include "server_network.h"
+#include "logger.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -22,7 +23,7 @@ ssize_t send_all(int sockfd, const void *buf, size_t len)
         {
             if (sent < 0 && errno == EINTR)
                 continue;
-            perror("send");
+            log_perror("send");
             return -1;
         }
         total += sent;
@@ -60,7 +61,7 @@ int send_server_message(int fd, ServerMessage *msg)
     uint8_t *sb = malloc(4 + plen);
     if (!sb)
     {
-        perror("malloc");
+        log_perror("malloc");
         return -1;
     }
 
@@ -68,8 +69,19 @@ int send_server_message(int fd, ServerMessage *msg)
     memcpy(sb, &nl, 4);
     server_message__pack(msg, sb + 4);
 
+    LOG_DEBUG("Sending message to fd=%d, size=%zu bytes", fd, plen);
     int result = send_all(fd, sb, 4 + plen);
     free(sb);
+
+    if (result < 0)
+    {
+        LOG_ERROR("Failed to send message to fd=%d", fd);
+    }
+    else
+    {
+        LOG_DEBUG("Message sent successfully to fd=%d", fd);
+    }
+
     return result;
 }
 
@@ -81,6 +93,10 @@ ClientMessage *receive_client_message(int fd)
     ssize_t r = recv_all(fd, lenbuf, 4);
     if (r <= 0)
     {
+        if (r < 0)
+        {
+            LOG_DEBUG("Failed to receive message length from fd=%d", fd);
+        }
         return NULL; // 연결 종료 또는 에러
     }
 
@@ -88,16 +104,19 @@ ClientMessage *receive_client_message(int fd)
     memcpy(&msg_len, lenbuf, 4);
     msg_len = ntohl(msg_len);
 
+    LOG_DEBUG("Receiving message from fd=%d, expected size=%u bytes", fd, msg_len);
+
     uint8_t *buf = malloc(msg_len);
     if (!buf)
     {
-        perror("malloc");
+        log_perror("malloc");
         return NULL;
     }
 
     r = recv_all(fd, buf, msg_len);
     if (r <= 0)
     {
+        LOG_DEBUG("Failed to receive message body from fd=%d", fd);
         free(buf);
         return NULL; // 연결 종료 또는 에러
     }
@@ -105,6 +124,16 @@ ClientMessage *receive_client_message(int fd)
     // 메시지 역직렬화
     ClientMessage *req = client_message__unpack(NULL, msg_len, buf);
     free(buf);
+
+    if (req)
+    {
+        LOG_DEBUG("Message received and parsed from fd=%d, msg_case=%d", fd, req->msg_case);
+    }
+    else
+    {
+        LOG_WARN("Failed to parse message from fd=%d", fd);
+    }
+
     return req;
 }
 
@@ -114,7 +143,7 @@ void handle_client_message(int fd, int epfd)
     ClientMessage *req = receive_client_message(fd);
     if (!req)
     {
-        printf("[fd=%d] Client disconnected\n", fd);
+        LOG_INFO("Client disconnected: fd=%d", fd);
 
         // 매칭 큐에서 플레이어 제거
         remove_player_from_matching(fd);
@@ -123,7 +152,7 @@ void handle_client_message(int fd, int epfd)
         ActiveGame *game = find_game_by_player_fd(fd);
         if (game)
         {
-            printf("[fd=%d] Player disconnected from game %s\n", fd, game->game_id);
+            LOG_INFO("Player disconnected from game %s: fd=%d", game->game_id, fd);
             // 상대방에게 연결 해제 알림 (나중에 구현)
             remove_game(game->game_id);
         }
@@ -138,14 +167,17 @@ void handle_client_message(int fd, int epfd)
     switch (req->msg_case)
     {
     case CLIENT_MESSAGE__MSG_PING:
+        LOG_DEBUG("Handling PING message from fd=%d", fd);
         result = handle_ping_message(fd, req);
         break;
 
     case CLIENT_MESSAGE__MSG_ECHO:
+        LOG_DEBUG("Handling ECHO message from fd=%d", fd);
         result = handle_echo_message(fd, req);
         break;
 
     case CLIENT_MESSAGE__MSG_MATCH_GAME:
+        LOG_DEBUG("Handling MATCH_GAME message from fd=%d", fd);
         result = handle_match_game_message(fd, req);
         break;
 
@@ -159,7 +191,7 @@ void handle_client_message(int fd, int epfd)
         //     break;
 
     default:
-        printf("[fd=%d] Unsupported msg_case=%d, sending error response\n", fd, req->msg_case);
+        LOG_WARN("Unsupported message type from fd=%d: msg_case=%d", fd, req->msg_case);
 
         // 에러 응답 생성 및 전송
         ServerMessage error_resp = SERVER_MESSAGE__INIT;
@@ -171,11 +203,11 @@ void handle_client_message(int fd, int epfd)
         result = send_server_message(fd, &error_resp);
         if (result < 0)
         {
-            printf("[fd=%d] Failed to send error response, closing connection\n", fd);
+            LOG_ERROR("Failed to send error response to fd=%d, closing connection", fd);
         }
         else
         {
-            printf("[fd=%d] Error response sent successfully\n", fd);
+            LOG_DEBUG("Error response sent successfully to fd=%d", fd);
             result = 0; // 에러 응답을 성공적으로 보냈으므로 연결 유지
         }
         break;
@@ -184,7 +216,7 @@ void handle_client_message(int fd, int epfd)
     // 핸들러에서 에러가 발생하면 연결을 닫을 수도 있음
     if (result < 0)
     {
-        printf("[fd=%d] Handler error, closing connection\n", fd);
+        LOG_WARN("Handler error for fd=%d, closing connection", fd);
         close(fd);
         epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
     }

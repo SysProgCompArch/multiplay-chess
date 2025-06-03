@@ -1,5 +1,6 @@
 #include "handlers.h"
 #include "match_manager.h"
+#include "logger.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +11,7 @@ int handle_match_game_message(int fd, ClientMessage *req)
 {
     if (!req->match_game)
     {
-        printf("[fd=%d] Invalid match game request - missing data\n", fd);
+        LOG_WARN("Invalid match game request - missing data: fd=%d", fd);
 
         // 에러 응답 전송
         ServerMessage error_resp = SERVER_MESSAGE__INIT;
@@ -24,13 +25,13 @@ int handle_match_game_message(int fd, ClientMessage *req)
     }
 
     MatchGameRequest *match_req = req->match_game;
-    printf("[fd=%d] Match request from player: %s\n", fd,
-           match_req->player_id ? match_req->player_id : "unknown");
+    LOG_INFO("Match request from player: %s (fd=%d)",
+             match_req->player_id ? match_req->player_id : "unknown", fd);
 
     // 플레이어 ID 검증
     if (!match_req->player_id || strlen(match_req->player_id) == 0)
     {
-        printf("[fd=%d] Invalid player ID\n", fd);
+        LOG_WARN("Invalid player ID from fd=%d", fd);
 
         ServerMessage error_resp = SERVER_MESSAGE__INIT;
         ErrorResponse error = ERROR_RESPONSE__INIT;
@@ -53,7 +54,7 @@ int handle_match_game_message(int fd, ClientMessage *req)
     {
     case MATCH_STATUS_WAITING:
         // 매칭 대기 중
-        printf("[fd=%d] Player %s added to matchmaking queue\n", fd, match_req->player_id);
+        LOG_INFO("Player %s added to matchmaking queue (fd=%d)", match_req->player_id, fd);
 
         match_resp.success = true;
         match_resp.message = "Waiting for opponent...";
@@ -67,7 +68,7 @@ int handle_match_game_message(int fd, ClientMessage *req)
 
     case MATCH_STATUS_GAME_STARTED:
         // 게임 시작 (두 플레이어 모두에게 알림)
-        printf("[fd=%d] Match found! Game %s started\n", fd, result.game_id);
+        LOG_INFO("Match found! Game %s started for fd=%d", result.game_id, fd);
 
         // 현재 플레이어에게 응답
         match_resp.success = true;
@@ -93,6 +94,7 @@ int handle_match_game_message(int fd, ClientMessage *req)
             opponent_msg.msg_case = SERVER_MESSAGE__MSG_MATCH_GAME_RES;
             opponent_msg.match_game_res = &opponent_resp;
 
+            LOG_DEBUG("Sending game start notification to opponent (fd=%d)", result.opponent_fd);
             send_server_message(result.opponent_fd, &opponent_msg);
         }
 
@@ -101,8 +103,8 @@ int handle_match_game_message(int fd, ClientMessage *req)
     case MATCH_STATUS_ERROR:
     default:
         // 매칭 실패
-        printf("[fd=%d] Matchmaking failed for player %s: %s\n",
-               fd, match_req->player_id, result.error_message ? result.error_message : "Unknown error");
+        LOG_ERROR("Matchmaking failed for player %s (fd=%d): %s",
+                  match_req->player_id, fd, result.error_message ? result.error_message : "Unknown error");
 
         ServerMessage error_resp = SERVER_MESSAGE__INIT;
         ErrorResponse error = ERROR_RESPONSE__INIT;
