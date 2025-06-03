@@ -7,6 +7,8 @@ add_library(common STATIC
     rule.h
     utils.c
     utils.h
+    network.c
+    network.h
 )
 
 # Proto 파일 경로와 출력 디렉토리 지정

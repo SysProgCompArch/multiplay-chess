@@ -1,9 +1,12 @@
 #!/bin/bash
 
-# 사용법: ./run.sh [client|server] [--port 포트번호]
+# 사용법: ./run.sh [client|server|test-client] [--port 포트번호 또는 서버IP 포트]
 
 if [ $# -lt 1 ]; then
-  echo "사용법: $0 [client|server] [--port 포트번호]"
+  echo "사용법: $0 [client|server|test-client] [옵션들...]"
+  echo "  client: 일반 클라이언트 실행"
+  echo "  server: 서버 실행 [--port 포트번호]"
+  echo "  test-client: 테스트 클라이언트 실행 [서버IP] [포트번호]"
   exit 1
 fi
 
@@ -17,8 +20,11 @@ case $TARGET in
   server)
     EXEC=./build/server/server
     ;;
+  test-client)
+    EXEC=./build/client/test-client
+    ;;
   *)
-    echo "알 수 없는 대상: $TARGET (client 또는 server만 가능)"
+    echo "알 수 없는 대상: $TARGET (client, server, test-client 중 하나)"
     exit 1
     ;;
 esac

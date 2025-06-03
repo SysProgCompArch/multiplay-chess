@@ -1,0 +1,95 @@
+[2025-06-03 18:24:52] [INFO] logger.c:34 logger_init() - === Logger initialized ===
+[2025-06-03 18:24:52] [INFO] main.c:34 main() - Chess client starting...
+[2025-06-03 18:24:52] [DEBUG] main.c:38 main() - Signal handler registered
+[2025-06-03 18:24:52] [DEBUG] main.c:42 main() - Client state initialized
+[2025-06-03 18:24:59] [INFO] logger.c:34 logger_init() - === Logger initialized ===
+[2025-06-03 18:24:59] [INFO] main.c:34 main() - Chess client starting...
+[2025-06-03 18:24:59] [DEBUG] main.c:38 main() - Signal handler registered
+[2025-06-03 18:24:59] [DEBUG] main.c:42 main() - Client state initialized
+[2025-06-03 18:24:59] [INFO] main.c:46 main() - ncurses initialized
+[2025-06-03 18:24:59] [INFO] main.c:61 main() - Network thread started
+[2025-06-03 18:24:59] [INFO] main.c:67 main() - Starting main game loop
+[2025-06-03 18:24:59] [INFO] network.c:53 network_thread() - Network thread started
+[2025-06-03 18:24:59] [INFO] network.c:18 connect_to_server() - Attempting to connect to server 127.0.0.1:8080
+[2025-06-03 18:24:59] [INFO] network.c:46 connect_to_server() - Successfully connected to server, socket fd: 4
+[2025-06-03 18:24:59] [INFO] network.c:73 network_thread() - Connection established, sending ping
+[2025-06-03 18:24:59] [INFO] network.c:89 network_thread() - Starting message receive loop
+[2025-06-03 18:24:59] [WARN] network.c:95 network_thread() - Failed to receive server message, breaking loop
+[2025-06-03 18:24:59] [INFO] network.c:106 network_thread() - Network thread ending, cleaning up connection
+[2025-06-03 18:24:59] [INFO] network.c:115 network_thread() - Network thread terminated
+[2025-06-03 18:25:03] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:25:03] [DEBUG] main.c:85 main() - Mouse event: x=11, y=14, bstate=00000002
+[2025-06-03 18:25:46] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:25:48] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:25:49] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:25:49] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:26:05] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:26:05] [DEBUG] main.c:85 main() - Mouse event: x=107, y=40, bstate=00000001
+[2025-06-03 18:28:19] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:28:19] [DEBUG] main.c:85 main() - Mouse event: x=13, y=32, bstate=00000002
+[2025-06-03 18:28:19] [INFO] main.c:19 signal_handler() - SIGINT ignored to prevent game interruption
+[2025-06-03 18:28:20] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:28:21] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:28:22] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:28:54] [INFO] logger.c:34 logger_init() - === Logger initialized ===
+[2025-06-03 18:28:54] [INFO] main.c:34 main() - Chess client starting...
+[2025-06-03 18:28:54] [DEBUG] main.c:38 main() - Signal handler registered
+[2025-06-03 18:28:54] [DEBUG] main.c:42 main() - Client state initialized
+[2025-06-03 18:33:51] [INFO] logger.c:34 logger_init() - === Logger initialized ===
+[2025-06-03 18:33:51] [INFO] main.c:34 main() - Chess client starting...
+[2025-06-03 18:33:51] [DEBUG] main.c:38 main() - Signal handler registered
+[2025-06-03 18:33:51] [DEBUG] main.c:42 main() - Client state initialized
+[2025-06-03 18:33:51] [INFO] main.c:46 main() - ncurses initialized
+[2025-06-03 18:33:51] [INFO] main.c:61 main() - Network thread started
+[2025-06-03 18:33:51] [INFO] network.c:53 network_thread() - Network thread started
+[2025-06-03 18:33:51] [INFO] network.c:18 connect_to_server() - Attempting to connect to server 127.0.0.1:8080
+[2025-06-03 18:33:51] [ERROR] logger.c:105 log_perror() - connect: Connection refused
+[2025-06-03 18:33:51] [ERROR] network.c:61 network_thread() - Failed to connect to server
+[2025-06-03 18:33:51] [INFO] main.c:67 main() - Starting main game loop
+[2025-06-03 18:33:56] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:33:56] [DEBUG] main.c:85 main() - Mouse event: x=15, y=25, bstate=00000002
+[2025-06-03 18:34:07] [INFO] logger.c:34 logger_init() - === Logger initialized ===
+[2025-06-03 18:34:07] [INFO] main.c:34 main() - Chess client starting...
+[2025-06-03 18:34:07] [DEBUG] main.c:38 main() - Signal handler registered
+[2025-06-03 18:34:07] [DEBUG] main.c:42 main() - Client state initialized
+[2025-06-03 18:34:07] [INFO] main.c:46 main() - ncurses initialized
+[2025-06-03 18:34:07] [INFO] main.c:61 main() - Network thread started
+[2025-06-03 18:34:07] [INFO] network.c:53 network_thread() - Network thread started
+[2025-06-03 18:34:07] [INFO] network.c:18 connect_to_server() - Attempting to connect to server 127.0.0.1:8080
+[2025-06-03 18:34:07] [ERROR] logger.c:105 log_perror() - connect: Connection refused
+[2025-06-03 18:34:07] [ERROR] network.c:61 network_thread() - Failed to connect to server
+[2025-06-03 18:34:07] [INFO] main.c:67 main() - Starting main game loop
+[2025-06-03 18:34:17] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:34:17] [DEBUG] main.c:85 main() - Mouse event: x=0, y=21, bstate=00000002
+[2025-06-03 18:34:17] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:34:18] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:34:20] [INFO] logger.c:34 logger_init() - === Logger initialized ===
+[2025-06-03 18:34:20] [INFO] main.c:34 main() - Chess client starting...
+[2025-06-03 18:34:20] [DEBUG] main.c:38 main() - Signal handler registered
+[2025-06-03 18:34:20] [DEBUG] main.c:42 main() - Client state initialized
+[2025-06-03 18:34:20] [INFO] main.c:46 main() - ncurses initialized
+[2025-06-03 18:34:20] [INFO] main.c:61 main() - Network thread started
+[2025-06-03 18:34:20] [INFO] network.c:53 network_thread() - Network thread started
+[2025-06-03 18:34:20] [INFO] network.c:18 connect_to_server() - Attempting to connect to server 127.0.0.1:8080
+[2025-06-03 18:34:20] [INFO] main.c:67 main() - Starting main game loop
+[2025-06-03 18:34:20] [ERROR] logger.c:105 log_perror() - connect: Connection refused
+[2025-06-03 18:34:20] [ERROR] network.c:61 network_thread() - Failed to connect to server
+[2025-06-03 18:34:35] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:34:35] [DEBUG] main.c:85 main() - Mouse event: x=20, y=14, bstate=00000002
+[2025-06-03 18:34:37] [INFO] logger.c:34 logger_init() - === Logger initialized ===
+[2025-06-03 18:34:37] [INFO] main.c:34 main() - Chess client starting...
+[2025-06-03 18:34:37] [DEBUG] main.c:38 main() - Signal handler registered
+[2025-06-03 18:34:37] [DEBUG] main.c:42 main() - Client state initialized
+[2025-06-03 18:34:37] [INFO] main.c:46 main() - ncurses initialized
+[2025-06-03 18:34:37] [INFO] main.c:61 main() - Network thread started
+[2025-06-03 18:34:37] [INFO] network.c:53 network_thread() - Network thread started
+[2025-06-03 18:34:37] [INFO] network.c:18 connect_to_server() - Attempting to connect to server 127.0.0.1:8080
+[2025-06-03 18:34:37] [INFO] network.c:46 connect_to_server() - Successfully connected to server, socket fd: 4
+[2025-06-03 18:34:37] [INFO] network.c:73 network_thread() - Connection established, sending ping
+[2025-06-03 18:34:37] [INFO] network.c:90 network_thread() - Starting message receive loop
+[2025-06-03 18:34:37] [INFO] main.c:67 main() - Starting main game loop
+[2025-06-03 18:34:37] [DEBUG] network.c:101 network_thread() - Received server message, dispatching to handler
+[2025-06-03 18:34:47] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:34:47] [DEBUG] main.c:85 main() - Mouse event: x=25, y=22, bstate=00000002
+[2025-06-03 18:35:14] [DEBUG] main.c:78 main() - Input received: 409
+[2025-06-03 18:35:14] [DEBUG] main.c:85 main() - Mouse event: x=-33, y=-33, bstate=00000001

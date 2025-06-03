@@ -136,13 +136,62 @@ multiplay-chess/
 
 ---
 
-### 4. 참고 사항
+### 4. 로그 시스템 사용법
+
+ncurses를 사용하는 환경에서는 표준 출력이 보이지 않기 때문에, 파일 기반 로그 시스템을 구현했습니다.
+
+#### 로그 파일 위치
+- **클라이언트 로그**: `chess_client.log` (실행 디렉터리)
+
+#### 로그 레벨
+- `DEBUG`: 상세한 디버그 정보
+- `INFO`: 일반 정보 메시지  
+- `WARN`: 경고 메시지
+- `ERROR`: 오류 메시지
+- `FATAL`: 심각한 오류 메시지
+
+#### 실시간 로그 모니터링
+
+1. **별도 터미널에서 로그 확인**:
+   ```bash
+   # 실시간 로그 모니터링 (권장)
+   ./watch_logs.sh
+   
+   # 또는 직접 tail 사용
+   tail -f chess_client.log
+   ```
+
+2. **특정 레벨만 필터링**:
+   ```bash
+   # 에러만 보기
+   tail -f chess_client.log | grep ERROR
+   
+   # 워닝 이상만 보기  
+   tail -f chess_client.log | grep -E "(WARN|ERROR|FATAL)"
+   ```
+
+3. **로그 파일 검색**:
+   ```bash
+   # 특정 함수의 로그만 보기
+   grep "connect_to_server" chess_client.log
+   
+   # 네트워크 관련 로그만 보기
+   grep -i "network\|connect\|socket" chess_client.log
+   ```
+
+#### 개발자를 위한 팁
+
+- 클라이언트를 실행하기 전에 다른 터미널에서 `./watch_logs.sh`를 실행하세요
+- 문제가 발생하면 로그 파일에서 `ERROR`나 `FATAL` 메시지를 확인하세요
+- 네트워크 연결 문제는 `connect_to_server` 함수 로그를 확인하세요
+
+---
+
+### 5. 참고 사항
 
 - common 라이브러리에 변경이 있으면, 클라이언트/서버 빌드시 자동으로 반영됩니다.
 - 외부 라이브러리나 테스트 코드가 추가되면, CMake 설정을 확장해 관리할 수 있습니다.
 - 기존의 `make` 명령도 사용 가능하지만, 위의 방법을 권장합니다.
-
----
 
 ## Protocol Buffers (protobuf-c) 사용 안내
 

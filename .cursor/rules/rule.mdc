@@ -3,7 +3,8 @@ description:
 globs: 
 alwaysApply: true
 ---
-1. 루트 폴더의 README.md에 우리 프로젝트에 대한 설명이 있으니 참고해줘
-2. 클라이언트-서버 통신에 관한 설명은 common/PROTOCOL.md 참조해줘
-3. 클라이언트-서버 공통으로 사용될 수 있는 코드를 적극적으로 common 폴더로 분리해줘
+1. 우리 프로젝트가 client, server, 공통코드(common) 구조로 되어있다는 점을 항상 고려해줘.
+2. 루트 폴더의 README.md에 우리 프로젝트에 대한 설명이 있으니 참고해줘
+3. 클라이언트-서버 통신에 관한 설명은 common/PROTOCOL.md 참조해줘
+3. 클라이언트-서버 공통으로 재사용될 수 있는 코드를 적극적으로 common 폴더로 묶어줘
 4. 빌드 관련 세팅을 수정한 후에는 ./build.sh 명령을 사용해서 빌드 테스트해줘

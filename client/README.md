@@ -110,3 +110,58 @@ client/
 ├── CMakeLists.txt      # 빌드 설정
 └── README.md           # 이 파일
 ```
+
+# ♟️ Multiplayer Chess Game (멀티플레이 체스 게임)
+
+2025-1 시스템프로그래밍 001분반 1팀 팀프로젝트
+
+Linux에서 C로 구현된 터미널 기반 멀티플레이어 체스 게임입니다. 컴파일하는 동안 가벼운 체스 게임을 즐기고 싶은 개발자를 위해 설계되었습니다 — GUI 오버헤드 없이 순수한 CLI의 매력을 경험하세요.
+
+## 🔍 로그 시스템
+
+ncurses를 사용하는 환경에서는 표준 출력이 보이지 않기 때문에, 파일 기반 로그 시스템을 구현했습니다.
+
+### 로그 파일 위치
+- **클라이언트 로그**: `chess_client.log` (실행 디렉터리)
+
+### 로그 레벨
+- `DEBUG`: 상세한 디버그 정보
+- `INFO`: 일반 정보 메시지  
+- `WARN`: 경고 메시지
+- `ERROR`: 오류 메시지
+- `FATAL`: 심각한 오류 메시지
+
+### 실시간 로그 모니터링
+
+1. **별도 터미널에서 로그 확인**:
+   ```bash
+   # 실시간 로그 모니터링 (권장)
+   ./watch_logs.sh
+   
+   # 또는 직접 tail 사용
+   tail -f chess_client.log
+   ```
+
+2. **특정 레벨만 필터링**:
+   ```bash
+   # 에러만 보기
+   tail -f chess_client.log | grep ERROR
+   
+   # 워닝 이상만 보기  
+   tail -f chess_client.log | grep -E "(WARN|ERROR|FATAL)"
+   ```
+
+3. **로그 파일 검색**:
+   ```bash
+   # 특정 함수의 로그만 보기
+   grep "connect_to_server" chess_client.log
+   
+   # 네트워크 관련 로그만 보기
+   grep -i "network\|connect\|socket" chess_client.log
+   ```
+
+### 개발자를 위한 팁
+
+- 클라이언트를 실행하기 전에 다른 터미널에서 `./watch_logs.sh`를 실행하세요
+- 문제가 발생하면 로그 파일에서 `ERROR`나 `FATAL` 메시지를 확인하세요
+- 네트워크 연결 문제는 `connect_to_server` 함수 로그를 확인하세요
