@@ -1,13 +1,13 @@
 #define _XOPEN_SOURCE_EXTENDED
-#include "ui.h"
-#include "client_state.h"
 #include <locale.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "client_state.h"
+#include "ui.h"
+
 // ncurses 초기화
-void init_ncurses()
-{
+void init_ncurses() {
     setlocale(LC_ALL, "");
 
     initscr();
@@ -15,8 +15,7 @@ void init_ncurses()
     // 터미널 크기 먼저 확인
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
-    if (rows < 30 || cols < 107)
-    {
+    if (rows < 30 || cols < 107) {
         endwin();
         printf("터미널 크기가 너무 작습니다. 최소 %dx%d가 필요합니다.\n",
                107, 30);
@@ -31,8 +30,7 @@ void init_ncurses()
     curs_set(0);
 
     // 색상 초기화
-    if (has_colors())
-    {
+    if (has_colors()) {
         start_color();
         init_pair(COLOR_PAIR_BORDER, COLOR_CYAN, COLOR_BLACK);
         init_pair(COLOR_PAIR_SELECTED, COLOR_BLACK, COLOR_WHITE);
@@ -48,25 +46,21 @@ void init_ncurses()
 }
 
 // ncurses 정리
-void cleanup_ncurses()
-{
-    if (isendwin() == FALSE)
-    {
+void cleanup_ncurses() {
+    if (isendwin() == FALSE) {
         endwin();
     }
 }
 
 // 테두리 그리기
-void draw_border(WINDOW *win)
-{
+void draw_border(WINDOW *win) {
     wattron(win, COLOR_PAIR(COLOR_PAIR_BORDER));
     box(win, 0, 0);
     wattroff(win, COLOR_PAIR(COLOR_PAIR_BORDER));
 }
 
 // 사용자명 입력 다이얼로그
-bool get_username_dialog()
-{
+bool get_username_dialog() {
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
 
@@ -92,8 +86,7 @@ bool get_username_dialog()
 
     delwin(dialog);
 
-    if (strlen(input) > 0)
-    {
+    if (strlen(input) > 0) {
         client_state_t *client = get_client_state();
         strncpy(client->username, input, sizeof(client->username) - 1);
         return true;
@@ -103,15 +96,14 @@ bool get_username_dialog()
 }
 
 // 에러 다이얼로그 표시
-void show_error_dialog(const char *title, const char *message)
-{
+void show_error_dialog(const char *title, const char *message) {
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
 
-    int dialog_width = 60;
+    int dialog_width  = 60;
     int dialog_height = 10;
-    int start_y = (rows - dialog_height) / 2;
-    int start_x = (cols - dialog_width) / 2;
+    int start_y       = (rows - dialog_height) / 2;
+    int start_x       = (cols - dialog_width) / 2;
 
     WINDOW *dialog = newwin(dialog_height, dialog_width, start_y, start_x);
 
@@ -127,23 +119,19 @@ void show_error_dialog(const char *title, const char *message)
 
     // 메시지 표시 (여러 줄 지원)
     char *msg_copy = strdup(message);
-    char *line = strtok(msg_copy, "\n");
-    int line_num = 4;
+    char *line     = strtok(msg_copy, "\n");
+    int   line_num = 4;
 
-    while (line && line_num < dialog_height - 2)
-    {
+    while (line && line_num < dialog_height - 2) {
         int msg_len = strlen(line);
-        if (msg_len > dialog_width - 4)
-        {
+        if (msg_len > dialog_width - 4) {
             // 긴 메시지는 잘라서 표시
             char truncated[dialog_width - 3];
             strncpy(truncated, line, dialog_width - 7);
             truncated[dialog_width - 7] = '\0';
             strcat(truncated, "...");
             mvwprintw(dialog, line_num, 2, "%s", truncated);
-        }
-        else
-        {
+        } else {
             mvwprintw(dialog, line_num, 2, "%s", line);
         }
         line = strtok(NULL, "\n");
@@ -158,9 +146,9 @@ void show_error_dialog(const char *title, const char *message)
     wrefresh(dialog);
 
     // 키 입력 대기
-    timeout(-1); // 블로킹 모드로 변경
+    timeout(-1);  // 블로킹 모드로 변경
     getch();
-    timeout(1000); // 다시 타임아웃 모드로 복원
+    timeout(1000);  // 다시 타임아웃 모드로 복원
 
     delwin(dialog);
 

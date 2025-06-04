@@ -1,14 +1,14 @@
 // replay.c
 #define _XOPEN_SOURCE_EXTENDED
 #include <locale.h>
-#include <stdlib.h>
 #include <ncursesw/ncurses.h>
+#include <stdlib.h>
 
-#include "rule.h"    
-#include "utils.h"   
-#include "pgn.h"     
+#include "pgn.h"
+#include "rule.h"
+#include "utils.h"
 
-extern WINDOW* board_win, * main_screen_win;
+extern WINDOW *     board_win, *main_screen_win;
 extern piecestate_t chessboard[8][8];
 
 // game_t → 전역 chessboard 배열로 복사
@@ -43,7 +43,7 @@ void replay_mode(const char* pgnfile) {
     game_t G;
     init_startpos(&G);  // 시작위치 세팅 :contentReference[oaicite:4]{index=4}
     update_global_board(&G);
-    draw_board();        // 초기판 그리기
+    draw_board();  // 초기판 그리기
     draw_replay_ui(0, gm.count);
 
     // 3) 키 입력으로 앞/뒤 이동
@@ -57,8 +57,7 @@ void replay_mode(const char* pgnfile) {
             move_t mv = gm.moves[idx];
             apply_move(&G, mv.sx, mv.sy, mv.dx, mv.dy);  // :contentReference[oaicite:5]{index=5}
             idx++;
-        }
-        else if (ch == KEY_LEFT && idx > 0) {
+        } else if (ch == KEY_LEFT && idx > 0) {
             // 뒤로 한 수: 전체 리셋 후 idx-1까지 재적용
             init_startpos(&G);
             for (int i = 0; i < idx - 1; i++) {
@@ -66,8 +65,7 @@ void replay_mode(const char* pgnfile) {
                 apply_move(&G, mv.sx, mv.sy, mv.dx, mv.dy);
             }
             idx--;
-        }
-        else {
+        } else {
             continue;
         }
 

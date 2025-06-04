@@ -1,18 +1,18 @@
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <unistd.h>
+
+#include "handlers/match_manager.h"
 #include "logger.h"
 #include "server_network.h"
-#include "handlers/match_manager.h"
 
 // 전역 변수로 epfd와 listener 저장 (시그널 핸들러에서 사용)
-static int g_epfd = -1;
+static int g_epfd     = -1;
 static int g_listener = -1;
 
 // 시그널 핸들러: 서버 종료 시 정리 작업
-void cleanup_signal_handler(int signum)
-{
+void cleanup_signal_handler(int signum) {
     LOG_INFO("Received signal %d, shutting down server...", signum);
 
     // 매칭 매니저 정리
@@ -29,11 +29,9 @@ void cleanup_signal_handler(int signum)
     exit(0);
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     // 로거 초기화 (다른 초기화보다 먼저) - 콘솔 출력 모드
-    if (logger_init(LOG_OUTPUT_CONSOLE, NULL) != 0)
-    {
+    if (logger_init(LOG_OUTPUT_CONSOLE, NULL) != 0) {
         fprintf(stderr, "Failed to initialize logger\n");
         return 1;
     }
@@ -46,8 +44,7 @@ int main(int argc, char *argv[])
     LOG_DEBUG("Signal handlers registered");
 
     // 매칭 매니저 초기화
-    if (init_match_manager() < 0)
-    {
+    if (init_match_manager() < 0) {
         LOG_FATAL("Failed to initialize match manager");
         logger_cleanup();
         return 1;

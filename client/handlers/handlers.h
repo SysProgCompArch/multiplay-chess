@@ -16,4 +16,4 @@ int handle_error_response(ServerMessage *msg);
 // 메인 핸들러 디스패처
 int dispatch_server_message(ServerMessage *msg);
 
-#endif // CLIENT_HANDLERS_H
+#endif  // CLIENT_HANDLERS_H

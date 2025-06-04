@@ -19,4 +19,4 @@ int handle_match_game_message(int fd, ClientMessage *req);
 // int handle_resign_message(int fd, ClientMessage *req);
 // int handle_chat_message(int fd, ClientMessage *req);
 
-#endif // HANDLERS_H
+#endif  // HANDLERS_H

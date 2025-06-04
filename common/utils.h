@@ -3,6 +3,7 @@
 #define UTILS_H
 
 #include <stdbool.h>
+
 #include "rule.h"
 
 // 표준 시작위치 설정
@@ -12,4 +13,4 @@ void init_startpos(game_t* G);
 // 성공 시 true, 포맷 오류 시 false
 bool fen_parse(const char* fen, game_t* G);
 
-#endif // UTILS_H
+#endif  // UTILS_H

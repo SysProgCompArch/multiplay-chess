@@ -1,79 +1,79 @@
 #ifndef MATCH_MANAGER_H
 #define MATCH_MANAGER_H
 
-#include "message.pb-c.h"
 #include <pthread.h>
-#include <time.h>
 #include <stdbool.h>
+#include <time.h>
+
+#include "message.pb-c.h"
 
 #define MAX_WAITING_PLAYERS 100
-#define MAX_ACTIVE_GAMES 50
-#define GAME_ID_LENGTH 32
+#define MAX_ACTIVE_GAMES    50
+#define GAME_ID_LENGTH      32
 
 // 매칭 상태 열거형
-typedef enum
-{
-    MATCH_STATUS_WAITING,      // 상대방 대기 중
-    MATCH_STATUS_GAME_STARTED, // 게임 시작됨
-    MATCH_STATUS_ERROR         // 오류 발생
+typedef enum {
+    MATCH_STATUS_WAITING,       // 상대방 대기 중
+    MATCH_STATUS_GAME_STARTED,  // 게임 시작됨
+    MATCH_STATUS_ERROR          // 오류 발생
 } MatchStatus;
 
 // 대기 중인 플레이어 정보
 typedef struct
 {
-    int fd;                 // 클라이언트 소켓 파일 디스크립터
-    char player_id[64];     // 플레이어 ID
-    time_t wait_start_time; // 대기 시작 시간
-    bool is_active;         // 활성 상태
+    int    fd;               // 클라이언트 소켓 파일 디스크립터
+    char   player_id[64];    // 플레이어 ID
+    time_t wait_start_time;  // 대기 시작 시간
+    bool   is_active;        // 활성 상태
 } WaitingPlayer;
 
 // 활성 게임 정보
 typedef struct
 {
-    char game_id[GAME_ID_LENGTH + 1]; // 게임 ID
-    int white_player_fd;              // 흰색 플레이어 소켓
-    int black_player_fd;              // 검은색 플레이어 소켓
-    char white_player_id[64];         // 흰색 플레이어 ID
-    char black_player_id[64];         // 검은색 플레이어 ID
-    time_t game_start_time;           // 게임 시작 시간
-    bool is_active;                   // 게임 활성 상태
+    char   game_id[GAME_ID_LENGTH + 1];  // 게임 ID
+    int    white_player_fd;              // 흰색 플레이어 소켓
+    int    black_player_fd;              // 검은색 플레이어 소켓
+    char   white_player_id[64];          // 흰색 플레이어 ID
+    char   black_player_id[64];          // 검은색 플레이어 ID
+    time_t game_start_time;              // 게임 시작 시간
+    bool   is_active;                    // 게임 활성 상태
 } ActiveGame;
 
 // 매칭 결과 구조체
 typedef struct
 {
-    MatchStatus status;   // 매칭 상태
-    char *game_id;        // 게임 ID (성공 시)
-    Color assigned_color; // 할당된 색상
-    int opponent_fd;      // 상대방 소켓 (게임 시작 시)
-    char *error_message;  // 오류 메시지 (실패 시)
+    MatchStatus status;          // 매칭 상태
+    char       *game_id;         // 게임 ID (성공 시)
+    Color       assigned_color;  // 할당된 색상
+    int         opponent_fd;     // 상대방 소켓 (게임 시작 시)
+    char       *error_message;   // 오류 메시지 (실패 시)
 } MatchResult;
 
 // 매칭 매니저 구조체
 typedef struct
 {
-    WaitingPlayer waiting_players[MAX_WAITING_PLAYERS];
-    ActiveGame active_games[MAX_ACTIVE_GAMES];
-    int waiting_count;
-    int active_game_count;
-    pthread_mutex_t mutex; // 스레드 안전성을 위한 뮤텍스
+    WaitingPlayer   waiting_players[MAX_WAITING_PLAYERS];
+    ActiveGame      active_games[MAX_ACTIVE_GAMES];
+    int             waiting_count;
+    int             active_game_count;
+    pthread_mutex_t mutex;  // 스레드 안전성을 위한 뮤텍스
 } MatchManager;
 
 // 매칭 매니저 전역 변수
 extern MatchManager g_match_manager;
 
 // 함수 선언
-int init_match_manager(void);
-void cleanup_match_manager(void);
+int         init_match_manager(void);
+void        cleanup_match_manager(void);
 MatchResult add_player_to_matching(int fd, const char *player_id);
-int remove_player_from_matching(int fd);
+int         remove_player_from_matching(int fd);
 ActiveGame *find_game_by_player_fd(int fd);
-int remove_game(const char *game_id);
-char *generate_game_id(void);
+int         remove_game(const char *game_id);
+char       *generate_game_id(void);
 
 // 디버깅/모니터링 함수
 void print_match_manager_status(void);
-int get_waiting_players_count(void);
-int get_active_games_count(void);
+int  get_waiting_players_count(void);
+int  get_active_games_count(void);
 
-#endif // MATCH_MANAGER_H
+#endif  // MATCH_MANAGER_H

@@ -1,32 +1,28 @@
-#include "ui.h"
-#include "client_state.h"
-#include <time.h>
 #include <string.h>
+#include <time.h>
+
+#include "client_state.h"
+#include "piece.h"
+#include "ui.h"
 
 // 재연결 상태 표시
-void draw_connection_status()
-{
+void draw_connection_status() {
     client_state_t *client = get_client_state();
-    int rows, cols;
+    int             rows, cols;
     getmaxyx(stdscr, rows, cols);
 
     pthread_mutex_lock(&network_mutex);
-    if (client->reconnecting)
-    {
+    if (client->reconnecting) {
         // 화면 우상단에 "Reconnecting..." 표시
         attron(COLOR_PAIR(COLOR_PAIR_BORDER));
         mvprintw(0, cols - 20, "Reconnecting...     ");
         attroff(COLOR_PAIR(COLOR_PAIR_BORDER));
-    }
-    else if (!client->connected)
-    {
+    } else if (!client->connected) {
         // 화면 우상단에 "Disconnected" 표시
         attron(COLOR_PAIR(COLOR_PAIR_BORDER));
         mvprintw(0, cols - 20, "Disconnected        ");
         attroff(COLOR_PAIR(COLOR_PAIR_BORDER));
-    }
-    else
-    {
+    } else {
         // 연결된 경우 상태 표시 지우기
         mvprintw(0, cols - 20, "                    ");
     }
@@ -34,8 +30,7 @@ void draw_connection_status()
 }
 
 // 메인 화면 그리기
-void draw_main_screen()
-{
+void draw_main_screen() {
     clear();
     refresh();
 
@@ -63,8 +58,7 @@ void draw_main_screen()
 }
 
 // 매칭 화면 그리기
-void draw_matching_screen()
-{
+void draw_matching_screen() {
     clear();
     refresh();
 
@@ -79,11 +73,11 @@ void draw_matching_screen()
 
     mvwprintw(match_win, 2, (MATCH_DIALOG_WIDTH - 20) / 2, "Finding opponent...");
 
-    client_state_t *client = get_client_state();
-    time_t current_time = time(NULL);
-    int elapsed = (int)(current_time - client->match_start_time);
-    int minutes = elapsed / 60;
-    int seconds = elapsed % 60;
+    client_state_t *client       = get_client_state();
+    time_t          current_time = time(NULL);
+    int             elapsed      = (int)(current_time - client->match_start_time);
+    int             minutes      = elapsed / 60;
+    int             seconds      = elapsed % 60;
 
     mvwprintw(match_win, 4, (MATCH_DIALOG_WIDTH - 20) / 2, "Wait time: %02d:%02d", minutes, seconds);
 
@@ -104,54 +98,47 @@ void draw_matching_screen()
 }
 
 // 체스 말 ASCII 문자 반환
-char get_piece_char(piece_t *piece, int team)
-{
+char get_piece_char(piece_t *piece, int team) {
     if (!piece)
         return ' ';
 
     // 흰색 팀 (0) - 대문자, 검은색 팀 (1) - 소문자
-    if (team == 0)
-    { // 흰색
-        switch (piece->type)
-        {
-        case KING:
-            return 'K';
-        case QUEEN:
-            return 'Q';
-        case ROOK:
-            return 'R';
-        case BISHOP:
-            return 'B';
-        case KNIGHT:
-            return 'N';
-        case PAWN:
-            return 'P';
+    if (team == 0) {  // 흰색
+        switch (piece->type) {
+            case KING:
+                return 'K';
+            case QUEEN:
+                return 'Q';
+            case ROOK:
+                return 'R';
+            case BISHOP:
+                return 'B';
+            case KNIGHT:
+                return 'N';
+            case PAWN:
+                return 'P';
         }
-    }
-    else
-    { // 검은색
-        switch (piece->type)
-        {
-        case KING:
-            return 'k';
-        case QUEEN:
-            return 'q';
-        case ROOK:
-            return 'r';
-        case BISHOP:
-            return 'b';
-        case KNIGHT:
-            return 'n';
-        case PAWN:
-            return 'p';
+    } else {  // 검은색
+        switch (piece->type) {
+            case KING:
+                return 'k';
+            case QUEEN:
+                return 'q';
+            case ROOK:
+                return 'r';
+            case BISHOP:
+                return 'b';
+            case KNIGHT:
+                return 'n';
+            case PAWN:
+                return 'p';
         }
     }
     return ' ';
 }
 
 // 체스 보드 그리기
-void draw_chess_board(WINDOW *board_win)
-{
+void draw_chess_board(WINDOW *board_win) {
     client_state_t *client = get_client_state();
 
     werase(board_win);
@@ -162,54 +149,39 @@ void draw_chess_board(WINDOW *board_win)
 
     board_state_t *board = &client->game_state.board_state;
 
-    for (int row = 0; row < BOARD_SIZE; row++)
-    {
+    for (int row = 0; row < BOARD_SIZE; row++) {
         // 왼쪽 라벨: 테두리 다음 칸(1)에 표시
         mvwprintw(board_win, 2 + row * SQUARE_H + 1, 1, "%d ", 8 - row);
-        for (int col = 0; col < BOARD_SIZE; col++)
-        {
-            int y = 2 + row * SQUARE_H;
-            int x = BOARD_LABEL_X + col * SQUARE_W;
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            int  y           = 2 + row * SQUARE_H;
+            int  x           = BOARD_LABEL_X + col * SQUARE_W;
             bool is_selected = (client->piece_selected &&
                                 client->selected_x == col &&
                                 client->selected_y == row);
             // 색상
-            if (is_selected)
-            {
+            if (is_selected) {
                 wattron(board_win, COLOR_PAIR(COLOR_PAIR_SELECTED_SQUARE));
-            }
-            else if ((row + col) % 2 == 0)
-            {
+            } else if ((row + col) % 2 == 0) {
                 wattron(board_win, COLOR_PAIR(COLOR_PAIR_BOARD_WHITE));
-            }
-            else
-            {
+            } else {
                 wattron(board_win, COLOR_PAIR(COLOR_PAIR_BOARD_BLACK));
             }
             // 3줄로 한 칸 출력
             mvwprintw(board_win, y, x, "       ");
             piecestate_t *piece = &board->board[row][col];
-            if (piece->piece && !piece->is_dead)
-            {
-                char piece_char = get_piece_char(piece->piece, 0); // 임시로 흰색
+            if (piece->piece && !piece->is_dead) {
+                char piece_char = get_piece_char(piece->piece, 0);  // 임시로 흰색
                 mvwprintw(board_win, y + 1, x, "   %c   ", piece_char);
-            }
-            else
-            {
+            } else {
                 mvwprintw(board_win, y + 1, x, "       ");
             }
             mvwprintw(board_win, y + 2, x, "       ");
             // 색상 해제
-            if (is_selected)
-            {
+            if (is_selected) {
                 wattroff(board_win, COLOR_PAIR(COLOR_PAIR_SELECTED_SQUARE));
-            }
-            else if ((row + col) % 2 == 0)
-            {
+            } else if ((row + col) % 2 == 0) {
                 wattroff(board_win, COLOR_PAIR(COLOR_PAIR_BOARD_WHITE));
-            }
-            else
-            {
+            } else {
                 wattroff(board_win, COLOR_PAIR(COLOR_PAIR_BOARD_BLACK));
             }
         }
@@ -222,8 +194,7 @@ void draw_chess_board(WINDOW *board_win)
 }
 
 // 채팅 영역 그리기
-void draw_chat_area(WINDOW *chat_win)
-{
+void draw_chat_area(WINDOW *chat_win) {
     client_state_t *client = get_client_state();
 
     werase(chat_win);
@@ -232,12 +203,11 @@ void draw_chat_area(WINDOW *chat_win)
     mvwprintw(chat_win, 1, 2, "Chat");
 
     // 채팅 메시지 표시
-    game_state_t *state = &client->game_state;
-    int display_count = (state->chat_count > 12) ? 12 : state->chat_count;
-    int start_index = (state->chat_count > 12) ? state->chat_count - 12 : 0;
+    game_state_t *state         = &client->game_state;
+    int           display_count = (state->chat_count > 12) ? 12 : state->chat_count;
+    int           start_index   = (state->chat_count > 12) ? state->chat_count - 12 : 0;
 
-    for (int i = 0; i < display_count; i++)
-    {
+    for (int i = 0; i < display_count; i++) {
         chat_message_t *msg = &state->chat_messages[start_index + i];
         mvwprintw(chat_win, 3 + i, 2, "%s: %s", msg->sender, msg->message);
     }
@@ -246,8 +216,7 @@ void draw_chat_area(WINDOW *chat_win)
 }
 
 // 게임 메뉴 그리기
-void draw_game_menu(WINDOW *menu_win)
-{
+void draw_game_menu(WINDOW *menu_win) {
     client_state_t *client = get_client_state();
 
     werase(menu_win);
@@ -260,16 +229,15 @@ void draw_game_menu(WINDOW *menu_win)
     mvwprintw(menu_win, 6, 2, "4. Main");
 
     // 현재 턴 표시
-    board_state_t *board = &client->game_state.board_state;
-    const char *turn_text = (board->current_turn == TEAM_WHITE) ? "White" : "Black";
+    board_state_t *board     = &client->game_state.board_state;
+    const char    *turn_text = (board->current_turn == TEAM_WHITE) ? "White" : "Black";
     mvwprintw(menu_win, 8, 2, "Turn: %s", turn_text);
 
     wrefresh(menu_win);
 }
 
 // 게임 화면 그리기
-void draw_game_screen()
-{
+void draw_game_screen() {
     client_state_t *client = get_client_state();
 
     clear();
@@ -306,16 +274,13 @@ void draw_game_screen()
 }
 
 // 매칭 타이머 업데이트 (매초 호출)
-void update_match_timer()
-{
+void update_match_timer() {
     client_state_t *client = get_client_state();
 
-    if (client->current_screen == SCREEN_MATCHING)
-    {
+    if (client->current_screen == SCREEN_MATCHING) {
         // 타임아웃 체크 (30초)
         time_t current_time = time(NULL);
-        if (current_time - client->match_start_time >= 30)
-        {
+        if (current_time - client->match_start_time >= 30) {
             add_chat_message_safe("System", "Matchmaking timeout");
             client->current_screen = SCREEN_MAIN;
         }
