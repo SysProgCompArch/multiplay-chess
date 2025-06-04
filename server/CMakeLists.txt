@@ -1,7 +1,7 @@
 add_executable(server
     main.c
     server_network.c
-    protocol.c
+    handlers/dispatcher.c
     handlers/ping_handler.c
     handlers/echo_handler.c
     handlers/match_handler.c

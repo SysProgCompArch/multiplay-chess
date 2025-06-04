@@ -2,7 +2,6 @@
 // 이 파일은 아직 사용되지 않으며, 프로토콜에 게임 메시지가 추가되면 구현 예정
 
 /*
-#include "../protocol.h"
 #include "handlers.h"
 #include <stdio.h>
 #include <stdlib.h>
