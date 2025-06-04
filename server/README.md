@@ -55,7 +55,7 @@ Linux에서 C로 구현된 멀티플레이어 체스 게임의 서버 컴포넌�
 [2025-06-03 20:16:58] [DEBUG] server_network.c:55 create_and_bind_listener() - Socket created: fd=3
 [2025-06-03 20:16:58] [INFO] server_network.c:161 event_loop() - Starting event loop...
 [2025-06-03 20:17:20] [INFO] server_network.c:156 handle_new_connection() - New client connected: fd=7
-[2025-06-03 20:17:21] [INFO] ping_handler.c:18 handle_ping_message() - Ping received from fd=7: Hello Server!
+[2025-06-03 20:17:21] [INFO] ping.c:18 handle_ping_message() - Ping received from fd=7: Hello Server!
 [2025-06-03 20:17:25] [INFO] match_manager.c:178 add_player_to_matching() - Player Alice(fd=7) added to waiting queue
 ```
 

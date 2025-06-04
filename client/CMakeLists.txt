@@ -6,11 +6,11 @@ add_executable(client
     ui_core.c
     ui_screens.c
     ui_input.c
-    handlers/ping_handler.c
-    handlers/echo_handler.c
-    handlers/match_handler.c
-    handlers/chat_handler.c
-    handlers/error_handler.c
+    handlers/ping.c
+    handlers/echo.c
+    handlers/match.c
+    handlers/chat.c
+    handlers/error.c
     handlers/dispatcher.c
 )
 

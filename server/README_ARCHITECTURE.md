@@ -11,9 +11,9 @@ server/
 ├── protocol.h/c            # 프로토콜 처리 (메시지 송수신, 프레이밍)
 ├── handlers/               # 메시지 핸들러들
 │   ├── handlers.h          # 핸들러 공통 인터페이스
-│   ├── ping_handler.c      # PING 메시지 처리
-│   ├── echo_handler.c      # ECHO 메시지 처리
-│   └── game_handler.c      # 향후 체스 게임 로직 (예시, 주석 처리)
+│   ├── ping.c      # PING 메시지 처리
+│   ├── echo.c      # ECHO 메시지 처리
+│   └── game.c      # 향후 체스 게임 로직 (예시, 주석 처리)
 └── CMakeLists.txt          # 빌드 설정
 ```
 
@@ -83,8 +83,8 @@ add_executable(server
     main.c
     network.c
     protocol.c
-    handlers/ping_handler.c
-    handlers/echo_handler.c
+    handlers/ping.c
+    handlers/echo.c
     handlers/my_new_handler.c  # 새 핸들러 추가
 )
 ```
