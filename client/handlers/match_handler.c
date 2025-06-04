@@ -2,8 +2,8 @@
 #include <string.h>
 
 #include "../client_state.h"
-#include "../logger.h"
 #include "handlers.h"
+#include "logger.h"
 
 int handle_match_game_response(ServerMessage *msg) {
     if (msg->msg_case != SERVER_MESSAGE__MSG_MATCH_GAME_RES) {

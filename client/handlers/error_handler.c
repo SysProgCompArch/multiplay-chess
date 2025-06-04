@@ -1,9 +1,9 @@
 #include <stdio.h>
 
 #include "../client_state.h"
-#include "../logger.h"
 #include "../ui.h"
 #include "handlers.h"
+#include "logger.h"
 
 int handle_error_response(ServerMessage *msg) {
     if (msg->msg_case != SERVER_MESSAGE__MSG_ERROR) {
