@@ -1,5 +1,6 @@
 #define _XOPEN_SOURCE_EXTENDED
 #include <locale.h>
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -97,6 +98,12 @@ bool get_username_dialog() {
 
 // 에러 다이얼로그 표시
 void show_error_dialog(const char *title, const char *message) {
+    client_state_t *client = get_client_state();
+
+    pthread_mutex_lock(&screen_mutex);
+    client->error_dialog_active = true;
+    pthread_mutex_unlock(&screen_mutex);
+
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
 
@@ -152,7 +159,26 @@ void show_error_dialog(const char *title, const char *message) {
 
     delwin(dialog);
 
-    // 화면 다시 그리기
-    clear();
+    pthread_mutex_lock(&screen_mutex);
+    client->error_dialog_active   = false;
+    screen_state_t current_screen = client->current_screen;
+    pthread_mutex_unlock(&screen_mutex);
+
+    // 에러 다이얼로그를 닫은 후 즉시 현재 화면을 다시 그리기
+    switch (current_screen) {
+        case SCREEN_MAIN:
+            draw_main_screen();
+            break;
+        case SCREEN_MATCHING:
+            draw_matching_screen();
+            break;
+        case SCREEN_GAME:
+            draw_game_screen();
+            break;
+        default:
+            draw_main_screen();
+            break;
+    }
+
     refresh();
 }

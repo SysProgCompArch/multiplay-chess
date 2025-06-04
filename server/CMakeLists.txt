@@ -6,6 +6,7 @@ add_executable(server
     handlers/echo.c
     handlers/match.c
     handlers/match_manager.c
+    handlers/chat.c
 )
 target_link_libraries(server PRIVATE common pthread)
 target_include_directories(server PRIVATE ${CMAKE_SOURCE_DIR}/common)

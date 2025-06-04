@@ -68,7 +68,12 @@ int main() {
         timeout(1000);  // 1초 타임아웃
         int ch = getch();
 
-        if (ch != ERR) {
+        // 에러 다이얼로그가 활성화되어 있으면 키 입력 처리를 건너뜀
+        pthread_mutex_lock(&screen_mutex);
+        bool dialog_active = client->error_dialog_active;
+        pthread_mutex_unlock(&screen_mutex);
+
+        if (ch != ERR && !dialog_active) {
             LOG_DEBUG("Input received: %d", ch);
             // 실제 키 입력이 있을 때만 처리
             if (ch == KEY_MOUSE) {
@@ -136,14 +141,31 @@ int main() {
                                 break;
                             case '4':
                             case 27:  // ESC
-                                LOG_INFO("User returned to main screen from game");
-                                client->current_screen = SCREEN_MAIN;
+                                if (client->chat_input_mode) {
+                                    // 채팅 입력 모드가 활성화된 상태에서 ESC 키
+                                    disable_chat_input();
+                                } else {
+                                    // 일반 상태에서 ESC 키 - 메인 화면으로 돌아가기
+                                    LOG_INFO("User returned to main screen from game");
+                                    client->current_screen = SCREEN_MAIN;
+                                }
                                 break;
                             case '\n':
                             case '\r':
-                                // 채팅 입력 모드 (간단 구현)
-                                LOG_DEBUG("User sent chat message");
-                                add_chat_message_safe(client->username, "Hello!");
+                                if (client->chat_input_mode) {
+                                    // 채팅 입력 모드에서 엔터 - 채팅 입력 함수에서 처리
+                                    handle_chat_input(ch);
+                                } else {
+                                    // 일반 모드에서 엔터 - 채팅 입력 모드 활성화
+                                    LOG_DEBUG("User activated chat input mode");
+                                    enable_chat_input();
+                                }
+                                break;
+                            default:
+                                // 채팅 입력 모드에서는 모든 키를 채팅 입력으로 처리
+                                if (client->chat_input_mode) {
+                                    handle_chat_input(ch);
+                                }
                                 break;
                         }
                         break;
@@ -153,20 +175,25 @@ int main() {
 
         // 화면 업데이트 (매번 수행)
         pthread_mutex_lock(&screen_mutex);
-        switch (client->current_screen) {
-            case SCREEN_MAIN:
-                draw_main_screen();
-                break;
-            case SCREEN_MATCHING:
-                draw_matching_screen();
-                break;
-            case SCREEN_GAME:
-                draw_game_screen();
-                break;
-            default:
-                draw_main_screen();
-                break;
+
+        // 에러 다이얼로그가 활성화되어 있으면 화면 업데이트를 건너뜀
+        if (!client->error_dialog_active) {
+            switch (client->current_screen) {
+                case SCREEN_MAIN:
+                    draw_main_screen();
+                    break;
+                case SCREEN_MATCHING:
+                    draw_matching_screen();
+                    break;
+                case SCREEN_GAME:
+                    draw_game_screen();
+                    break;
+                default:
+                    draw_main_screen();
+                    break;
+            }
         }
+
         pthread_mutex_unlock(&screen_mutex);
         refresh();
     }

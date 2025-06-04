@@ -16,6 +16,9 @@ void cancel_matching();
 void start_reconnect();
 bool should_attempt_reconnect();
 
+// 채팅 관련
+void send_chat_message(const char *message);
+
 #define RECONNECT_INTERVAL 5  // 5초마다 재연결 시도
 
 #endif  // CLIENT_CLIENT_NETWORK_H

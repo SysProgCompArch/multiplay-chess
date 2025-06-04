@@ -62,6 +62,12 @@ void handle_mouse_input(MEVENT *event);
 void handle_board_click(int board_x, int board_y);
 bool coord_to_board_pos(int screen_x, int screen_y, int *board_x, int *board_y);
 
+// 채팅 입력 처리
+void enable_chat_input();
+void disable_chat_input();
+void handle_chat_input(int ch);
+void draw_chat_input(WINDOW *input_win);
+
 // 화면 업데이트
 void update_match_timer();
 

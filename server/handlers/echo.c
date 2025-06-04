@@ -20,15 +20,10 @@ int handle_echo_message(int fd, ClientMessage *req) {
     EchoResponse  echo_resp = ECHO_RESPONSE__INIT;
 
     // 메시지 복사
-    char *echo_message = malloc(strlen(req->echo->message) + 1);
-    if (!echo_message) {
-        LOG_ERROR("Failed to allocate memory for echo response: fd=%d", fd);
-        return -1;
-    }
-    strcpy(echo_message, req->echo->message);
-    echo_resp.message = echo_message;
-    resp.msg_case     = SERVER_MESSAGE__MSG_ECHO_RES;
-    resp.echo_res     = &echo_resp;
+    char *echo_message = strdup(req->echo->message);
+    echo_resp.message  = echo_message;
+    resp.msg_case      = SERVER_MESSAGE__MSG_ECHO_RES;
+    resp.echo_res      = &echo_resp;
 
     // 응답 전송
     int result = send_server_message(fd, &resp);

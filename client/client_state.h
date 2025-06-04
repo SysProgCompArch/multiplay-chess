@@ -37,9 +37,17 @@ typedef struct
     int            selected_x, selected_y;  // 선택된 기물 위치
     bool           piece_selected;          // 기물이 선택되었는지 여부
 
+    // 채팅 입력 모드
+    bool chat_input_mode;         // 채팅 입력 모드 활성화 여부
+    char chat_input_buffer[256];  // 채팅 입력 버퍼
+    int  chat_input_cursor;       // 채팅 입력 커서 위치
+
     // 재연결 관련
     bool   reconnecting;
     time_t last_reconnect_attempt;
+
+    // 에러 다이얼로그 상태
+    bool error_dialog_active;
 } client_state_t;
 
 // 전역 상태 접근 함수들

@@ -23,6 +23,15 @@ void init_client_state() {
     g_client.connected      = false;
     g_client.piece_selected = false;
     g_client.socket_fd      = -1;
+
+    // 채팅 입력 관련 초기화
+    g_client.chat_input_mode = false;
+    memset(g_client.chat_input_buffer, 0, sizeof(g_client.chat_input_buffer));
+    g_client.chat_input_cursor = 0;
+
+    // 에러 다이얼로그 상태 초기화
+    g_client.error_dialog_active = false;
+
     init_game_state(&g_client.game_state);
 }
 

@@ -253,9 +253,7 @@ void draw_game_screen() {
     draw_chat_area(chat_win);
 
     WINDOW *input_win = newwin(INPUT_HEIGHT, CHAT_WIDTH, CHAT_HEIGHT + 2, BOARD_WIDTH + 5);
-    draw_border(input_win);
-    mvwprintw(input_win, 1, 2, "Message: (Enter)");
-    wrefresh(input_win);
+    draw_chat_input(input_win);
 
     WINDOW *menu_win = newwin(10, 20, BOARD_HEIGHT + 2, 2);
     draw_game_menu(menu_win);
@@ -265,7 +263,6 @@ void draw_game_screen() {
 
     wrefresh(board_win);
     wrefresh(chat_win);
-    wrefresh(input_win);
     wrefresh(menu_win);
 
     // 연결 상태 표시

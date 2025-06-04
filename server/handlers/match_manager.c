@@ -199,6 +199,20 @@ ActiveGame *find_game_by_player_fd(int fd) {
     return NULL;
 }
 
+// fd로 플레이어 ID 찾기
+char *find_player_id_by_fd(int fd) {
+    pthread_mutex_lock(&g_match_manager.mutex);
+
+    for (int i = 0; i < MAX_WAITING_PLAYERS; i++) {
+        if (g_match_manager.waiting_players[i].is_active && g_match_manager.waiting_players[i].fd == fd) {
+            return g_match_manager.waiting_players[i].player_id;
+        }
+    }
+
+    pthread_mutex_unlock(&g_match_manager.mutex);
+    return NULL;
+}
+
 // 게임 제거
 int remove_game(const char *game_id) {
     if (!game_id)

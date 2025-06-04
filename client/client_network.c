@@ -233,15 +233,58 @@ void cancel_matching() {
 // 네트워크 정리
 void cleanup_network() {
     LOG_INFO("Cleaning up network resources");
-    if (network_thread_running) {
-        network_thread_running = false;
-        client_state_t *client = get_client_state();
-        if (client->socket_fd >= 0) {
-            close(client->socket_fd);
-            client->socket_fd = -1;
-        }
-        LOG_INFO("Waiting for network thread to terminate");
+    network_thread_running = false;
+
+    // 네트워크 스레드가 종료될 때까지 대기
+    if (network_thread_id != 0) {
         pthread_join(network_thread_id, NULL);
+        network_thread_id = 0;
     }
+
+    // 소켓 정리
+    client_state_t *client = get_client_state();
+    if (client->socket_fd >= 0) {
+        close(client->socket_fd);
+        client->socket_fd = -1;
+    }
+
+    client->connected = false;
     LOG_INFO("Network cleanup completed");
+}
+
+// 채팅 메시지 전송
+void send_chat_message(const char *message) {
+    LOG_INFO("Sending chat message: %s", message);
+    client_state_t *client = get_client_state();
+
+    if (!client->connected) {
+        LOG_WARN("Cannot send chat message: not connected to server");
+        add_chat_message_safe("System", "Cannot send message: not connected");
+        return;
+    }
+
+    if (!message || strlen(message) == 0) {
+        LOG_WARN("Cannot send empty chat message");
+        return;
+    }
+
+    // 채팅 메시지 생성
+    ClientMessage chat_msg = CLIENT_MESSAGE__INIT;
+    ChatRequest   chat_req = CHAT_REQUEST__INIT;
+
+    chat_req.game_id   = "default_game";  // TODO: 실제 게임 ID 사용
+    chat_req.player_id = client->username;
+    chat_req.message   = (char *)message;
+
+    chat_msg.msg_case = CLIENT_MESSAGE__MSG_CHAT;
+    chat_msg.chat     = &chat_req;
+
+    if (send_client_message(client->socket_fd, &chat_msg) < 0) {
+        LOG_ERROR("Failed to send chat message");
+        add_chat_message_safe("System", "Failed to send message");
+    } else {
+        LOG_DEBUG("Chat message sent successfully");
+        // 로컬에도 메시지 추가 (에코용)
+        add_chat_message_safe(client->username, message);
+    }
 }
