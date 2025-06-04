@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../protocol.h"
 #include "handlers.h"
 #include "logger.h"
 #include "network.h"

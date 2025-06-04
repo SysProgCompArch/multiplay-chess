@@ -13,6 +13,7 @@ int  parse_port_from_args(int argc, char *argv[]);
 int  create_and_bind_listener(int port);
 int  setup_epoll(int listener);
 void handle_new_connection(int listener, int epfd);
+void handle_client_message(int fd, int epfd);
 void event_loop(int listener, int epfd);
 void cleanup(int listener, int epfd);
 

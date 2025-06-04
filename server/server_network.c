@@ -11,8 +11,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "handlers/handlers.h"
+#include "handlers/match_manager.h"
 #include "logger.h"
-#include "protocol.h"
+#include "network.h"
 
 // 파일 디스크립터를 논블로킹 모드로 전환
 int set_nonblocking(int fd) {
@@ -172,4 +174,39 @@ void cleanup(int listener, int epfd) {
     close(listener);
     close(epfd);
     LOG_DEBUG("Network resources cleaned up");
+}
+
+// 클라이언트 소켓에서 protobuf 메시지 수신 및 처리, 연결 종료 처리
+void handle_client_message(int fd, int epfd) {
+    ClientMessage *msg = receive_client_message(fd);
+    if (!msg) {
+        LOG_INFO("Client disconnected: fd=%d", fd);
+
+        // 매칭 큐에서 플레이어 제거
+        remove_player_from_matching(fd);
+
+        // TODO: 진행 중인 게임이 있다면 상대방에게 알림
+        ActiveGame *game = find_game_by_player_fd(fd);
+        if (game) {
+            LOG_INFO("Player disconnected from game %s: fd=%d", game->game_id, fd);
+            // 상대방에게 연결 해제 알림 (나중에 구현)
+            remove_game(game->game_id);
+        }
+
+        close(fd);
+        epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
+        return;
+    }
+
+    // 메시지 디스패처로 처리 위임
+    int result = dispatch_client_message(fd, msg);
+
+    // 핸들러에서 에러가 발생하면 연결을 닫을 수도 있음
+    if (result < 0) {
+        LOG_WARN("Handler error for fd=%d, closing connection", fd);
+        close(fd);
+        epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
+    }
+
+    client_message__free_unpacked(msg, NULL);
 }
