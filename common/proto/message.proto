@@ -161,10 +161,9 @@ message ResignBroadcast {
 
 // 채팅 메시지 브로드캐스트
 message ChatBroadcast {
-  string game_id   = 1;
-  string player_id = 2;
-  string message   = 3;
-  google.protobuf.Timestamp timestamp = 4;
+  string player_id = 1;
+  string message   = 2;
+  google.protobuf.Timestamp timestamp = 3;
 }
 
 // 오류를 통일해서 보낼 때

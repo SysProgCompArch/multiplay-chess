@@ -373,14 +373,13 @@ struct  _ResignBroadcast
 struct  _ChatBroadcast
 {
   ProtobufCMessage base;
-  char *game_id;
   char *player_id;
   char *message;
   Google__Protobuf__Timestamp *timestamp;
 };
 #define CHAT_BROADCAST__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&chat_broadcast__descriptor) \
-    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, NULL }
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, NULL }
 
 
 /*

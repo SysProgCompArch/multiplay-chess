@@ -1771,23 +1771,11 @@ const ProtobufCMessageDescriptor resign_broadcast__descriptor =
   (ProtobufCMessageInit) resign_broadcast__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor chat_broadcast__field_descriptors[4] =
+static const ProtobufCFieldDescriptor chat_broadcast__field_descriptors[3] =
 {
   {
-    "game_id",
-    1,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(ChatBroadcast, game_id),
-    NULL,
-    &protobuf_c_empty_string,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
     "player_id",
-    2,
+    1,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
@@ -1799,7 +1787,7 @@ static const ProtobufCFieldDescriptor chat_broadcast__field_descriptors[4] =
   },
   {
     "message",
-    3,
+    2,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
@@ -1811,7 +1799,7 @@ static const ProtobufCFieldDescriptor chat_broadcast__field_descriptors[4] =
   },
   {
     "timestamp",
-    4,
+    3,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     0,   /* quantifier_offset */
@@ -1823,15 +1811,14 @@ static const ProtobufCFieldDescriptor chat_broadcast__field_descriptors[4] =
   },
 };
 static const unsigned chat_broadcast__field_indices_by_name[] = {
-  0,   /* field[0] = game_id */
-  2,   /* field[2] = message */
-  1,   /* field[1] = player_id */
-  3,   /* field[3] = timestamp */
+  1,   /* field[1] = message */
+  0,   /* field[0] = player_id */
+  2,   /* field[2] = timestamp */
 };
 static const ProtobufCIntRange chat_broadcast__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 4 }
+  { 0, 3 }
 };
 const ProtobufCMessageDescriptor chat_broadcast__descriptor =
 {
@@ -1841,7 +1828,7 @@ const ProtobufCMessageDescriptor chat_broadcast__descriptor =
   "ChatBroadcast",
   "",
   sizeof(ChatBroadcast),
-  4,
+  3,
   chat_broadcast__field_descriptors,
   chat_broadcast__field_indices_by_name,
   1,  chat_broadcast__number_ranges,
