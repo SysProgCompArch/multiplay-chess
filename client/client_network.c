@@ -284,7 +284,5 @@ void send_chat_message(const char *message) {
         add_chat_message_safe("System", "Failed to send message");
     } else {
         LOG_DEBUG("Chat message sent successfully");
-        // 로컬에도 메시지 추가 (에코용)
-        add_chat_message_safe(client->username, message);
     }
 }
