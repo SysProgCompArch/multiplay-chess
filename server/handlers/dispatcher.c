@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "../server_network.h"
 #include "handlers.h"
 #include "logger.h"
 
@@ -42,14 +43,8 @@ int dispatch_client_message(int fd, ClientMessage *msg) {
 int handle_unknown_message(int fd, ClientMessage *msg) {
     LOG_WARN("Unknown message type: %d", msg->msg_case);
 
-    // 에러 응답 생성 및 전송
-    ServerMessage error_resp = SERVER_MESSAGE__INIT;
-    ErrorResponse error      = ERROR_RESPONSE__INIT;
-    error.message            = "Unsupported message type";
-    error_resp.msg_case      = SERVER_MESSAGE__MSG_ERROR;
-    error_resp.error         = &error;
-
-    int result = send_server_message(fd, &error_resp);
+    // 헬퍼 함수를 사용해서 에러 응답 전송
+    int result = send_error_response(fd, 400, "Unsupported message type");
     if (result < 0) {
         LOG_ERROR("Failed to send error response to fd=%d", fd);
         return -1;

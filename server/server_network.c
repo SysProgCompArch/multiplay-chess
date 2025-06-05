@@ -16,6 +16,20 @@
 #include "logger.h"
 #include "network.h"
 
+// 에러 응답을 보내는 헬퍼 함수
+int send_error_response(int fd, int error_code, const char *error_message) {
+    ServerMessage error_msg  = SERVER_MESSAGE__INIT;
+    ErrorResponse error_resp = ERROR_RESPONSE__INIT;
+
+    error_resp.code    = error_code;
+    error_resp.message = (char *)error_message;
+
+    error_msg.msg_case = SERVER_MESSAGE__MSG_ERROR;
+    error_msg.error    = &error_resp;
+
+    return send_server_message(fd, &error_msg);
+}
+
 // 파일 디스크립터를 논블로킹 모드로 전환
 int set_nonblocking(int fd) {
     int flags = fcntl(fd, F_GETFL, 0);
@@ -201,11 +215,10 @@ void handle_client_message(int fd, int epfd) {
     // 메시지 디스패처로 처리 위임
     int result = dispatch_client_message(fd, msg);
 
-    // 핸들러에서 에러가 발생하면 연결을 닫을 수도 있음
+    // 핸들러에서 에러가 발생하면 에러 응답을 보냄
     if (result < 0) {
-        LOG_WARN("Handler error for fd=%d, closing connection", fd);
-        close(fd);
-        epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);
+        LOG_WARN("Handler error for fd=%d, sending error response", fd);
+        send_error_response(fd, -result, "An error occurred while processing the request");
     }
 
     client_message__free_unpacked(msg, NULL);

@@ -17,4 +17,7 @@ void handle_client_message(int fd, int epfd);
 void event_loop(int listener, int epfd);
 void cleanup(int listener, int epfd);
 
+// 에러 응답 헬퍼 함수
+int send_error_response(int fd, int error_code, const char *error_message);
+
 #endif  // NETWORK_H
