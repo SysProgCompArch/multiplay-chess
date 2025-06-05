@@ -17,6 +17,7 @@ typedef int (*message_handler_t)(int fd, ClientMessage *req);
 int handle_ping_message(int fd, ClientMessage *req);
 int handle_echo_message(int fd, ClientMessage *req);
 int handle_match_game_message(int fd, ClientMessage *req);
+int handle_chat_message(int fd, ClientMessage *req);
 
 // 나중에 추가될 핸들러들
 // int handle_move_message(int fd, ClientMessage *req);
