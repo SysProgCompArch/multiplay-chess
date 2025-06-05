@@ -13,7 +13,8 @@ static int g_listener = -1;
 
 // 시그널 핸들러: 서버 종료 시 정리 작업
 void cleanup_signal_handler(int signum) {
-    LOG_INFO("Received signal %d, shutting down server...", signum);
+    // 시그널 핸들러에서는 async-signal-safe 함수만 사용
+    write(STDOUT_FILENO, "Received shutdown signal, cleaning up...\n", 41);
 
     // 매칭 매니저 정리
     cleanup_match_manager();
@@ -24,9 +25,9 @@ void cleanup_signal_handler(int signum) {
     if (g_epfd >= 0)
         close(g_epfd);
 
-    LOG_INFO("Server shutdown complete");
+    write(STDOUT_FILENO, "Server shutdown complete\n", 25);
     logger_cleanup();
-    exit(0);
+    _exit(0);  // exit() 대신 _exit() 사용 (async-signal-safe)
 }
 
 int main(int argc, char *argv[]) {

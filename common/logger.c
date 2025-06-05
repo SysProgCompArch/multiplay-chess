@@ -69,11 +69,18 @@ void logger_cleanup(void) {
     pthread_mutex_lock(&log_mutex);
 
     if (output_type == LOG_OUTPUT_FILE && log_file != NULL) {
-        LOG_INFO("=== Logger cleanup ===");
+        // 뮤텍스를 잠근 상태에서 LOG_INFO 호출하면 데드락 발생
+        // 대신 직접 파일에 작성
+        if (log_file) {
+            fprintf(log_file, "[%s] [INFO] logger.c:%d logger_cleanup() - === Logger cleanup ===\n",
+                    "cleanup", __LINE__);
+        }
         fclose(log_file);
         log_file = NULL;
     } else if (output_type == LOG_OUTPUT_CONSOLE) {
-        LOG_INFO("=== Server Logger cleanup ===");
+        // 콘솔의 경우도 직접 출력
+        printf("=== Server Logger cleanup ===\n");
+        fflush(stdout);
     }
 
     pthread_mutex_unlock(&log_mutex);
