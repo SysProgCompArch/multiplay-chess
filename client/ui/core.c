@@ -67,8 +67,25 @@ void handle_terminal_resize() {
     client_state_t *client = get_client_state();
 
     pthread_mutex_lock(&screen_mutex);
-    screen_state_t current_screen = client->current_screen;
+    draw_current_screen();
     pthread_mutex_unlock(&screen_mutex);
+
+    refresh();
+}
+
+// 테두리 그리기
+void draw_border(WINDOW *win) {
+    wattron(win, COLOR_PAIR(COLOR_PAIR_BORDER));
+    box(win, 0, 0);
+    wattroff(win, COLOR_PAIR(COLOR_PAIR_BORDER));
+}
+
+// 화면 전환 공통 함수
+void draw_current_screen() {
+    client_state_t *client = get_client_state();
+
+    // mutex는 호출하는 쪽에서 처리하도록 변경
+    screen_state_t current_screen = client->current_screen;
 
     switch (current_screen) {
         case SCREEN_MAIN:
@@ -84,15 +101,6 @@ void handle_terminal_resize() {
             draw_main_screen();
             break;
     }
-
-    refresh();
-}
-
-// 테두리 그리기
-void draw_border(WINDOW *win) {
-    wattron(win, COLOR_PAIR(COLOR_PAIR_BORDER));
-    box(win, 0, 0);
-    wattroff(win, COLOR_PAIR(COLOR_PAIR_BORDER));
 }
 
 // 사용자명 입력 다이얼로그
@@ -195,25 +203,13 @@ void show_error_dialog(const char *title, const char *message) {
     delwin(dialog);
 
     pthread_mutex_lock(&screen_mutex);
-    client->error_dialog_active   = false;
-    screen_state_t current_screen = client->current_screen;
+    client->error_dialog_active = false;
     pthread_mutex_unlock(&screen_mutex);
 
     // 에러 다이얼로그를 닫은 후 즉시 현재 화면을 다시 그리기
-    switch (current_screen) {
-        case SCREEN_MAIN:
-            draw_main_screen();
-            break;
-        case SCREEN_MATCHING:
-            draw_matching_screen();
-            break;
-        case SCREEN_GAME:
-            draw_game_screen();
-            break;
-        default:
-            draw_main_screen();
-            break;
-    }
+    pthread_mutex_lock(&screen_mutex);
+    draw_current_screen();
+    pthread_mutex_unlock(&screen_mutex);
 
     refresh();
 }

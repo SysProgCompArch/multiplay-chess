@@ -193,20 +193,7 @@ int main() {
 
         // 에러 다이얼로그가 활성화되어 있으면 화면 업데이트를 건너뜀
         if (!client->error_dialog_active) {
-            switch (client->current_screen) {
-                case SCREEN_MAIN:
-                    draw_main_screen();
-                    break;
-                case SCREEN_MATCHING:
-                    draw_matching_screen();
-                    break;
-                case SCREEN_GAME:
-                    draw_game_screen();
-                    break;
-                default:
-                    draw_main_screen();
-                    break;
-            }
+            draw_current_screen();
         }
 
         pthread_mutex_unlock(&screen_mutex);

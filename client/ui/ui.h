@@ -41,6 +41,9 @@ void draw_main_screen();
 void draw_matching_screen();
 void draw_game_screen();
 
+// 화면 전환 공통 함수
+void draw_current_screen();
+
 // 다이얼로그
 bool get_username_dialog();
 void show_error_dialog(const char *title, const char *message);
