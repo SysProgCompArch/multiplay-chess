@@ -3,6 +3,7 @@
 
 #include <ncursesw/ncurses.h>
 
+#include "colors.h"
 #include "common.h"
 #include "piece.h"
 
@@ -28,17 +29,9 @@
 #define MATCH_DIALOG_HEIGHT 10
 #define MATCH_DIALOG_WIDTH  50
 
-// 색상 쌍 정의
-#define COLOR_PAIR_BORDER          1
-#define COLOR_PAIR_SELECTED        2
-#define COLOR_PAIR_WHITE_PIECE     3
-#define COLOR_PAIR_BLACK_PIECE     4
-#define COLOR_PAIR_BOARD_WHITE     5
-#define COLOR_PAIR_BOARD_BLACK     6
-#define COLOR_PAIR_SELECTED_SQUARE 7
-
 // ncurses 관련
 void init_ncurses();
+void init_colors();
 void cleanup_ncurses();
 void draw_border(WINDOW *win);
 

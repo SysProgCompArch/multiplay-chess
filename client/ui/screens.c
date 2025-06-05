@@ -37,18 +37,45 @@ void draw_main_screen() {
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
 
-    int start_y = (rows - MAIN_MENU_HEIGHT) / 2;
-    int start_x = (cols - MAIN_MENU_WIDTH) / 2;
+    // 더 큰 메인 윈도우 크기
+    int main_height = 25;
+    int main_width  = 80;
+    int start_y     = (rows - main_height) / 2;
+    int start_x     = (cols - main_width) / 2;
 
-    WINDOW *main_win = newwin(MAIN_MENU_HEIGHT, MAIN_MENU_WIDTH, start_y, start_x);
-    draw_border(main_win);
+    WINDOW *main_win = newwin(main_height, main_width, start_y, start_x);
 
-    mvwprintw(main_win, 2, (MAIN_MENU_WIDTH - 18) / 2, "MULTIPLAYER CHESS");
-    mvwprintw(main_win, 4, (MAIN_MENU_WIDTH - 30) / 2, "==============================");
-    mvwprintw(main_win, 7, (MAIN_MENU_WIDTH - 20) / 2, "1. Start Game");
-    mvwprintw(main_win, 8, (MAIN_MENU_WIDTH - 20) / 2, "2. Options");
-    mvwprintw(main_win, 9, (MAIN_MENU_WIDTH - 20) / 2, "3. Exit");
-    mvwprintw(main_win, 12, (MAIN_MENU_WIDTH - 35) / 2, "Press 1, 2, 3 or use mouse");
+    // ASCII 아트 제목
+    wattron(main_win, A_BOLD);
+    mvwprintw(main_win, 2, (main_width - 51) / 2, " ██████╗██╗  ██╗███████╗███████╗███████╗    ██████╗");
+    mvwprintw(main_win, 3, (main_width - 51) / 2, "██╔════╝██║  ██║██╔════╝██╔════╝██╔════╝   ██╔═══╝");
+    mvwprintw(main_win, 4, (main_width - 51) / 2, "██║     ███████║█████╗  ███████╗███████╗   ██║    ");
+    mvwprintw(main_win, 5, (main_width - 51) / 2, "██║     ██╔══██║██╔══╝  ╚════██║╚════██║   ██║    ");
+    mvwprintw(main_win, 6, (main_width - 51) / 2, "╚██████╗██║  ██║███████╗███████║███████║██╗╚██████╗");
+    mvwprintw(main_win, 7, (main_width - 51) / 2, " ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝ ╚═════╝");
+    wattroff(main_win, A_BOLD);
+
+    // 부제목
+    wattron(main_win, A_ITALIC);
+    mvwprintw(main_win, 9, (main_width - 16) / 2, "MULTIPLAYER GAME");
+    wattroff(main_win, A_ITALIC);
+
+    // 장식선
+    wattron(main_win, COLOR_PAIR(COLOR_PAIR_BORDER));
+    mvwprintw(main_win, 11, (main_width - 60) / 2, "═══════════════════════════════════════════════════════════");
+    wattroff(main_win, COLOR_PAIR(COLOR_PAIR_BORDER));
+
+    // 메뉴 항목들
+    wattron(main_win, A_BOLD);
+    mvwprintw(main_win, 14, (main_width - 18) / 2, "1. Start New Game");
+    mvwprintw(main_win, 16, (main_width - 18) / 2, "2. Options       ");
+    mvwprintw(main_win, 18, (main_width - 18) / 2, "3. Exit          ");
+    wattroff(main_win, A_BOLD);
+
+    // 하단 장식
+    wattron(main_win, COLOR_PAIR(COLOR_PAIR_BORDER));
+    mvwprintw(main_win, 21, (main_width - 60) / 2, "═══════════════════════════════════════════════════════════");
+    wattroff(main_win, COLOR_PAIR(COLOR_PAIR_BORDER));
 
     wrefresh(main_win);
 

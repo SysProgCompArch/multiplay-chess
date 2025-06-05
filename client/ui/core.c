@@ -30,17 +30,7 @@ void init_ncurses() {
     mousemask(ALL_MOUSE_EVENTS, NULL);
     curs_set(0);
 
-    // 색상 초기화
-    if (has_colors()) {
-        start_color();
-        init_pair(COLOR_PAIR_BORDER, COLOR_CYAN, COLOR_BLACK);
-        init_pair(COLOR_PAIR_SELECTED, COLOR_BLACK, COLOR_WHITE);
-        init_pair(COLOR_PAIR_WHITE_PIECE, COLOR_WHITE, COLOR_BLACK);
-        init_pair(COLOR_PAIR_BLACK_PIECE, COLOR_YELLOW, COLOR_BLACK);
-        init_pair(COLOR_PAIR_BOARD_WHITE, COLOR_BLACK, COLOR_WHITE);
-        init_pair(COLOR_PAIR_BOARD_BLACK, COLOR_WHITE, COLOR_BLACK);
-        init_pair(COLOR_PAIR_SELECTED_SQUARE, COLOR_RED, COLOR_YELLOW);
-    }
+    init_colors();
 
     clear();
     refresh();
