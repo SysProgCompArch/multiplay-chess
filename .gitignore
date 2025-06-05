@@ -84,5 +84,5 @@ build/
 
 .cache
 
-# log file
-*.log
+# log files
+logs/

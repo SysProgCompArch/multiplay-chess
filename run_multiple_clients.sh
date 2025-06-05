@@ -139,7 +139,7 @@ check_client_executable
 echo -e "${YELLOW}기존 로그 파일을 정리하시겠습니까? (y/N):${NC} "
 read -r answer
 if [[ $answer =~ ^[Yy]$ ]]; then
-    rm -f chess_client*.log
+    rm -f logs/chess_client*.log
     echo -e "${GREEN}기존 로그 파일을 정리했습니다${NC}"
 fi
 

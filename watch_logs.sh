@@ -2,8 +2,8 @@
 
 # 체스 클라이언트 로그 모니터링 스크립트 (다중 클라이언트 지원)
 
-LOG_PATTERN="chess_client*.log"
-LOG_FILE="chess_client.log"  # 기본값 (호환성)
+LOG_PATTERN="logs/chess_client*.log"
+LOG_FILE="logs/chess_client.log"  # 기본값 (호환성)
 
 # ANSI 색상 코드 정의
 RED='\033[0;31m'      # ERROR, FATAL
@@ -90,7 +90,7 @@ if [ "$MONITOR_MODE" = "single" ]; then
 else
     echo -e "모니터링 모드: ${GREEN}다중 클라이언트${NC} ($LOG_PATTERN)"
     # 존재하는 로그 파일들 찾기
-    LOG_FILES=($(ls chess_client*.log 2>/dev/null))
+    LOG_FILES=($(ls logs/chess_client*.log 2>/dev/null))
     
     if [ ${#LOG_FILES[@]} -eq 0 ]; then
         LOG_FILES=("$LOG_FILE")  # 기본 파일로 대체
@@ -120,7 +120,7 @@ if [ "$any_file_exists" = false ]; then
     while [ "$any_file_exists" = false ]; do
         sleep 1
         if [ "$MONITOR_MODE" = "all" ]; then
-            LOG_FILES=($(ls chess_client*.log 2>/dev/null))
+            LOG_FILES=($(ls logs/chess_client*.log 2>/dev/null))
         fi
         
         for log_file in "${LOG_FILES[@]}"; do
@@ -140,7 +140,7 @@ echo -e "${CYAN}모니터링 중인 파일들:${NC}"
 for log_file in "${LOG_FILES[@]}"; do
     if [ -f "$log_file" ]; then
         # PID 추출
-        if [[ "$log_file" =~ chess_client_([0-9]+)\.log ]]; then
+        if [[ "$log_file" =~ logs/chess_client_([0-9]+)\.log ]]; then
             pid="${BASH_REMATCH[1]}"
             echo -e "  ${GREEN}✓${NC} $log_file ${ORANGE}(PID: $pid)${NC}"
         else
@@ -171,8 +171,8 @@ fi
 
 # 색상 적용 (PID 정보도 색상 적용)
 COLOR_CMD="sed -u \
-    -e \"s/^==> \(chess_client_\([0-9]\+\)\.log\) <==/$(printf "${WHITE}${ORANGE}")● Client PID:\2$(printf "${NC}") ────────────────/g\" \
-    -e \"s/^==> \(chess_client\.log\) <==/$(printf "${WHITE}${ORANGE}")● Default Client$(printf "${NC}") ────────────────/g\" \
+    -e \"s/^==> \(logs\/chess_client_\([0-9]\+\)\.log\) <==/$(printf "${WHITE}${ORANGE}")● Client PID:\2$(printf "${NC}") ────────────────/g\" \
+    -e \"s/^==> \(logs\/chess_client\.log\) <==/$(printf "${WHITE}${ORANGE}")● Default Client$(printf "${NC}") ────────────────/g\" \
     -e \"s/\(\[[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\} [0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}\]\)/$(printf "${CYAN}")\1$(printf "${NC}")/g\" \
     -e \"s/\(\[ERROR\]\)/$(printf "${RED}")\1$(printf "${NC}")/g\" \
     -e \"s/\(\[FATAL\]\)/$(printf "${RED}")\1$(printf "${NC}")/g\" \

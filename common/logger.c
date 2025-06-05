@@ -2,6 +2,7 @@
 
 #include <pthread.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 // ANSI 색상 코드 정의
@@ -32,11 +33,14 @@ int logger_init(log_output_type_t type, const char *file_path_or_prefix) {
             fclose(log_file);
         }
 
+        // logs 디렉토리 생성 (이미 존재하면 무시)
+        mkdir("logs", 0755);
+
         char log_filename[256];
         if (file_path_or_prefix) {
-            snprintf(log_filename, sizeof(log_filename), "%s_%d.log", file_path_or_prefix, getpid());
+            snprintf(log_filename, sizeof(log_filename), "logs/%s_%d.log", file_path_or_prefix, getpid());
         } else {
-            snprintf(log_filename, sizeof(log_filename), "app_%d.log", getpid());
+            snprintf(log_filename, sizeof(log_filename), "logs/app_%d.log", getpid());
         }
 
         log_file = fopen(log_filename, "a");
