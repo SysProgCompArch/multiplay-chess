@@ -79,13 +79,31 @@ void draw_chat_input(WINDOW *input_win) {
     werase(input_win);
     draw_border(input_win);
 
+    // 입력창 크기 확인
+    int win_height, win_width;
+    getmaxyx(input_win, win_height, win_width);
+
     if (client->chat_input_mode) {
         // 입력 모드일 때
-        mvwprintw(input_win, 1, 2, "Message: %s", client->chat_input_buffer);
+        int max_display_len = win_width - 12;  // "Message: " + 테두리 여백
+
+        // 입력 버퍼가 너무 길면 끝부분만 표시
+        char display_buffer[256];
+        int  buffer_len = strlen(client->chat_input_buffer);
+
+        if (buffer_len > max_display_len) {
+            strncpy(display_buffer, client->chat_input_buffer + (buffer_len - max_display_len), max_display_len);
+            display_buffer[max_display_len] = '\0';
+        } else {
+            strcpy(display_buffer, client->chat_input_buffer);
+        }
+
+        mvwprintw(input_win, 1, 2, "Message: %s", display_buffer);
 
         // 커서 표시
-        int cursor_x = 11 + client->chat_input_cursor;  // "Message: " 길이
-        if (cursor_x < CHAT_WIDTH - 3) {                // 윈도우 경계 체크
+        int display_cursor = strlen(display_buffer);
+        int cursor_x       = 11 + display_cursor;  // "Message: " 길이
+        if (cursor_x < win_width - 3) {            // 윈도우 경계 체크
             mvwprintw(input_win, 1, cursor_x, "_");
         }
 

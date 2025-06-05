@@ -16,10 +16,10 @@ void init_ncurses() {
     // 터미널 크기 먼저 확인
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
-    if (rows < 30 || cols < 107) {
+    if (rows < 30 || cols < 100) {  // 2+60+1+35+2 = 100 (최소 구성)
         endwin();
         printf("터미널 크기가 너무 작습니다. 최소 %dx%d가 필요합니다.\n",
-               107, 30);
+               100, 30);
         printf("현재 크기: %dx%d\n", cols, rows);
         exit(1);
     }
@@ -41,6 +41,51 @@ void cleanup_ncurses() {
     if (isendwin() == FALSE) {
         endwin();
     }
+}
+
+// 터미널 크기 변경 처리
+void handle_terminal_resize() {
+    // ncurses 화면 크기 업데이트
+    endwin();
+    refresh();
+
+    // 터미널 크기 확인
+    int rows, cols;
+    getmaxyx(stdscr, rows, cols);
+
+    // 최소 크기 확인
+    if (rows < 30 || cols < 100) {  // 2+60+1+35+2 = 100 (최소 구성)
+        char error_msg[256];
+        snprintf(error_msg, sizeof(error_msg),
+                 "Terminal size is too small.\nMinimum required: 100x30\nCurrent size: %dx%d",
+                 cols, rows);
+        show_error_dialog("Terminal Too Small", error_msg);
+        return;
+    }
+
+    // 현재 화면을 다시 그리기
+    client_state_t *client = get_client_state();
+
+    pthread_mutex_lock(&screen_mutex);
+    screen_state_t current_screen = client->current_screen;
+    pthread_mutex_unlock(&screen_mutex);
+
+    switch (current_screen) {
+        case SCREEN_MAIN:
+            draw_main_screen();
+            break;
+        case SCREEN_MATCHING:
+            draw_matching_screen();
+            break;
+        case SCREEN_GAME:
+            draw_game_screen();
+            break;
+        default:
+            draw_main_screen();
+            break;
+    }
+
+    refresh();
 }
 
 // 테두리 그리기
@@ -105,7 +150,7 @@ void show_error_dialog(const char *title, const char *message) {
     WINDOW *dialog = newwin(dialog_height, dialog_width, start_y, start_x);
 
     // 배경을 어둡게 만들기 위해 색상 설정
-    wbkgd(dialog, COLOR_PAIR(COLOR_PAIR_BORDER));
+    wbkgd(dialog, COLOR_PAIR(COLOR_PAIR_DIALOG_BORDER));
     draw_border(dialog);
 
     // 제목 표시

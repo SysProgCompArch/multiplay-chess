@@ -83,7 +83,8 @@
 #define CHESS_POSSIBLE_MOVE   RGB_COLOR(0, 3, 0)  // 연한 초록색
 #define CHESS_CAPTURE_MOVE    RGB_COLOR(3, 0, 0)  // 연한 빨간색
 #define CHESS_CHECK_HIGHLIGHT RGB_COLOR(5, 1, 1)  // 밝은 빨간색
-#define CHESS_BORDER_COLOR    EXT_COLOR_GRAY_16
+#define CHESS_BORDER          EXT_COLOR_GRAY_16
+#define CHESS_DIALOG_BORDER   EXT_COLOR_GRAY_20
 
 // UI 요소에 유용한 색상들
 #define UI_BUTTON_NORMAL  RGB_COLOR(3, 3, 3)  // 중간 회색
@@ -114,18 +115,10 @@
 
 // 색상 쌍 정의
 #define COLOR_PAIR_BORDER          1
-#define COLOR_PAIR_SELECTED        2
-#define COLOR_PAIR_WHITE_PIECE     3
-#define COLOR_PAIR_BLACK_PIECE     4
-#define COLOR_PAIR_BOARD_WHITE     5
-#define COLOR_PAIR_BOARD_BLACK     6
-#define COLOR_PAIR_SELECTED_SQUARE 7
-
-// 확장 색상 쌍 정의 (256색)
-#define COLOR_PAIR_EXTENDED_1 8   // 빨간색
-#define COLOR_PAIR_EXTENDED_2 9   // 초록색
-#define COLOR_PAIR_EXTENDED_3 10  // 하늘색
-#define COLOR_PAIR_EXTENDED_4 11  // 노란색
-#define COLOR_PAIR_EXTENDED_5 12  // 분홍색
+#define COLOR_PAIR_DIALOG_BORDER   2
+#define COLOR_PAIR_SELECTED        3
+#define COLOR_PAIR_BOARD_WHITE     4
+#define COLOR_PAIR_BOARD_BLACK     5
+#define COLOR_PAIR_SELECTED_SQUARE 6
 
 #endif  // EXTENDED_COLORS_H

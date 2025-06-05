@@ -34,6 +34,7 @@ void init_ncurses();
 void init_colors();
 void cleanup_ncurses();
 void draw_border(WINDOW *win);
+void handle_terminal_resize();
 
 // 화면 그리기
 void draw_main_screen();
@@ -63,5 +64,8 @@ void draw_chat_input(WINDOW *input_win);
 
 // 화면 업데이트
 void update_match_timer();
+
+// 동적 크기 계산
+void calculate_chat_dimensions(int terminal_cols, int *chat_width, int *input_width);
 
 #endif  // CLIENT_UI_H

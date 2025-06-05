@@ -11,12 +11,19 @@
 #include "logger.h"
 #include "ui/ui.h"
 
-// 신호 처리기 - SIGINT 무시
+// 터미널 크기 변경 플래그
+volatile sig_atomic_t terminal_resized = 0;
+
+// 신호 처리기 - SIGINT 무시, SIGWINCH 처리
 void signal_handler(int signum) {
     if (signum == SIGINT) {
         // SIGINT 무시 - 게임 중단 방지
         LOG_INFO("SIGINT ignored to prevent game interruption");
         return;
+    } else if (signum == SIGWINCH) {
+        // 터미널 크기 변경 신호
+        terminal_resized = 1;
+        LOG_DEBUG("Terminal resize signal received");
     }
 }
 
@@ -32,7 +39,8 @@ int main() {
 
     // 신호 처리기 등록
     signal(SIGINT, signal_handler);
-    LOG_DEBUG("Signal handler registered");
+    signal(SIGWINCH, signal_handler);
+    LOG_DEBUG("Signal handlers registered (SIGINT, SIGWINCH)");
 
     // 클라이언트 상태 초기화
     init_client_state();
@@ -64,6 +72,13 @@ int main() {
 
     // 메인 게임 루프
     while (1) {
+        // 터미널 크기 변경 확인
+        if (terminal_resized) {
+            terminal_resized = 0;
+            LOG_INFO("Handling terminal resize");
+            handle_terminal_resize();
+        }
+
         // 입력 처리 (논블로킹)
         timeout(1000);  // 1초 타임아웃
         int ch = getch();

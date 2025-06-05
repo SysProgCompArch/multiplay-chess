@@ -229,14 +229,65 @@ void draw_chat_area(WINDOW *chat_win) {
 
     mvwprintw(chat_win, 1, 2, "Chat");
 
+    // 채팅창 크기에 맞춰 표시할 메시지 수 계산
+    int win_height, win_width;
+    getmaxyx(chat_win, win_height, win_width);
+
+    int max_messages = win_height - 4;  // 테두리와 제목 제외
+    if (max_messages < 1) max_messages = 1;
+
     // 채팅 메시지 표시
     game_state_t *state         = &client->game_state;
-    int           display_count = (state->chat_count > 12) ? 12 : state->chat_count;
-    int           start_index   = (state->chat_count > 12) ? state->chat_count - 12 : 0;
+    int           display_count = (state->chat_count > max_messages) ? max_messages : state->chat_count;
+    int           start_index   = (state->chat_count > max_messages) ? state->chat_count - max_messages : 0;
 
-    for (int i = 0; i < display_count; i++) {
+    int current_line = 3;  // 메시지 표시 시작 라인
+
+    for (int i = 0; i < display_count && current_line < win_height - 1; i++) {
         chat_message_t *msg = &state->chat_messages[start_index + i];
-        mvwprintw(chat_win, 3 + i, 2, "%s: %s", msg->sender, msg->message);
+
+        // 전체 메시지 준비
+        char full_msg[512];
+        snprintf(full_msg, sizeof(full_msg), "%s: %s", msg->sender, msg->message);
+
+        int max_line_len = win_width - 4;  // 테두리와 여백 제외
+        int msg_len      = strlen(full_msg);
+
+        // 메시지가 한 줄에 들어가는 경우
+        if (msg_len <= max_line_len) {
+            mvwprintw(chat_win, current_line, 2, "%s", full_msg);
+            current_line++;
+        } else {
+            // 메시지가 여러 줄에 걸치는 경우
+            int  pos        = 0;
+            bool first_line = true;
+
+            while (pos < msg_len && current_line < win_height - 1) {
+                char line_buffer[256];
+                int  copy_len = (msg_len - pos > max_line_len) ? max_line_len : msg_len - pos;
+
+                // 첫 줄이 아닌 경우 들여쓰기 적용
+                if (!first_line) {
+                    int indent = strlen(msg->sender) + 2;        // "sender: " 길이만큼 들여쓰기
+                    if (indent > max_line_len - 10) indent = 4;  // 너무 긴 이름의 경우 기본 들여쓰기
+
+                    for (int j = 0; j < indent && j < max_line_len - copy_len; j++) {
+                        line_buffer[j] = ' ';
+                    }
+                    strncpy(line_buffer + indent, full_msg + pos, copy_len);
+                    line_buffer[indent + copy_len] = '\0';
+                } else {
+                    strncpy(line_buffer, full_msg + pos, copy_len);
+                    line_buffer[copy_len] = '\0';
+                }
+
+                mvwprintw(chat_win, current_line, 2, "%s", line_buffer);
+
+                pos += copy_len;
+                current_line++;
+                first_line = false;
+            }
+        }
     }
 
     wrefresh(chat_win);
@@ -273,16 +324,26 @@ void draw_game_screen() {
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
 
+    // 동적 채팅창 크기 계산
+    int chat_width, input_width;
+    calculate_chat_dimensions(cols, &chat_width, &input_width);
+
+    // 체스판은 고정 위치와 크기 (왼쪽 여백 2)
     WINDOW *board_win = newwin(BOARD_HEIGHT, BOARD_WIDTH, 1, 2);
     draw_chess_board(board_win);
 
-    WINDOW *chat_win = newwin(CHAT_HEIGHT, CHAT_WIDTH, 1, BOARD_WIDTH + 5);
+    // 채팅창은 동적 크기, 채팅창 높이도 터미널 높이에 맞춰 조정
+    int     chat_height  = (rows > 30) ? rows - 10 : CHAT_HEIGHT;  // 최소 높이 유지
+    int     chat_start_x = 2 + BOARD_WIDTH + 1;                    // 왼쪽여백 + 체스판 + 중간여백(1)
+    WINDOW *chat_win     = newwin(chat_height, chat_width, 1, chat_start_x);
     draw_chat_area(chat_win);
 
-    WINDOW *input_win = newwin(INPUT_HEIGHT, CHAT_WIDTH, CHAT_HEIGHT + 2, BOARD_WIDTH + 5);
+    // 입력창은 채팅창 아래에 위치 (채팅창과 간격 1로 줄임)
+    WINDOW *input_win = newwin(INPUT_HEIGHT, input_width, chat_height + 1, chat_start_x);
     draw_chat_input(input_win);
 
-    WINDOW *menu_win = newwin(10, 20, BOARD_HEIGHT + 2, 2);
+    // 게임 메뉴는 체스판 아래에 고정 (체스판과 간격 1로 줄임)
+    WINDOW *menu_win = newwin(10, 20, BOARD_HEIGHT + 1, 2);
     draw_game_menu(menu_win);
 
     mvprintw(0, 2, "Player: %s vs %s", client->username, client->opponent_name);
@@ -290,6 +351,7 @@ void draw_game_screen() {
 
     wrefresh(board_win);
     wrefresh(chat_win);
+    wrefresh(input_win);
     wrefresh(menu_win);
 
     // 연결 상태 표시
@@ -309,4 +371,24 @@ void update_match_timer() {
             client->current_screen = SCREEN_MAIN;
         }
     }
+}
+
+// 채팅창 크기 동적 계산
+void calculate_chat_dimensions(int terminal_cols, int *chat_width, int *input_width) {
+    // 체스판 크기는 고정 (BOARD_WIDTH = 60)
+    // 왼쪽 여백(2) + 체스판(60) + 중간 여백(1) + 채팅창 + 오른쪽 여백(2) = 터미널 너비
+    // 따라서 채팅창 사용 가능 너비 = 터미널 너비 - 65
+
+    int available_width = terminal_cols - BOARD_WIDTH - 2 - 1 - 2;  // 왼쪽여백 + 체스판 + 중간여백 + 오른쪽여백
+
+    // 채팅창 최소 크기 35, 최대 크기 80
+    if (available_width < 35) {
+        *chat_width = 35;
+    } else if (available_width > 80) {
+        *chat_width = 80;
+    } else {
+        *chat_width = available_width;
+    }
+
+    *input_width = *chat_width;  // 입력창도 같은 크기
 }
