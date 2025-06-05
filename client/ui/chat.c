@@ -1,8 +1,8 @@
 #include <ncursesw/ncurses.h>
 #include <string.h>
 
-#include "client_network.h"
-#include "client_state.h"
+#include "../client_network.h"
+#include "../client_state.h"
 #include "logger.h"
 #include "ui.h"
 

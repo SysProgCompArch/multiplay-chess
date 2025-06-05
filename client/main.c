@@ -9,7 +9,7 @@
 #include "client_network.h"
 #include "client_state.h"
 #include "logger.h"
-#include "ui.h"
+#include "ui/ui.h"
 
 // 신호 처리기 - SIGINT 무시
 void signal_handler(int signum) {

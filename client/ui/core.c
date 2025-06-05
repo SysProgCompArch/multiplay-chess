@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "client_state.h"
+#include "../client_state.h"
 #include "ui.h"
 
 // ncurses 초기화

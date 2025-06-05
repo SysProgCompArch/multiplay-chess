@@ -1,6 +1,7 @@
 {
     "editor.formatOnSave": true,
     "files.associations": {
-        "system_error": "c"
+        "system_error": "c",
+        "ui.h": "c"
     }
 }

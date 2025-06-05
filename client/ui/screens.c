@@ -1,7 +1,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "client_state.h"
+#include "../client_state.h"
 #include "piece.h"
 #include "ui.h"
 

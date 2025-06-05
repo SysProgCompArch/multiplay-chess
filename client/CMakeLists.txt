@@ -3,10 +3,10 @@ add_executable(client
     game_state.c
     client_state.c
     client_network.c
-    ui_core.c
-    ui_screens.c
-    ui_input.c
-    ui_chat.c
+    ui/core.c
+    ui/screens.c
+    ui/input.c
+    ui/chat.c
     handlers/ping.c
     handlers/echo.c
     handlers/match.c

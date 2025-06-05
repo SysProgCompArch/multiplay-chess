@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include "../client_state.h"
-#include "../ui.h"
+#include "../ui/ui.h"
 #include "handlers.h"
 #include "logger.h"
 
