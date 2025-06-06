@@ -87,10 +87,8 @@ piece_t black_pawn = {
 
 // --- 기물 테이블 & 승격용 퀸 반환 함수 ---
 piece_t *piece_table[2][6] = {
-    {&white_king, &white_queen, &white_rook,
-     &white_bishop, &white_knight, &white_pawn},
-    {&black_king, &black_queen, &black_rook,
-     &black_bishop, &black_knight, &black_pawn}
+    {&white_pawn, &white_knight, &white_bishop, &white_rook, &white_queen, &white_king},
+    {&black_pawn, &black_knight, &black_bishop, &black_rook, &black_queen, &black_king}
 };
 
 piece_t *get_default_queen(int color) {

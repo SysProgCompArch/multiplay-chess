@@ -104,15 +104,13 @@ void handle_board_click(int board_x, int board_y) {
                 return;
             }
 
-            // 현재 턴인지 확인 - 디버그용으로 일시적으로 비활성화
+            // 현재 턴인지 확인
             if (board->current_turn != client->game_state.local_team) {
                 char turn_msg[128];
                 snprintf(turn_msg, sizeof(turn_msg), "It's not your turn! current_turn=%d, local_team=%d",
                          board->current_turn, client->game_state.local_team);
                 add_chat_message_safe("System", turn_msg);
-
-                // 디버그용: 턴 체크 일시적으로 비활성화
-                // return;
+                return;
             }
 
             // 턴 확인 완료 - 자신의 기물을 선택함
