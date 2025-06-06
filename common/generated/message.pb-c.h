@@ -31,6 +31,7 @@ typedef struct _MoveResult MoveResult;
 typedef struct _MoveBroadcast MoveBroadcast;
 typedef struct _ResignBroadcast ResignBroadcast;
 typedef struct _ChatBroadcast ChatBroadcast;
+typedef struct _OpponentDisconnectedBroadcast OpponentDisconnectedBroadcast;
 typedef struct _ErrorResponse ErrorResponse;
 
 
@@ -220,6 +221,7 @@ typedef enum {
   SERVER_MESSAGE__MSG_MOVE_BROADCAST = 22,
   SERVER_MESSAGE__MSG_RESIGN_BROADCAST = 23,
   SERVER_MESSAGE__MSG_CHAT_BROADCAST = 24,
+  SERVER_MESSAGE__MSG_OPPONENT_DISCONNECTED = 25,
   SERVER_MESSAGE__MSG_ERROR = 99
     PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(SERVER_MESSAGE__MSG)
 } ServerMessage__MsgCase;
@@ -243,6 +245,7 @@ struct  _ServerMessage
     MoveBroadcast *move_broadcast;
     ResignBroadcast *resign_broadcast;
     ChatBroadcast *chat_broadcast;
+    OpponentDisconnectedBroadcast *opponent_disconnected;
     /*
      * 그 외 새 기능 추가 시 확장 가능
      */
@@ -380,6 +383,31 @@ struct  _ChatBroadcast
 #define CHAT_BROADCAST__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&chat_broadcast__descriptor) \
     , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, NULL }
+
+
+/*
+ * 상대방 연결 끊김 브로드캐스트
+ */
+struct  _OpponentDisconnectedBroadcast
+{
+  ProtobufCMessage base;
+  /*
+   * 게임 ID
+   */
+  char *game_id;
+  /*
+   * 연결이 끊어진 플레이어 ID
+   */
+  char *player_id;
+  /*
+   * 승리자 색 (연결 끊김으로 인한 승리)
+   */
+  Color winner_color;
+  Google__Protobuf__Timestamp *timestamp;
+};
+#define OPPONENT_DISCONNECTED_BROADCAST__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&opponent_disconnected_broadcast__descriptor) \
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, COLOR__COLOR_UNSPECIFIED, NULL }
 
 
 /*
@@ -695,6 +723,25 @@ ChatBroadcast *
 void   chat_broadcast__free_unpacked
                      (ChatBroadcast *message,
                       ProtobufCAllocator *allocator);
+/* OpponentDisconnectedBroadcast methods */
+void   opponent_disconnected_broadcast__init
+                     (OpponentDisconnectedBroadcast         *message);
+size_t opponent_disconnected_broadcast__get_packed_size
+                     (const OpponentDisconnectedBroadcast   *message);
+size_t opponent_disconnected_broadcast__pack
+                     (const OpponentDisconnectedBroadcast   *message,
+                      uint8_t             *out);
+size_t opponent_disconnected_broadcast__pack_to_buffer
+                     (const OpponentDisconnectedBroadcast   *message,
+                      ProtobufCBuffer     *buffer);
+OpponentDisconnectedBroadcast *
+       opponent_disconnected_broadcast__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   opponent_disconnected_broadcast__free_unpacked
+                     (OpponentDisconnectedBroadcast *message,
+                      ProtobufCAllocator *allocator);
 /* ErrorResponse methods */
 void   error_response__init
                      (ErrorResponse         *message);
@@ -761,6 +808,9 @@ typedef void (*ResignBroadcast_Closure)
 typedef void (*ChatBroadcast_Closure)
                  (const ChatBroadcast *message,
                   void *closure_data);
+typedef void (*OpponentDisconnectedBroadcast_Closure)
+                 (const OpponentDisconnectedBroadcast *message,
+                  void *closure_data);
 typedef void (*ErrorResponse_Closure)
                  (const ErrorResponse *message,
                   void *closure_data);
@@ -788,6 +838,7 @@ extern const ProtobufCMessageDescriptor move_result__descriptor;
 extern const ProtobufCMessageDescriptor move_broadcast__descriptor;
 extern const ProtobufCMessageDescriptor resign_broadcast__descriptor;
 extern const ProtobufCMessageDescriptor chat_broadcast__descriptor;
+extern const ProtobufCMessageDescriptor opponent_disconnected_broadcast__descriptor;
 extern const ProtobufCMessageDescriptor error_response__descriptor;
 
 PROTOBUF_C__END_DECLS

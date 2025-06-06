@@ -11,6 +11,7 @@ int handle_ping_response(ServerMessage *msg);
 int handle_echo_response(ServerMessage *msg);
 int handle_match_game_response(ServerMessage *msg);
 int handle_chat_broadcast(ServerMessage *msg);
+int handle_opponent_disconnected_broadcast(ServerMessage *msg);
 int handle_error_response(ServerMessage *msg);
 
 // 메인 핸들러 디스패처

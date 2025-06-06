@@ -7,6 +7,9 @@
 #include "../client_state.h"
 #include "ui.h"
 
+// 전역 다이얼로그 윈도우
+static WINDOW *g_error_dialog = NULL;
+
 // ncurses 초기화
 void init_ncurses() {
     setlocale(LC_ALL, "");
@@ -59,7 +62,7 @@ void handle_terminal_resize() {
         snprintf(error_msg, sizeof(error_msg),
                  "Terminal size is too small.\nMinimum required: 100x30\nCurrent size: %dx%d",
                  cols, rows);
-        show_error_dialog("Terminal Too Small", error_msg);
+        show_error_dialog("Terminal Too Small", error_msg, "OK");
         return;
     }
 
@@ -140,7 +143,7 @@ bool get_username_dialog() {
 }
 
 // 에러 다이얼로그 표시
-void show_error_dialog(const char *title, const char *message) {
+void show_error_dialog(const char *title, const char *message, const char *button_text) {
     client_state_t *client = get_client_state();
 
     pthread_mutex_lock(&screen_mutex);
@@ -191,7 +194,9 @@ void show_error_dialog(const char *title, const char *message) {
     free(msg_copy);
 
     // 확인 버튼 안내
-    mvwprintw(dialog, dialog_height - 2, (dialog_width - 20) / 2, "Press any key to close");
+    char button_msg[64];
+    snprintf(button_msg, sizeof(button_msg), "Press Enter for [%s]", button_text ? button_text : "OK");
+    mvwprintw(dialog, dialog_height - 2, (dialog_width - strlen(button_msg)) / 2, "%s", button_msg);
 
     wrefresh(dialog);
 
@@ -212,4 +217,70 @@ void show_error_dialog(const char *title, const char *message) {
     pthread_mutex_unlock(&screen_mutex);
 
     refresh();
+}
+
+// 에러 다이얼로그 그리기 (키 입력 처리 없음)
+void draw_error_dialog(const char *title, const char *message, const char *button_text) {
+    if (g_error_dialog) {
+        delwin(g_error_dialog);
+        g_error_dialog = NULL;
+    }
+
+    int rows, cols;
+    getmaxyx(stdscr, rows, cols);
+
+    int dialog_width  = 60;
+    int dialog_height = 10;
+    int start_y       = (rows - dialog_height) / 2;
+    int start_x       = (cols - dialog_width) / 2;
+
+    g_error_dialog = newwin(dialog_height, dialog_width, start_y, start_x);
+
+    // 배경을 어둡게 만들기 위해 색상 설정
+    wbkgd(g_error_dialog, COLOR_PAIR(COLOR_PAIR_DIALOG_BORDER));
+    draw_border(g_error_dialog);
+
+    // 제목 표시
+    mvwprintw(g_error_dialog, 1, (dialog_width - strlen(title)) / 2, "%s", title);
+
+    // 구분선
+    mvwprintw(g_error_dialog, 2, 2, "========================================================");
+
+    // 메시지 표시 (여러 줄 지원)
+    char *msg_copy = strdup(message);
+    char *line     = strtok(msg_copy, "\n");
+    int   line_num = 4;
+
+    while (line && line_num < dialog_height - 2) {
+        int msg_len = strlen(line);
+        if (msg_len > dialog_width - 4) {
+            // 긴 메시지는 잘라서 표시
+            char truncated[dialog_width - 3];
+            strncpy(truncated, line, dialog_width - 7);
+            truncated[dialog_width - 7] = '\0';
+            strcat(truncated, "...");
+            mvwprintw(g_error_dialog, line_num, 2, "%s", truncated);
+        } else {
+            mvwprintw(g_error_dialog, line_num, 2, "%s", line);
+        }
+        line = strtok(NULL, "\n");
+        line_num++;
+    }
+
+    free(msg_copy);
+
+    // 확인 버튼 안내
+    char button_msg[64];
+    snprintf(button_msg, sizeof(button_msg), "Press Enter for [%s]", button_text ? button_text : "OK");
+    mvwprintw(g_error_dialog, dialog_height - 2, (dialog_width - strlen(button_msg)) / 2, "%s", button_msg);
+
+    wrefresh(g_error_dialog);
+}
+
+// 에러 다이얼로그 닫기
+void close_error_dialog() {
+    if (g_error_dialog) {
+        delwin(g_error_dialog);
+        g_error_dialog = NULL;
+    }
 }

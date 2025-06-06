@@ -1,6 +1,7 @@
 #include "client_network.h"
 
 #include <arpa/inet.h>
+#include <errno.h>
 #include <netinet/in.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -48,6 +49,11 @@ int connect_to_server() {
 // 네트워크 스레드
 void *network_thread(void *arg) {
     LOG_INFO("Network thread started");
+
+    // 스레드 취소 활성화
+    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
+
     client_state_t *client = get_client_state();
 
     // 초기 연결 시도
@@ -79,11 +85,23 @@ void *network_thread(void *arg) {
             // 연결 종료 또는 오류
             pthread_mutex_lock(&network_mutex);
             client->connected = false;
+
+            // 게임 중이었다면 연결 끊김 상태로 설정
+            if (client->current_screen == SCREEN_GAME) {
+                client->connection_lost = true;
+                strcpy(client->disconnect_message, "Connection lost");
+            }
             pthread_mutex_unlock(&network_mutex);
 
             if (client->socket_fd >= 0) {
                 close(client->socket_fd);
                 client->socket_fd = -1;
+            }
+
+            // 종료 요청이 있었다면 재연결 메시지 출력하지 않고 루프 탈출
+            if (!network_thread_running) {
+                LOG_DEBUG("Network thread shutdown requested during connection loss");
+                break;
             }
 
             add_chat_message_safe("System", "Connection lost. Reconnecting...");
@@ -235,20 +253,34 @@ void cleanup_network() {
     LOG_INFO("Cleaning up network resources");
     network_thread_running = false;
 
-    // 네트워크 스레드가 종료될 때까지 대기
-    if (network_thread_id != 0) {
-        pthread_join(network_thread_id, NULL);
-        network_thread_id = 0;
-    }
-
-    // 소켓 정리
+    // 소켓을 먼저 닫아서 네트워크 스레드의 블로킹을 해제
     client_state_t *client = get_client_state();
     if (client->socket_fd >= 0) {
+        LOG_DEBUG("Closing socket to interrupt network thread");
         close(client->socket_fd);
         client->socket_fd = -1;
     }
 
+    pthread_mutex_lock(&network_mutex);
     client->connected = false;
+    pthread_mutex_unlock(&network_mutex);
+
+    // 네트워크 스레드가 종료될 때까지 대기 (타임아웃 포함)
+    if (network_thread_id != 0) {
+        LOG_DEBUG("Waiting for network thread to terminate");
+
+        // 잠시 대기하여 네트워크 스레드가 자연스럽게 종료되도록 함
+        usleep(100000);  // 100ms 대기
+
+        // 네트워크 스레드가 여전히 블로킹되어 있을 수 있으므로 강제 종료
+        LOG_WARN("Attempting to cancel network thread to ensure clean shutdown");
+        pthread_cancel(network_thread_id);
+        pthread_join(network_thread_id, NULL);
+        LOG_DEBUG("Network thread cancelled and joined successfully");
+
+        network_thread_id = 0;
+    }
+
     LOG_INFO("Network cleanup completed");
 }
 

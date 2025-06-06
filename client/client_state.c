@@ -32,6 +32,14 @@ void init_client_state() {
     // 에러 다이얼로그 상태 초기화
     g_client.error_dialog_active = false;
 
+    // 연결 끊김 감지 초기화
+    g_client.connection_lost = false;
+    memset(g_client.disconnect_message, 0, sizeof(g_client.disconnect_message));
+
+    // 상대방 연결 끊김 감지 초기화
+    g_client.opponent_disconnected = false;
+    memset(g_client.opponent_disconnect_message, 0, sizeof(g_client.opponent_disconnect_message));
+
     init_game_state(&g_client.game_state);
 }
 

@@ -13,6 +13,7 @@ add_executable(client
     handlers/match.c
     handlers/chat.c
     handlers/error.c
+    handlers/disconnect.c
     handlers/dispatcher.c
 )
 

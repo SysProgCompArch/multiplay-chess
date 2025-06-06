@@ -21,7 +21,7 @@ int handle_error_response(ServerMessage *msg) {
         add_chat_message_safe("System", error_msg);
 
         // 에러 다이얼로그 표시
-        show_error_dialog("Server Error", msg->error->message);
+        show_error_dialog("Server Error", msg->error->message, "OK");
     } else {
         LOG_WARN("Received error response but no error message provided");
     }

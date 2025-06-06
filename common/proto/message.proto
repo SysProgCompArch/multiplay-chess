@@ -106,6 +106,7 @@ message ServerMessage {
     MoveBroadcast      move_broadcast   = 22;
     ResignBroadcast    resign_broadcast = 23;
     ChatBroadcast      chat_broadcast   = 24;
+    OpponentDisconnectedBroadcast opponent_disconnected = 25;
     ErrorResponse      error            = 99;
     // 그 외 새 기능 추가 시 확장 가능
   }
@@ -164,6 +165,14 @@ message ChatBroadcast {
   string player_id = 1;
   string message   = 2;
   google.protobuf.Timestamp timestamp = 3;
+}
+
+// 상대방 연결 끊김 브로드캐스트
+message OpponentDisconnectedBroadcast {
+  string game_id      = 1; // 게임 ID
+  string player_id    = 2; // 연결이 끊어진 플레이어 ID
+  Color  winner_color = 3; // 승리자 색 (연결 끊김으로 인한 승리)
+  google.protobuf.Timestamp timestamp = 4;
 }
 
 // 오류를 통일해서 보낼 때

@@ -14,17 +14,38 @@
 // 터미널 크기 변경 플래그
 volatile sig_atomic_t terminal_resized = 0;
 
-// 신호 처리기 - SIGINT 무시, SIGWINCH 처리
-void signal_handler(int signum) {
-    if (signum == SIGINT) {
-        // SIGINT 무시 - 게임 중단 방지
-        LOG_INFO("SIGINT ignored to prevent game interruption");
-        return;
-    } else if (signum == SIGWINCH) {
-        // 터미널 크기 변경 신호
-        terminal_resized = 1;
-        LOG_DEBUG("Terminal resize signal received");
-    }
+// 종료 요청 플래그
+volatile sig_atomic_t shutdown_requested = 0;
+
+// 클린업 및 종료 함수
+void cleanup_and_exit(int exit_code) {
+    LOG_INFO("Starting cleanup and exit process");
+
+    // 네트워크 정리
+    cleanup_network();
+
+    // UI 다이얼로그 정리
+    close_error_dialog();
+
+    // ncurses 정리
+    cleanup_ncurses();
+
+    // 로거 정리
+    logger_cleanup();
+
+    LOG_INFO("Cleanup completed, exiting with code %d", exit_code);
+    exit(exit_code);
+}
+
+// 신호 처리기 - SIGINT 종료 처리, SIGWINCH 처리
+void handle_sigint(int sig) {
+    shutdown_requested = 1;
+    LOG_INFO("SIGINT received, requesting graceful shutdown");
+}
+
+void handle_sigwinch(int sig) {
+    terminal_resized = 1;
+    LOG_DEBUG("Terminal resize signal received");
 }
 
 // 메인 함수
@@ -38,8 +59,8 @@ int main() {
     LOG_INFO("Chess client starting... (PID: %d)", getpid());
 
     // 신호 처리기 등록
-    signal(SIGINT, signal_handler);
-    signal(SIGWINCH, signal_handler);
+    signal(SIGINT, handle_sigint);
+    signal(SIGWINCH, handle_sigwinch);
     LOG_DEBUG("Signal handlers registered (SIGINT, SIGWINCH)");
 
     // 클라이언트 상태 초기화
@@ -58,9 +79,7 @@ int main() {
     if (pthread_create(&network_thread_id, NULL, network_thread, NULL) != 0) {
         LOG_FATAL("Failed to create network thread");
         log_perror("pthread_create");
-        cleanup_ncurses();
-        logger_cleanup();
-        exit(1);
+        cleanup_and_exit(1);
     }
     LOG_INFO("Network thread started");
 
@@ -72,6 +91,12 @@ int main() {
 
     // 메인 게임 루프
     while (1) {
+        // 종료 요청 확인 (SIGINT)
+        if (shutdown_requested) {
+            LOG_INFO("Shutdown requested, exiting gracefully");
+            cleanup_and_exit(0);
+        }
+
         // 터미널 크기 변경 확인
         if (terminal_resized) {
             terminal_resized = 0;
@@ -83,12 +108,35 @@ int main() {
         timeout(1000);  // 1초 타임아웃
         int ch = getch();
 
-        // 에러 다이얼로그가 활성화되어 있으면 키 입력 처리를 건너뜀
+        // 에러 다이얼로그가 활성화되어 있는지 확인
         pthread_mutex_lock(&screen_mutex);
         bool dialog_active = client->error_dialog_active;
         pthread_mutex_unlock(&screen_mutex);
 
-        if (ch != ERR && !dialog_active) {
+        if (ch != ERR && dialog_active) {
+            // 다이얼로그가 활성화되어 있을 때 Enter 키 처리
+            if (ch == '\n' || ch == '\r' || ch == ' ') {
+                LOG_DEBUG("User acknowledged dialog with key: %d", ch);
+                pthread_mutex_lock(&screen_mutex);
+
+                // 다이얼로그 닫기
+                close_error_dialog();
+                client->error_dialog_active = false;
+
+                // 연결 끊김 타입에 따라 상태 리셋
+                if (client->connection_lost) {
+                    client->connection_lost = false;
+                    client->current_screen  = SCREEN_MAIN;
+                    LOG_INFO("User acknowledged connection lost dialog, returned to main screen");
+                } else if (client->opponent_disconnected) {
+                    client->opponent_disconnected = false;
+                    client->current_screen        = SCREEN_MAIN;
+                    LOG_INFO("User acknowledged opponent disconnected dialog, returned to main screen");
+                }
+
+                pthread_mutex_unlock(&screen_mutex);
+            }
+        } else if (ch != ERR && !dialog_active) {
             LOG_DEBUG("Input received: %d", ch);
             // 실제 키 입력이 있을 때만 처리
             if (ch == KEY_MOUSE) {
@@ -117,10 +165,7 @@ int main() {
                             case 'q':
                             case 'Q':
                                 LOG_INFO("User requested quit");
-                                cleanup_network();
-                                cleanup_ncurses();
-                                logger_cleanup();
-                                exit(0);
+                                cleanup_and_exit(0);
                                 break;
                         }
                         break;
@@ -188,6 +233,26 @@ int main() {
             }
         }
 
+        // 연결 끊김 상태 확인 및 다이얼로그 표시
+        pthread_mutex_lock(&screen_mutex);
+        if (client->connection_lost && !client->error_dialog_active) {
+            client->error_dialog_active = true;
+            LOG_INFO("Showing connection lost dialog");
+
+            // 연결 끊김 다이얼로그 표시 (키 입력 처리 없음)
+            draw_error_dialog("Connection Lost", client->disconnect_message, "OK");
+            pthread_mutex_unlock(&screen_mutex);
+        } else if (client->opponent_disconnected && !client->error_dialog_active) {
+            client->error_dialog_active = true;
+            LOG_INFO("Showing opponent disconnected dialog");
+
+            // 상대방 연결 끊김 다이얼로그 표시 (키 입력 처리 없음)
+            draw_error_dialog("Opponent Disconnected", client->opponent_disconnect_message, "OK");
+            pthread_mutex_unlock(&screen_mutex);
+        } else {
+            pthread_mutex_unlock(&screen_mutex);
+        }
+
         // 화면 업데이트 (매번 수행)
         pthread_mutex_lock(&screen_mutex);
 
@@ -200,10 +265,6 @@ int main() {
         refresh();
     }
 
-    // 프로그램 종료 (도달하지 않음)
-    cleanup_network();
-    cleanup_ncurses();
-    logger_cleanup();
-
+    // 프로그램 종료 (이 코드는 도달하지 않음)
     return 0;
 }

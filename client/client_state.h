@@ -48,6 +48,14 @@ typedef struct
 
     // 에러 다이얼로그 상태
     bool error_dialog_active;
+
+    // 연결 끊김 감지
+    bool connection_lost;
+    char disconnect_message[256];
+
+    // 상대방 연결 끊김 감지
+    bool opponent_disconnected;
+    char opponent_disconnect_message[256];
 } client_state_t;
 
 // 전역 상태 접근 함수들

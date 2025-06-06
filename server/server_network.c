@@ -196,16 +196,8 @@ void handle_client_message(int fd, int epfd) {
     if (!msg) {
         LOG_INFO("Client disconnected: fd=%d", fd);
 
-        // 매칭 큐에서 플레이어 제거
-        remove_player_from_matching(fd);
-
-        // TODO: 진행 중인 게임이 있다면 상대방에게 알림
-        ActiveGame *game = find_game_by_player_fd(fd);
-        if (game) {
-            LOG_INFO("Player disconnected from game %s: fd=%d", game->game_id, fd);
-            // 상대방에게 연결 해제 알림 (나중에 구현)
-            remove_game(game->game_id);
-        }
+        // 연결 끊김 통합 처리 (매칭 큐 제거 및 게임 종료 처리)
+        handle_player_disconnect(fd);
 
         close(fd);
         epoll_ctl(epfd, EPOLL_CTL_DEL, fd, NULL);

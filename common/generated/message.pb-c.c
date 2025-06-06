@@ -682,6 +682,51 @@ void   chat_broadcast__free_unpacked
   assert(message->base.descriptor == &chat_broadcast__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   opponent_disconnected_broadcast__init
+                     (OpponentDisconnectedBroadcast         *message)
+{
+  static const OpponentDisconnectedBroadcast init_value = OPPONENT_DISCONNECTED_BROADCAST__INIT;
+  *message = init_value;
+}
+size_t opponent_disconnected_broadcast__get_packed_size
+                     (const OpponentDisconnectedBroadcast *message)
+{
+  assert(message->base.descriptor == &opponent_disconnected_broadcast__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t opponent_disconnected_broadcast__pack
+                     (const OpponentDisconnectedBroadcast *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &opponent_disconnected_broadcast__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t opponent_disconnected_broadcast__pack_to_buffer
+                     (const OpponentDisconnectedBroadcast *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &opponent_disconnected_broadcast__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+OpponentDisconnectedBroadcast *
+       opponent_disconnected_broadcast__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (OpponentDisconnectedBroadcast *)
+     protobuf_c_message_unpack (&opponent_disconnected_broadcast__descriptor,
+                                allocator, len, data);
+}
+void   opponent_disconnected_broadcast__free_unpacked
+                     (OpponentDisconnectedBroadcast *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &opponent_disconnected_broadcast__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 void   error_response__init
                      (ErrorResponse         *message)
 {
@@ -1190,7 +1235,7 @@ const ProtobufCMessageDescriptor chat_request__descriptor =
   (ProtobufCMessageInit) chat_request__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor server_message__field_descriptors[9] =
+static const ProtobufCFieldDescriptor server_message__field_descriptors[10] =
 {
   {
     "version",
@@ -1289,6 +1334,18 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[9] =
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
+    "opponent_disconnected",
+    25,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(ServerMessage, msg_case),
+    offsetof(ServerMessage, opponent_disconnected),
+    &opponent_disconnected_broadcast__descriptor,
+    NULL,
+    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
     "error",
     99,
     PROTOBUF_C_LABEL_NONE,
@@ -1304,10 +1361,11 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[9] =
 static const unsigned server_message__field_indices_by_name[] = {
   7,   /* field[7] = chat_broadcast */
   2,   /* field[2] = echo_res */
-  8,   /* field[8] = error */
+  9,   /* field[9] = error */
   3,   /* field[3] = match_game_res */
   5,   /* field[5] = move_broadcast */
   4,   /* field[4] = move_result */
+  8,   /* field[8] = opponent_disconnected */
   1,   /* field[1] = ping_res */
   6,   /* field[6] = resign_broadcast */
   0,   /* field[0] = version */
@@ -1317,8 +1375,8 @@ static const ProtobufCIntRange server_message__number_ranges[4 + 1] =
   { 1, 0 },
   { 10, 1 },
   { 20, 3 },
-  { 99, 8 },
-  { 0, 9 }
+  { 99, 9 },
+  { 0, 10 }
 };
 const ProtobufCMessageDescriptor server_message__descriptor =
 {
@@ -1328,7 +1386,7 @@ const ProtobufCMessageDescriptor server_message__descriptor =
   "ServerMessage",
   "",
   sizeof(ServerMessage),
-  9,
+  10,
   server_message__field_descriptors,
   server_message__field_indices_by_name,
   4,  server_message__number_ranges,
@@ -1833,6 +1891,83 @@ const ProtobufCMessageDescriptor chat_broadcast__descriptor =
   chat_broadcast__field_indices_by_name,
   1,  chat_broadcast__number_ranges,
   (ProtobufCMessageInit) chat_broadcast__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor opponent_disconnected_broadcast__field_descriptors[4] =
+{
+  {
+    "game_id",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(OpponentDisconnectedBroadcast, game_id),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "player_id",
+    2,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(OpponentDisconnectedBroadcast, player_id),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "winner_color",
+    3,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_ENUM,
+    0,   /* quantifier_offset */
+    offsetof(OpponentDisconnectedBroadcast, winner_color),
+    &color__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "timestamp",
+    4,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(OpponentDisconnectedBroadcast, timestamp),
+    &google__protobuf__timestamp__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned opponent_disconnected_broadcast__field_indices_by_name[] = {
+  0,   /* field[0] = game_id */
+  1,   /* field[1] = player_id */
+  3,   /* field[3] = timestamp */
+  2,   /* field[2] = winner_color */
+};
+static const ProtobufCIntRange opponent_disconnected_broadcast__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 4 }
+};
+const ProtobufCMessageDescriptor opponent_disconnected_broadcast__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "OpponentDisconnectedBroadcast",
+  "OpponentDisconnectedBroadcast",
+  "OpponentDisconnectedBroadcast",
+  "",
+  sizeof(OpponentDisconnectedBroadcast),
+  4,
+  opponent_disconnected_broadcast__field_descriptors,
+  opponent_disconnected_broadcast__field_indices_by_name,
+  1,  opponent_disconnected_broadcast__number_ranges,
+  (ProtobufCMessageInit) opponent_disconnected_broadcast__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
 static const ProtobufCFieldDescriptor error_response__field_descriptors[4] =

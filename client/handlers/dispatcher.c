@@ -26,6 +26,9 @@ int dispatch_server_message(ServerMessage *msg) {
         case SERVER_MESSAGE__MSG_CHAT_BROADCAST:
             return handle_chat_broadcast(msg);
 
+        case SERVER_MESSAGE__MSG_OPPONENT_DISCONNECTED:
+            return handle_opponent_disconnected_broadcast(msg);
+
         case SERVER_MESSAGE__MSG_ERROR:
             return handle_error_response(msg);
 

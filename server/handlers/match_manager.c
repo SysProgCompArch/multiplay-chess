@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include "logger.h"
+#include "network.h"
 
 // 매칭 매니저 전역 인스턴스
 MatchManager g_match_manager;
@@ -267,4 +268,77 @@ int get_active_games_count(void) {
     int count = g_match_manager.active_game_count;
     pthread_mutex_unlock(&g_match_manager.mutex);
     return count;
+}
+
+// 플레이어 연결 끊김 처리
+int handle_player_disconnect(int fd) {
+    pthread_mutex_lock(&g_match_manager.mutex);
+
+    // 1. 대기 중인 플레이어인지 확인하고 제거
+    for (int i = 0; i < MAX_WAITING_PLAYERS; i++) {
+        if (g_match_manager.waiting_players[i].is_active &&
+            g_match_manager.waiting_players[i].fd == fd) {
+            g_match_manager.waiting_players[i].is_active = false;
+            g_match_manager.waiting_count--;
+            LOG_INFO("Disconnected player removed from waiting queue (fd=%d)", fd);
+            pthread_mutex_unlock(&g_match_manager.mutex);
+            return 0;
+        }
+    }
+
+    // 2. 활성 게임에 참여 중인 플레이어인지 확인
+    for (int i = 0; i < MAX_ACTIVE_GAMES; i++) {
+        ActiveGame *game = &g_match_manager.active_games[i];
+        if (game->is_active &&
+            (game->white_player_fd == fd || game->black_player_fd == fd)) {
+            // 상대방 fd 찾기
+            int   opponent_fd;
+            char  disconnected_player_id[64];
+            Color winner_color;
+
+            if (game->white_player_fd == fd) {
+                opponent_fd = game->black_player_fd;
+                strcpy(disconnected_player_id, game->white_player_id);
+                winner_color = COLOR__COLOR_BLACK;
+            } else {
+                opponent_fd = game->white_player_fd;
+                strcpy(disconnected_player_id, game->black_player_id);
+                winner_color = COLOR__COLOR_WHITE;
+            }
+
+            LOG_INFO("Player %s (fd=%d) disconnected from game %s, opponent is fd=%d",
+                     disconnected_player_id, fd, game->game_id, opponent_fd);
+
+            // 상대방에게 연결 끊김 메시지 전송
+            ServerMessage                 disconnect_msg       = SERVER_MESSAGE__INIT;
+            OpponentDisconnectedBroadcast disconnect_broadcast = OPPONENT_DISCONNECTED_BROADCAST__INIT;
+
+            disconnect_broadcast.game_id      = game->game_id;
+            disconnect_broadcast.player_id    = disconnected_player_id;
+            disconnect_broadcast.winner_color = winner_color;
+            // timestamp는 NULL로 두면 protobuf에서 자동으로 처리
+
+            disconnect_msg.msg_case              = SERVER_MESSAGE__MSG_OPPONENT_DISCONNECTED;
+            disconnect_msg.opponent_disconnected = &disconnect_broadcast;
+
+            // 상대방에게 메시지 전송
+            if (send_server_message(opponent_fd, &disconnect_msg) < 0) {
+                LOG_WARN("Failed to send disconnect notification to opponent (fd=%d)", opponent_fd);
+            } else {
+                LOG_INFO("Sent disconnect notification to opponent (fd=%d)", opponent_fd);
+            }
+
+            // 게임 종료
+            game->is_active = false;
+            g_match_manager.active_game_count--;
+            LOG_INFO("Game %s ended due to player disconnect", game->game_id);
+
+            pthread_mutex_unlock(&g_match_manager.mutex);
+            return 1;  // 게임에서 연결 끊김 처리됨
+        }
+    }
+
+    LOG_DEBUG("Disconnected player (fd=%d) was not in any active game or waiting queue", fd);
+    pthread_mutex_unlock(&g_match_manager.mutex);
+    return -1;  // 매칭 상태가 아님
 }

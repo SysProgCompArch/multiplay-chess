@@ -70,6 +70,7 @@ int         remove_player_from_matching(int fd);
 ActiveGame *find_game_by_player_fd(int fd);
 int         remove_game(const char *game_id);
 char       *generate_game_id(void);
+int         handle_player_disconnect(int fd);
 
 // 디버깅/모니터링 함수
 void print_match_manager_status(void);
