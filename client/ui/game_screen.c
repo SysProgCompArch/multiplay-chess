@@ -325,11 +325,13 @@ void draw_player_info(WINDOW *player_win, const char *player_name, bool is_me, t
     }
 
     // 플레이어 이름 표시 (왼쪽)
-    char display_name[64];
+    char        display_name[64];
+    const char *team_text = (team == TEAM_WHITE) ? "[WHITE]" : "[BLACK]";
+
     if (is_me) {
-        snprintf(display_name, sizeof(display_name), "%s (ME)", player_name);
+        snprintf(display_name, sizeof(display_name), "%s %s (ME)", team_text, player_name);
     } else {
-        snprintf(display_name, sizeof(display_name), "%s", player_name);
+        snprintf(display_name, sizeof(display_name), "%s %s", team_text, player_name);
     }
 
     // 현재 턴이면 강조 표시
