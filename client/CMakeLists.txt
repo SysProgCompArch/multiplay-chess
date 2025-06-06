@@ -5,6 +5,9 @@ add_executable(client
     client_network.c
     ui/core.c
     ui/screens.c
+    ui/main_screen.c
+    ui/matching_screen.c
+    ui/game_screen.c
     ui/input.c
     ui/chat.c
     ui/colors.c
