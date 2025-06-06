@@ -244,18 +244,72 @@ void draw_chat_area(WINDOW *chat_win) {
     int win_height, win_width;
     getmaxyx(chat_win, win_height, win_width);
 
-    int max_messages = win_height - 4;  // 테두리와 제목 제외
-    if (max_messages < 1) max_messages = 1;
+    int max_display_lines = win_height - 4;  // 테두리(위1+아래1) + 제목(1) + 여백(1) 제외
+    if (max_display_lines < 1) max_display_lines = 1;
 
     // 채팅 메시지 표시
-    game_state_t *state         = &client->game_state;
-    int           display_count = (state->chat_count > max_messages) ? max_messages : state->chat_count;
-    int           start_index   = (state->chat_count > max_messages) ? state->chat_count - max_messages : 0;
+    game_state_t *state = &client->game_state;
 
-    int current_line = 3;  // 메시지 표시 시작 라인
+    int current_line = 3;               // 메시지 표시 시작 라인
+    int max_line     = win_height - 2;  // 아래 테두리 바로 위까지
 
-    for (int i = 0; i < display_count && current_line < win_height - 1; i++) {
-        chat_message_t *msg = &state->chat_messages[start_index + i];
+    // 역순으로 메시지를 처리하여 최신 메시지가 아래쪽에 표시되도록 함
+    int total_lines_needed = 0;
+
+    // 먼저 필요한 총 라인 수를 계산
+    for (int i = state->chat_count - 1; i >= 0; i--) {
+        chat_message_t *msg = &state->chat_messages[i];
+        char            full_msg[512];
+        snprintf(full_msg, sizeof(full_msg), "%s: %s", msg->sender, msg->message);
+
+        int max_line_len = win_width - 4;  // 테두리와 여백 제외
+        int msg_len      = strlen(full_msg);
+
+        if (msg_len <= max_line_len) {
+            total_lines_needed += 1;
+        } else {
+            // 여러 줄 메시지의 라인 수 계산
+            int lines_for_msg = (msg_len + max_line_len - 1) / max_line_len;  // 올림 계산
+            total_lines_needed += lines_for_msg;
+        }
+
+        if (total_lines_needed >= max_display_lines) {
+            break;
+        }
+    }
+
+    // 표시할 메시지들을 다시 순서대로 출력
+    int start_msg_index = 0;
+    int lines_counted   = 0;
+
+    // 표시할 첫 번째 메시지 인덱스 찾기
+    for (int i = state->chat_count - 1; i >= 0; i--) {
+        chat_message_t *msg = &state->chat_messages[i];
+        char            full_msg[512];
+        snprintf(full_msg, sizeof(full_msg), "%s: %s", msg->sender, msg->message);
+
+        int max_line_len = win_width - 4;
+        int msg_len      = strlen(full_msg);
+
+        int lines_for_this_msg;
+        if (msg_len <= max_line_len) {
+            lines_for_this_msg = 1;
+        } else {
+            lines_for_this_msg = (msg_len + max_line_len - 1) / max_line_len;
+        }
+
+        if (lines_counted + lines_for_this_msg > max_display_lines) {
+            start_msg_index = i + 1;
+            break;
+        }
+
+        lines_counted += lines_for_this_msg;
+        start_msg_index = i;
+    }
+
+    // 실제 메시지 출력
+    for (int i = start_msg_index; i < state->chat_count && current_line < max_line; i++) {
+        chat_message_t *msg = &state->chat_messages[i];
 
         // 전체 메시지 준비
         char full_msg[512];
@@ -266,14 +320,16 @@ void draw_chat_area(WINDOW *chat_win) {
 
         // 메시지가 한 줄에 들어가는 경우
         if (msg_len <= max_line_len) {
-            mvwprintw(chat_win, current_line, 2, "%s", full_msg);
-            current_line++;
+            if (current_line < max_line) {
+                mvwprintw(chat_win, current_line, 2, "%s", full_msg);
+                current_line++;
+            }
         } else {
             // 메시지가 여러 줄에 걸치는 경우
             int  pos        = 0;
             bool first_line = true;
 
-            while (pos < msg_len && current_line < win_height - 1) {
+            while (pos < msg_len && current_line < max_line) {
                 char line_buffer[256];
                 int  copy_len = (msg_len - pos > max_line_len) ? max_line_len : msg_len - pos;
 
