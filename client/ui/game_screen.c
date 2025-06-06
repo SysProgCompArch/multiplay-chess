@@ -28,32 +28,32 @@ const char *get_piece_unicode(piece_t *piece, int team) {
     if (team == 0) {  // 흰색
         switch (piece->type) {
             case KING:
-                return "♔";
+                return "W KNG";
             case QUEEN:
-                return "♕";
+                return "W QUE";
             case ROOK:
-                return "♖";
+                return "W ROK";
             case BISHOP:
-                return "♗";
+                return "W BIS";
             case KNIGHT:
-                return "♘";
+                return "W KNT";
             case PAWN:
-                return "♙";
+                return "W PAW";
         }
     } else {  // 검은색
         switch (piece->type) {
             case KING:
-                return "♚";
+                return "B KNG";
             case QUEEN:
-                return "♛";
+                return "B QUE";
             case ROOK:
-                return "♜";
+                return "B ROK";
             case BISHOP:
-                return "♝";
+                return "B BIS";
             case KNIGHT:
-                return "♞";
+                return "B KNT";
             case PAWN:
-                return "♟";
+                return "B PAW";
         }
     }
     return " ";
@@ -184,7 +184,7 @@ void draw_chess_board(WINDOW *board_win) {
             piecestate_t *piece = &board->board[row][col];
             if (piece->piece && !piece->is_dead) {
                 const char *piece_unicode = get_piece_unicode(piece->piece, piece->color);
-                mvwprintw(board_win, y + 1, x, "   %s   ", piece_unicode);
+                mvwprintw(board_win, y + 1, x, "%s", piece_unicode);
             } else if (is_cursor) {
                 mvwprintw(board_win, y + 1, x, "   *   ");
             } else {
