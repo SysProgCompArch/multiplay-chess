@@ -58,7 +58,19 @@ void handle_board_click(int board_x, int board_y) {
         // 기물 선택
         piecestate_t *piece = &board->board[board_y][board_x];
         if (piece->piece && !piece->is_dead) {
-            // TODO: 현재 플레이어의 기물인지 확인
+            // 현재 플레이어의 기물인지 확인
+            team_t piece_team = (piece->color == 0) ? TEAM_WHITE : TEAM_BLACK;
+            if (piece_team != client->game_state.local_team) {
+                add_chat_message_safe("System", "You can only move your own pieces!");
+                return;
+            }
+
+            // 현재 턴인지 확인
+            if (board->current_turn != client->game_state.local_team) {
+                add_chat_message_safe("System", "It's not your turn!");
+                return;
+            }
+
             client->selected_x     = board_x;
             client->selected_y     = board_y;
             client->piece_selected = true;
@@ -206,6 +218,19 @@ bool handle_chess_notation(const char *notation) {
             // 출발지에 기물이 있는지 확인
             piecestate_t *piece = &board->board[from_y][from_x];
             if (piece->piece && !piece->is_dead) {
+                // 현재 플레이어의 기물인지 확인
+                team_t piece_team = (piece->color == 0) ? TEAM_WHITE : TEAM_BLACK;
+                if (piece_team != client->game_state.local_team) {
+                    add_chat_message_safe("System", "You can only move your own pieces!");
+                    return false;
+                }
+
+                // 현재 턴인지 확인
+                if (board->current_turn != client->game_state.local_team) {
+                    add_chat_message_safe("System", "It's not your turn!");
+                    return false;
+                }
+
                 // 이동 시도
                 if (make_move(board, from_x, from_y, to_x, to_y)) {
                     char move_msg[64];
