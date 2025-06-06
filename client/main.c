@@ -181,6 +181,12 @@ int main() {
                         break;
 
                     case SCREEN_GAME:
+                        // 채팅 입력 모드가 아닌 경우 키보드 조작 시도
+                        if (!client->chat_input_mode && handle_keyboard_board_input(ch)) {
+                            // 키보드 조작이 처리됨
+                            break;
+                        }
+
                         switch (ch) {
                             case '1':
                                 // 기권 처리
@@ -199,14 +205,16 @@ int main() {
                                 add_chat_message_safe("System", "Game save feature coming soon.");
                                 break;
                             case '4':
+                            case 'q':
+                            case 'Q':
+                                // 메인 화면으로 돌아가기
+                                LOG_INFO("User returned to main screen from game");
+                                client->current_screen = SCREEN_MAIN;
+                                break;
                             case 27:  // ESC
                                 if (client->chat_input_mode) {
                                     // 채팅 입력 모드가 활성화된 상태에서 ESC 키
                                     disable_chat_input();
-                                } else {
-                                    // 일반 상태에서 ESC 키 - 메인 화면으로 돌아가기
-                                    LOG_INFO("User returned to main screen from game");
-                                    client->current_screen = SCREEN_MAIN;
                                 }
                                 break;
                             case '\n':
@@ -214,6 +222,9 @@ int main() {
                                 if (client->chat_input_mode) {
                                     // 채팅 입력 모드에서 엔터 - 채팅 입력 함수에서 처리
                                     handle_chat_input(ch);
+                                } else if (is_cursor_mode()) {
+                                    // 키보드 조작에서 이미 엔터 처리됨
+                                    break;
                                 } else {
                                     // 일반 모드에서 엔터 - 채팅 입력 모드 활성화
                                     LOG_DEBUG("User activated chat input mode");

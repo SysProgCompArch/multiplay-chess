@@ -41,8 +41,23 @@ void handle_chat_input(int ch) {
             // 엔터키 - 메시지 전송
             if (client->chat_input_cursor > 0) {
                 client->chat_input_buffer[client->chat_input_cursor] = '\0';
-                LOG_INFO("Sending chat message: %s", client->chat_input_buffer);
-                send_chat_message(client->chat_input_buffer);
+
+                // 체스 표기법 명령어 체크 (move: 로 시작하는 경우)
+                if (strncmp(client->chat_input_buffer, "move:", 5) == 0) {
+                    char *notation = client->chat_input_buffer + 5;
+                    // 앞뒤 공백 제거
+                    while (*notation == ' ') notation++;
+
+                    if (handle_chess_notation(notation)) {
+                        LOG_INFO("Chess notation processed: %s", notation);
+                    } else {
+                        LOG_INFO("Invalid chess notation: %s", notation);
+                    }
+                } else {
+                    // 일반 채팅 메시지 전송
+                    LOG_INFO("Sending chat message: %s", client->chat_input_buffer);
+                    send_chat_message(client->chat_input_buffer);
+                }
 
                 // 채팅 전송 후 즉시 화면 업데이트
                 pthread_mutex_lock(&screen_mutex);
@@ -115,7 +130,7 @@ void draw_chat_input(WINDOW *input_win) {
         }
 
         // 하단에 도움말 표시
-        mvwprintw(input_win, 2, 2, "Enter: Send, ESC: Cancel");
+        mvwprintw(input_win, 2, 2, "Enter: Send, ESC: Cancel, move:e2e4");
     } else {
         // 비활성 모드일 때
         mvwprintw(input_win, 1, 2, "Press Enter to chat");

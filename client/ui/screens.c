@@ -213,9 +213,17 @@ void draw_chess_board(WINDOW *board_win) {
             bool is_selected = (client->piece_selected &&
                                 client->selected_x == col &&
                                 client->selected_y == row);
+
+            // 커서 위치 확인
+            int cursor_x, cursor_y;
+            get_cursor_position(&cursor_x, &cursor_y);
+            bool is_cursor = (is_cursor_mode() && cursor_x == col && cursor_y == row);
+
             // 색상
             if (is_selected) {
                 wattron(board_win, COLOR_PAIR(COLOR_PAIR_SELECTED_SQUARE));
+            } else if (is_cursor) {
+                wattron(board_win, COLOR_PAIR(COLOR_PAIR_CURSOR_SQUARE));
             } else if ((row + col) % 2 == 0) {
                 wattron(board_win, COLOR_PAIR(COLOR_PAIR_BOARD_BLACK));
             } else {
@@ -227,6 +235,8 @@ void draw_chess_board(WINDOW *board_win) {
             if (piece->piece && !piece->is_dead) {
                 char piece_char = get_piece_char(piece->piece, 0);  // 임시로 흰색
                 mvwprintw(board_win, y + 1, x, "   %c   ", piece_char);
+            } else if (is_cursor) {
+                mvwprintw(board_win, y + 1, x, "   *   ");
             } else {
                 mvwprintw(board_win, y + 1, x, "       ");
             }
@@ -234,6 +244,8 @@ void draw_chess_board(WINDOW *board_win) {
             // 색상 해제
             if (is_selected) {
                 wattroff(board_win, COLOR_PAIR(COLOR_PAIR_SELECTED_SQUARE));
+            } else if (is_cursor) {
+                wattroff(board_win, COLOR_PAIR(COLOR_PAIR_CURSOR_SQUARE));
             } else if ((row + col) % 2 == 0) {
                 wattroff(board_win, COLOR_PAIR(COLOR_PAIR_BOARD_WHITE));
             } else {
@@ -332,7 +344,7 @@ void draw_game_menu(WINDOW *menu_win) {
     mvwprintw(menu_win, 3, 2, "1. Resign");
     mvwprintw(menu_win, 4, 2, "2. Draw");
     mvwprintw(menu_win, 5, 2, "3. Save");
-    mvwprintw(menu_win, 6, 2, "4. Main");
+    mvwprintw(menu_win, 6, 2, "Q. Quit to Main");
 
     // 현재 턴 표시
     board_state_t *board     = &client->game_state.board_state;
@@ -391,15 +403,19 @@ void draw_game_screen() {
     draw_chat_input(input_win);
 
     // 게임 메뉴는 내 정보창 아래에 위치
-    WINDOW *menu_win = newwin(10, 20, board_start_y + BOARD_HEIGHT + player_info_height, 2);
-    draw_game_menu(menu_win);
+    // WINDOW *menu_win = newwin(10, 20, board_start_y + BOARD_HEIGHT + player_info_height, 2);
+    // draw_game_menu(menu_win);
 
     wrefresh(opponent_info_win);
     wrefresh(board_win);
     wrefresh(my_info_win);
     wrefresh(chat_win);
     wrefresh(input_win);
-    wrefresh(menu_win);
+    // wrefresh(menu_win);
+
+    // 조작법 안내 (화면 하단)
+    int help_y = rows - 2;
+    mvprintw(help_y, 2, "Controls: Arrow keys + Space/Enter | ESC to cancel | Q to quit | Enter to chat | move:e2e4");
 
     // 연결 상태 표시
     draw_connection_status();

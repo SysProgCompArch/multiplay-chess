@@ -95,3 +95,134 @@ void handle_mouse_input(MEVENT *event) {
         }
     }
 }
+
+// 현재 커서 위치 (방향키 조작용)
+static int  cursor_x    = 0;
+static int  cursor_y    = 0;
+static bool cursor_mode = false;
+
+// 커서 모드 활성화/비활성화
+void enable_cursor_mode() {
+    cursor_mode = true;
+    cursor_x    = 0;
+    cursor_y    = 0;
+}
+
+void disable_cursor_mode() {
+    cursor_mode = false;
+}
+
+bool is_cursor_mode() {
+    return cursor_mode;
+}
+
+void get_cursor_position(int *x, int *y) {
+    *x = cursor_x;
+    *y = cursor_y;
+}
+
+// 키보드 입력으로 체스판 조작
+bool handle_keyboard_board_input(int ch) {
+    client_state_t *client = get_client_state();
+
+    if (client->current_screen != SCREEN_GAME) {
+        return false;
+    }
+
+    switch (ch) {
+        case KEY_UP:
+            if (!cursor_mode) enable_cursor_mode();
+            if (cursor_y > 0) cursor_y--;
+            return true;
+
+        case KEY_DOWN:
+            if (!cursor_mode) enable_cursor_mode();
+            if (cursor_y < BOARD_SIZE - 1) cursor_y++;
+            return true;
+
+        case KEY_LEFT:
+            if (!cursor_mode) enable_cursor_mode();
+            if (cursor_x > 0) cursor_x--;
+            return true;
+
+        case KEY_RIGHT:
+            if (!cursor_mode) enable_cursor_mode();
+            if (cursor_x < BOARD_SIZE - 1) cursor_x++;
+            return true;
+
+        case ' ':   // 스페이스바
+        case '\n':  // 엔터
+        case '\r':
+            if (cursor_mode) {
+                handle_board_click(cursor_x, cursor_y);
+                return true;
+            }
+            return false;
+
+        case 27:  // ESC
+            // 기물이 선택되어 있으면 선택 해제
+            if (client->piece_selected) {
+                client->piece_selected = false;
+                return true;
+            }
+            // 커서 모드가 활성화되어 있으면 비활성화
+            if (cursor_mode) {
+                disable_cursor_mode();
+                return true;
+            }
+            // 그 외의 경우 ESC는 아무것도 하지 않음 (메인 화면으로 가지 않음)
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+// 체스 표기법 파싱 및 처리
+bool handle_chess_notation(const char *notation) {
+    client_state_t *client = get_client_state();
+
+    if (client->current_screen != SCREEN_GAME) {
+        return false;
+    }
+
+    // 간단한 표기법 파싱 (예: e2e4, a1b2)
+    if (strlen(notation) == 4) {
+        // 출발지 파싱
+        int from_x = notation[0] - 'a';
+        int from_y = 8 - (notation[1] - '0');
+
+        // 도착지 파싱
+        int to_x = notation[2] - 'a';
+        int to_y = 8 - (notation[3] - '0');
+
+        // 범위 체크
+        if (from_x >= 0 && from_x < 8 && from_y >= 0 && from_y < 8 &&
+            to_x >= 0 && to_x < 8 && to_y >= 0 && to_y < 8) {
+            board_state_t *board = &client->game_state.board_state;
+
+            // 출발지에 기물이 있는지 확인
+            piecestate_t *piece = &board->board[from_y][from_x];
+            if (piece->piece && !piece->is_dead) {
+                // 이동 시도
+                if (make_move(board, from_x, from_y, to_x, to_y)) {
+                    char move_msg[64];
+                    snprintf(move_msg, sizeof(move_msg), "Move: %s", notation);
+                    add_chat_message_safe("System", move_msg);
+                    // TODO: 서버에 이동 정보 전송
+                    return true;
+                } else {
+                    add_chat_message_safe("System", "Invalid move notation.");
+                }
+            } else {
+                add_chat_message_safe("System", "No piece at starting position.");
+            }
+        } else {
+            add_chat_message_safe("System", "Invalid notation format.");
+        }
+    } else {
+        add_chat_message_safe("System", "Use format: e2e4 (from-to)");
+    }
+
+    return false;
+}

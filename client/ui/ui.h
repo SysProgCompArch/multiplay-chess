@@ -62,6 +62,16 @@ void handle_mouse_input(MEVENT *event);
 void handle_board_click(int board_x, int board_y);
 bool coord_to_board_pos(int screen_x, int screen_y, int *board_x, int *board_y);
 
+// 키보드 조작 (방향키)
+bool handle_keyboard_board_input(int ch);
+void enable_cursor_mode();
+void disable_cursor_mode();
+bool is_cursor_mode();
+void get_cursor_position(int *x, int *y);
+
+// 체스 표기법 처리
+bool handle_chess_notation(const char *notation);
+
 // 채팅 입력 처리
 void enable_chat_input();
 void disable_chat_input();
