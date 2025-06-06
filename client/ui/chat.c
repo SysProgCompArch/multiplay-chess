@@ -135,6 +135,4 @@ void draw_chat_input(WINDOW *input_win) {
         // 비활성 모드일 때
         mvwprintw(input_win, 1, 2, "Press Enter to chat");
     }
-
-    wrefresh(input_win);
 }

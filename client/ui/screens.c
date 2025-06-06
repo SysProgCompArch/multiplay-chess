@@ -52,7 +52,6 @@ void draw_connection_status() {
 // 메인 화면 그리기
 void draw_main_screen() {
     clear();
-    wnoutrefresh(stdscr);  // stdscr 변경사항을 가상 화면에 반영
 
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
@@ -97,20 +96,20 @@ void draw_main_screen() {
     mvwprintw(main_win, 21, (main_width - 60) / 2, "═══════════════════════════════════════════════════════════");
     wattroff(main_win, COLOR_PAIR(COLOR_PAIR_BORDER));
 
-    wnoutrefresh(main_win);
-
     // 연결 상태 표시
     draw_connection_status();
-    wnoutrefresh(stdscr);  // stdscr 변경사항도 가상 화면에 반영
 
-    // 모든 그리기 작업 완료 후 한 번에 화면 업데이트
+    // 더블 버퍼링: 모든 윈도우를 준비한 후 한 번에 화면에 반영
+    wnoutrefresh(stdscr);
+    wnoutrefresh(main_win);
     doupdate();
+
+    delwin(main_win);
 }
 
 // 매칭 화면 그리기
 void draw_matching_screen() {
     clear();
-    wnoutrefresh(stdscr);  // stdscr 변경사항을 가상 화면에 반영
 
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
@@ -148,14 +147,15 @@ void draw_matching_screen() {
 
     mvwprintw(match_win, 7, (MATCH_DIALOG_WIDTH - 19) / 2, "Press ESC to cancel");
 
-    wnoutrefresh(match_win);
-
     // 연결 상태 표시
     draw_connection_status();
-    wnoutrefresh(stdscr);  // stdscr 변경사항도 가상 화면에 반영
 
-    // 모든 그리기 작업 완료 후 한 번에 화면 업데이트
+    // 더블 버퍼링: 모든 윈도우를 준비한 후 한 번에 화면에 반영
+    wnoutrefresh(stdscr);
+    wnoutrefresh(match_win);
     doupdate();
+
+    delwin(match_win);
 }
 
 // 체스 말 ASCII 문자 반환
@@ -263,7 +263,7 @@ void draw_chess_board(WINDOW *board_win) {
     }
     // 하단 라벨
     mvwprintw(board_win, BOARD_HEIGHT - 2, BOARD_LABEL_X, "   a      b      c      d      e      f      g      h");
-    wnoutrefresh(board_win);
+    // wrefresh는 상위 함수에서 더블 버퍼링으로 처리
 }
 
 // 채팅 영역 그리기
@@ -336,7 +336,7 @@ void draw_chat_area(WINDOW *chat_win) {
         }
     }
 
-    wnoutrefresh(chat_win);
+    // wrefresh는 상위 함수에서 더블 버퍼링으로 처리
 }
 
 // 게임 메뉴 그리기
@@ -357,16 +357,14 @@ void draw_game_menu(WINDOW *menu_win) {
     const char    *turn_text = (board->current_turn == TEAM_WHITE) ? "White" : "Black";
     mvwprintw(menu_win, 8, 2, "Turn: %s", turn_text);
 
-    wnoutrefresh(menu_win);
+    // wrefresh는 상위 함수에서 더블 버퍼링으로 처리
 }
 
 // 게임 화면 그리기
 void draw_game_screen() {
     client_state_t *client = get_client_state();
 
-    // 전체 화면을 지우되, 바로 refresh하지 않음
     clear();
-    wnoutrefresh(stdscr);  // stdscr 변경사항을 가상 화면에 반영
 
     int rows, cols;
     getmaxyx(stdscr, rows, cols);
@@ -413,23 +411,28 @@ void draw_game_screen() {
     // WINDOW *menu_win = newwin(10, 20, board_start_y + BOARD_HEIGHT + player_info_height, 2);
     // draw_game_menu(menu_win);
 
-    wnoutrefresh(opponent_info_win);
-    wnoutrefresh(board_win);
-    wnoutrefresh(my_info_win);
-    wnoutrefresh(chat_win);
-    wnoutrefresh(input_win);
-    // wnoutrefresh(menu_win);
-
     // 조작법 안내 (화면 하단)
     int help_y = rows - 2;
     mvprintw(help_y, 2, "Controls: Arrow keys + Space/Enter | ESC to cancel | Q to quit | Enter to chat | move:e2e4");
 
     // 연결 상태 표시
     draw_connection_status();
-    wnoutrefresh(stdscr);  // stdscr 변경사항도 가상 화면에 반영
 
-    // 모든 그리기 작업 완료 후 한 번에 화면 업데이트
+    // 더블 버퍼링: 모든 윈도우를 준비한 후 한 번에 화면에 반영
+    wnoutrefresh(stdscr);
+    wnoutrefresh(opponent_info_win);
+    wnoutrefresh(board_win);
+    wnoutrefresh(my_info_win);
+    wnoutrefresh(chat_win);
+    wnoutrefresh(input_win);
     doupdate();
+
+    // 윈도우 메모리 해제
+    delwin(opponent_info_win);
+    delwin(board_win);
+    delwin(my_info_win);
+    delwin(chat_win);
+    delwin(input_win);
 }
 
 // 플레이어 정보 표시
@@ -477,7 +480,7 @@ void draw_player_info(WINDOW *player_win, const char *player_name, bool is_me, t
     }
 
     wattroff(player_win, COLOR_PAIR(color_pair));
-    wnoutrefresh(player_win);
+    // wrefresh는 상위 함수에서 더블 버퍼링으로 처리
 }
 
 // 매칭 타이머 업데이트 (매초 호출)
