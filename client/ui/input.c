@@ -40,19 +40,24 @@ bool coord_to_board_pos(int screen_x, int screen_y, int *board_x, int *board_y) 
 
     // 범위 확인
     if (display_x >= 0 && display_x < BOARD_SIZE && display_y >= 0 && display_y < BOARD_SIZE) {
-        // UI에서 체스 보드를 그릴 때 항상 y좌표를 뒤집어서 그리므로
-        // 화면 좌표를 실제 보드 배열 인덱스로 변환할 때도 이를 고려해야 함
+        // 보드 그리기 로직과 일치시켜야 함:
+        // 화이트 플레이어: actual_row = row, actual_col = col
+        // 블랙 플레이어: actual_row = 7 - row, actual_col = 7 - col
+        // 역변환: display_x/y → actual_x/y
+
         client_state_t *client          = get_client_state();
         bool            is_black_player = (client->game_state.local_team == TEAM_BLACK);
 
         if (is_black_player) {
-            // 블랙 플레이어: x, y 모두 뒤집기
+            // 블랙 플레이어: actual_col = 7 - col, actual_row = 7 - row
+            // 역변환: actual_col = 7 - display_x, actual_row = 7 - display_y
             *board_x = 7 - display_x;
-            *board_y = display_y;  // y는 UI에서 이미 뒤집혀있으므로 그대로 사용
+            *board_y = 7 - display_y;
         } else {
-            // 화이트 플레이어: x는 그대로, y는 UI 뒤집기 보정
+            // 화이트 플레이어: actual_col = col, actual_row = row
+            // 역변환: actual_col = display_x, actual_row = display_y
             *board_x = display_x;
-            *board_y = 7 - display_y;  // UI에서 뒤집어 그렸으므로 다시 뒤집어서 보정
+            *board_y = display_y;
         }
         return true;
     }
