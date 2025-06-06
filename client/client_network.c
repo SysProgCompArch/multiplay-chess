@@ -305,9 +305,7 @@ void send_chat_message(const char *message) {
     ClientMessage chat_msg = CLIENT_MESSAGE__INIT;
     ChatRequest   chat_req = CHAT_REQUEST__INIT;
 
-    chat_req.game_id   = "default_game";  // TODO: 실제 게임 ID 사용
-    chat_req.player_id = client->username;
-    chat_req.message   = (char *)message;
+    chat_req.message = (char *)message;
 
     chat_msg.msg_case = CLIENT_MESSAGE__MSG_CHAT;
     chat_msg.chat     = &chat_req;

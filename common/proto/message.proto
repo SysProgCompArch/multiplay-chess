@@ -67,26 +67,21 @@ message MatchGameRequest {
 
 // 기물 이동 요청
 message MoveRequest {
-  string game_id    = 1; // 어떤 게임인지 식별
-  string player_id  = 2; // 요청 보낸 유저 ID
-  string from       = 3; // 이동 전 위치
-  string to         = 4; // 이동 후 위치
+  string from       = 1; // 이동 전 위치
+  string to         = 2; // 이동 후 위치
   // 요청 시점 타임스탬프
-  google.protobuf.Timestamp timestamp = 5;
+  google.protobuf.Timestamp timestamp = 3;
 }
 
 // 기권(Resign) 요청
 message ResignRequest {
-  string game_id   = 1;
-  string player_id = 2;
+  string player_id = 1;
 }
 
 // 채팅 메시지 전송 예시
 message ChatRequest {
-  string game_id   = 1;
-  string player_id = 2;
-  string message   = 3;
-  google.protobuf.Timestamp timestamp = 4;
+  string message   = 1;
+  google.protobuf.Timestamp timestamp = 2;
 }
 
 

@@ -157,14 +157,6 @@ struct  _MoveRequest
 {
   ProtobufCMessage base;
   /*
-   * 어떤 게임인지 식별
-   */
-  char *game_id;
-  /*
-   * 요청 보낸 유저 ID
-   */
-  char *player_id;
-  /*
    * 이동 전 위치
    */
   char *from;
@@ -179,7 +171,7 @@ struct  _MoveRequest
 };
 #define MOVE_REQUEST__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&move_request__descriptor) \
-    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, NULL }
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, NULL }
 
 
 /*
@@ -188,12 +180,11 @@ struct  _MoveRequest
 struct  _ResignRequest
 {
   ProtobufCMessage base;
-  char *game_id;
   char *player_id;
 };
 #define RESIGN_REQUEST__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&resign_request__descriptor) \
-    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string }
+    , (char *)protobuf_c_empty_string }
 
 
 /*
@@ -202,14 +193,12 @@ struct  _ResignRequest
 struct  _ChatRequest
 {
   ProtobufCMessage base;
-  char *game_id;
-  char *player_id;
   char *message;
   Google__Protobuf__Timestamp *timestamp;
 };
 #define CHAT_REQUEST__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&chat_request__descriptor) \
-    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, NULL }
+    , (char *)protobuf_c_empty_string, NULL }
 
 
 typedef enum {
