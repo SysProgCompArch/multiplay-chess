@@ -141,29 +141,42 @@ void draw_chess_board(WINDOW *board_win) {
     werase(board_win);
     draw_border(board_win);
 
-    // 상단 라벨 (테두리+라벨)
-    mvwprintw(board_win, 1, BOARD_LABEL_Y, "     a      b      c      d      e      f      g      h");
+    // 블랙 플레이어인지 확인
+    bool is_black_player = (client->game_state.local_team == TEAM_BLACK);
+
+    // 상단 라벨 (블랙 플레이어일 때 역순)
+    if (is_black_player) {
+        mvwprintw(board_win, 1, BOARD_LABEL_Y, "     h      g      f      e      d      c      b      a");
+    } else {
+        mvwprintw(board_win, 1, BOARD_LABEL_Y, "     a      b      c      d      e      f      g      h");
+    }
 
     board_state_t *board = &client->game_state.board_state;
 
     for (int row = 0; row < BOARD_SIZE; row++) {
+        // 실제 보드에서의 행/열 계산 (블랙 플레이어일 때 뒤집기)
+        int actual_row = is_black_player ? (7 - row) : row;
+
         // 왼쪽 라벨: 테두리 다음 칸(1)에 표시
-        mvwprintw(board_win, 2 + row * SQUARE_H + 1, 1, "%d ", 8 - row);
+        mvwprintw(board_win, 2 + row * SQUARE_H + 1, 1, "%d ", 8 - actual_row);
+
         for (int col = 0; col < BOARD_SIZE; col++) {
+            int actual_col = is_black_player ? (7 - col) : col;
+
             int  y           = 2 + row * SQUARE_H;
             int  x           = BOARD_LABEL_X + col * SQUARE_W;
             bool is_selected = (client->piece_selected &&
-                                client->selected_x == col &&
-                                client->selected_y == row);
+                                client->selected_x == actual_col &&
+                                client->selected_y == actual_row);
 
-            // 커서 위치 확인
+            // 커서 위치 확인 (실제 좌표로 변환)
             int cursor_x, cursor_y;
             get_cursor_position(&cursor_x, &cursor_y);
-            bool is_cursor = (is_cursor_mode() && cursor_x == col && cursor_y == row);
+            bool is_cursor = (is_cursor_mode() && cursor_x == actual_col && cursor_y == actual_row);
 
-            // 이동 가능 위치 확인
-            bool is_possible_move = client->game_state.possible_moves[row][col];
-            bool is_capture_move  = client->game_state.capture_moves[row][col];
+            // 이동 가능 위치 확인 (실제 좌표 사용)
+            bool is_possible_move = client->game_state.possible_moves[actual_row][actual_col];
+            bool is_capture_move  = client->game_state.capture_moves[actual_row][actual_col];
 
             // 색상 (우선순위: 선택됨 > 커서 > 캡처 > 이동가능 > 기본)
             if (is_selected) {
@@ -181,7 +194,7 @@ void draw_chess_board(WINDOW *board_win) {
             }
             // 3줄로 한 칸 출력
             mvwprintw(board_win, y, x, "       ");
-            piecestate_t *piece = &board->board[row][col];
+            piecestate_t *piece = &board->board[actual_row][actual_col];
             if (piece->piece && !piece->is_dead) {
                 const char *piece_unicode = get_piece_unicode(piece->piece, piece->color);
                 mvwprintw(board_win, y + 1, x, " %s ", piece_unicode);
@@ -207,10 +220,14 @@ void draw_chess_board(WINDOW *board_win) {
             }
         }
         // 오른쪽 라벨: 테두리 바로 안쪽(BOARD_WIDTH - 2)에 표시
-        mvwprintw(board_win, 2 + row * SQUARE_H + 1, BOARD_WIDTH - 2, "%d", 8 - row);
+        mvwprintw(board_win, 2 + row * SQUARE_H + 1, BOARD_WIDTH - 2, "%d", 8 - actual_row);
     }
-    // 하단 라벨
-    mvwprintw(board_win, BOARD_HEIGHT - 2, BOARD_LABEL_X, "   a      b      c      d      e      f      g      h");
+    // 하단 라벨 (블랙 플레이어일 때 역순)
+    if (is_black_player) {
+        mvwprintw(board_win, BOARD_HEIGHT - 2, BOARD_LABEL_X, "   h      g      f      e      d      c      b      a");
+    } else {
+        mvwprintw(board_win, BOARD_HEIGHT - 2, BOARD_LABEL_X, "   a      b      c      d      e      f      g      h");
+    }
     wrefresh(board_win);
 }
 

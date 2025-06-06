@@ -34,11 +34,22 @@ bool coord_to_board_pos(int screen_x, int screen_y, int *board_x, int *board_y) 
         return false;
 
     // 어느 칸인지 계산
-    *board_x = chess_rel_x / SQUARE_W;
-    *board_y = chess_rel_y / SQUARE_H;
+    int display_x = chess_rel_x / SQUARE_W;
+    int display_y = chess_rel_y / SQUARE_H;
 
     // 범위 확인
-    if (*board_x >= 0 && *board_x < BOARD_SIZE && *board_y >= 0 && *board_y < BOARD_SIZE) {
+    if (display_x >= 0 && display_x < BOARD_SIZE && display_y >= 0 && display_y < BOARD_SIZE) {
+        // 블랙 플레이어인지 확인하여 좌표 변환
+        client_state_t *client          = get_client_state();
+        bool            is_black_player = (client->game_state.local_team == TEAM_BLACK);
+
+        if (is_black_player) {
+            *board_x = 7 - display_x;
+            *board_y = 7 - display_y;
+        } else {
+            *board_x = display_x;
+            *board_y = display_y;
+        }
         return true;
     }
 
@@ -131,8 +142,17 @@ bool is_cursor_mode() {
 }
 
 void get_cursor_position(int *x, int *y) {
-    *x = cursor_x;
-    *y = cursor_y;
+    // 블랙 플레이어인 경우 커서 좌표도 변환
+    client_state_t *client          = get_client_state();
+    bool            is_black_player = (client->game_state.local_team == TEAM_BLACK);
+
+    if (is_black_player) {
+        *x = 7 - cursor_x;
+        *y = 7 - cursor_y;
+    } else {
+        *x = cursor_x;
+        *y = cursor_y;
+    }
 }
 
 // 키보드 입력으로 체스판 조작
