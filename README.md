@@ -98,7 +98,7 @@ multiplay-chess/
 
 - 라이브러리 설치 필요
   ```sh
-  sudo apt install protobuf-c-compiler libprotobuf-c-dev libncurses-dev
+  sudo apt install pkg-config protobuf-compiler protobuf-c-compiler libprotobuf-dev libprotobuf-c-dev libncurses-dev
   ```
 
 ### 2. 전체 빌드 및 개별 타겟 빌드 (build.sh 사용)

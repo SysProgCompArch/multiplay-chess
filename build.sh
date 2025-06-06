@@ -1,9 +1,9 @@
 #!/bin/sh
 
-# Check for protobuf-c-compiler and libprotobuf-c-dev dependencies
-for pkg in protobuf-c-compiler libprotobuf-c-dev libncurses-dev; do
+# Check for required dependencies
+for pkg in pkg-config protobuf-compiler protobuf-c-compiler libprotobuf-dev libprotobuf-c-dev libncurses-dev; do
     if ! dpkg -s "$pkg" >/dev/null 2>&1; then
-        echo "Error: Required package $pkg is not installed.\nPlease install the dependencies and try again:\n  sudo apt install protobuf-c-compiler libprotobuf-c-dev" >&2
+        echo "Error: Required package $pkg is not installed.\nPlease install the dependencies and try again:\n  sudo apt install pkg-config protobuf-compiler protobuf-c-compiler libprotobuf-dev libprotobuf-c-dev libncurses-dev" >&2
         exit 1
     fi
 done
