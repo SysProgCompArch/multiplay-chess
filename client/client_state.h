@@ -8,10 +8,6 @@
 #include "common.h"
 #include "game_state.h"
 
-// 서버 연결 설정
-#define SERVER_HOST "127.0.0.1"
-#define SERVER_PORT 8080
-
 // 상수 정의
 #define MAX_CHAT_NAME   32
 #define MAX_PLAYER_NAME 32
@@ -50,6 +46,10 @@ typedef struct
     // 연결 끊김 감지
     bool connection_lost;
     char disconnect_message[256];
+
+    // 서버 연결 정보
+    char server_host[256];
+    int  server_port;
 } client_state_t;
 
 // 전역 상태 접근 함수들

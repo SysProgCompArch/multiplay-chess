@@ -3,6 +3,10 @@
 
 #include <stdbool.h>
 
+// 서버 연결 설정
+#define SERVER_DEFAULT_HOST "127.0.0.1"
+#define SERVER_DEFAULT_PORT 8080
+
 // 네트워크 관련 함수들
 int   connect_to_server();
 void *network_thread(void *arg);

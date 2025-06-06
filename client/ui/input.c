@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "../client_state.h"
 #include "piece.h"
 #include "ui.h"

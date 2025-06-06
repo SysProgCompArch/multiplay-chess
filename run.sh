@@ -1,12 +1,23 @@
 #!/bin/bash
 
-# 사용법: ./run.sh [client|server|test-client] [--port 포트번호 또는 서버IP 포트]
+# 사용법: ./run.sh [client|server|test-client] [옵션들...]
 
 if [ $# -lt 1 ]; then
   echo "사용법: $0 [client|server|test-client] [옵션들...]"
-  echo "  client: 일반 클라이언트 실행"
+  echo "  client: 일반 클라이언트 실행 [-h HOST] [-p PORT]"
   echo "  server: 서버 실행 [--port 포트번호]"
   echo "  test-client: 테스트 클라이언트 실행 [서버IP] [포트번호]"
+  echo ""
+  echo "클라이언트 옵션:"
+  echo "  -h, --host HOST    서버 호스트 (기본값: 127.0.0.1)"
+  echo "  -p, --port PORT    서버 포트 (기본값: 8080)"
+  echo "  --help             도움말 출력"
+  echo ""
+  echo "예시:"
+  echo "  $0 client                    # 기본값으로 클라이언트 실행"
+  echo "  $0 client -h 192.168.1.100  # 특정 호스트로 연결"
+  echo "  $0 client -p 9090           # 특정 포트로 연결"
+  echo "  $0 client -h 192.168.1.100 -p 9090  # 호스트와 포트 모두 지정"
   exit 1
 fi
 

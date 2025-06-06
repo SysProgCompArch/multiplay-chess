@@ -17,7 +17,9 @@
 
 // 서버 연결
 int connect_to_server() {
-    LOG_INFO("Attempting to connect to server %s:%d", SERVER_HOST, SERVER_PORT);
+    client_state_t *client = get_client_state();
+
+    LOG_INFO("Attempting to connect to server %s:%d", client->server_host, client->server_port);
 
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
@@ -28,9 +30,9 @@ int connect_to_server() {
     struct sockaddr_in serv_addr;
     memset(&serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port   = htons(SERVER_PORT);
+    serv_addr.sin_port   = htons(client->server_port);
 
-    if (inet_pton(AF_INET, SERVER_HOST, &serv_addr.sin_addr) <= 0) {
+    if (inet_pton(AF_INET, client->server_host, &serv_addr.sin_addr) <= 0) {
         log_perror("inet_pton");
         close(sockfd);
         return -1;

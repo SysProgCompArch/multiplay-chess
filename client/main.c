@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "client_network.h"
@@ -47,8 +48,62 @@ void handle_sigwinch(int sig) {
     LOG_DEBUG("Terminal resize signal received");
 }
 
+// 사용법 출력
+void print_usage(const char *program_name) {
+    printf("사용법: %s [OPTIONS]\n", program_name);
+    printf("\n옵션:\n");
+    printf("  -h, --host HOST    서버 호스트 (기본값: %s)\n", SERVER_DEFAULT_HOST);
+    printf("  -p, --port PORT    서버 포트 (기본값: %d)\n", SERVER_DEFAULT_PORT);
+    printf("  --help             이 도움말 출력\n");
+    printf("\n예시:\n");
+    printf("  %s                     # 기본값으로 연결\n", program_name);
+    printf("  %s -h 192.168.1.100    # 특정 호스트로 연결\n", program_name);
+    printf("  %s -p 9090             # 특정 포트로 연결\n", program_name);
+    printf("  %s -h 192.168.1.100 -p 9090  # 호스트와 포트 모두 지정\n", program_name);
+}
+
 // 메인 함수
-int main() {
+int main(int argc, char *argv[]) {
+    // 기본값으로 초기화
+    char server_host[256];
+    int  server_port = SERVER_DEFAULT_PORT;
+    strcpy(server_host, SERVER_DEFAULT_HOST);
+
+    // 명령행 인자 처리
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--host") == 0) {
+            if (i + 1 < argc) {
+                strncpy(server_host, argv[i + 1], sizeof(server_host) - 1);
+                server_host[sizeof(server_host) - 1] = '\0';
+                i++;  // 다음 인자 건너뛰기
+            } else {
+                fprintf(stderr, "오류: %s 옵션에 호스트가 필요합니다.\n", argv[i]);
+                print_usage(argv[0]);
+                return 1;
+            }
+        } else if (strcmp(argv[i], "-p") == 0 || strcmp(argv[i], "--port") == 0) {
+            if (i + 1 < argc) {
+                server_port = atoi(argv[i + 1]);
+                if (server_port <= 0 || server_port > 65535) {
+                    fprintf(stderr, "오류: 잘못된 포트 번호: %s\n", argv[i + 1]);
+                    return 1;
+                }
+                i++;  // 다음 인자 건너뛰기
+            } else {
+                fprintf(stderr, "오류: %s 옵션에 포트 번호가 필요합니다.\n", argv[i]);
+                print_usage(argv[0]);
+                return 1;
+            }
+        } else if (strcmp(argv[i], "--help") == 0) {
+            print_usage(argv[0]);
+            return 0;
+        } else {
+            fprintf(stderr, "오류: 알 수 없는 옵션: %s\n", argv[i]);
+            print_usage(argv[0]);
+            return 1;
+        }
+    }
+
     // 로거 초기화 (ncurses 초기화 전에) - 파일 출력 모드
     if (logger_init(LOG_OUTPUT_FILE, "chess_client") != 0) {
         fprintf(stderr, "Failed to initialize logger\n");
@@ -56,6 +111,7 @@ int main() {
     }
 
     LOG_INFO("Chess client starting... (PID: %d)", getpid());
+    LOG_INFO("Target server: %s:%d", server_host, server_port);
 
     // 신호 처리기 등록
     signal(SIGINT, handle_sigint);
@@ -64,14 +120,17 @@ int main() {
 
     // 클라이언트 상태 초기화
     init_client_state();
-    LOG_DEBUG("Client state initialized");
+
+    // 명령행에서 받은 서버 정보로 설정
+    client_state_t *client = get_client_state();
+    strcpy(client->server_host, server_host);
+    client->server_port = server_port;
+
+    LOG_DEBUG("Client state initialized with server %s:%d", client->server_host, client->server_port);
 
     // ncurses 초기화
     init_ncurses();
     LOG_INFO("ncurses initialized");
-
-    // 시작 메시지
-    add_chat_message_safe("System", "Welcome to Chess Client!");
 
     // 네트워크 스레드 시작
     network_thread_running = true;
@@ -85,7 +144,6 @@ int main() {
     // 첫 화면 그리기
     draw_main_screen();
 
-    client_state_t *client = get_client_state();
     LOG_INFO("Starting main game loop");
 
     // 메인 게임 루프

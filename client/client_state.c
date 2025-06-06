@@ -2,6 +2,7 @@
 
 #include <string.h>
 
+#include "client_network.h"
 #include "logger.h"
 
 // 전역 클라이언트 상태
@@ -21,15 +22,18 @@ client_state_t *get_client_state() {
 // 클라이언트 상태 초기화
 void init_client_state() {
     memset(&g_client, 0, sizeof(g_client));
-    g_client.current_screen = SCREEN_MAIN;
-    g_client.connected      = false;
-    g_client.piece_selected = false;
-    g_client.socket_fd      = -1;
+    g_client.current_screen   = SCREEN_MAIN;
+    g_client.connected        = false;
+    g_client.piece_selected   = false;
+    g_client.socket_fd        = -1;
+    g_client.match_start_time = 0;
+    g_client.selected_x       = -1;
+    g_client.selected_y       = -1;
 
     // 채팅 입력 관련 초기화
-    g_client.chat_input_mode = false;
-    memset(g_client.chat_input_buffer, 0, sizeof(g_client.chat_input_buffer));
+    g_client.chat_input_mode   = false;
     g_client.chat_input_cursor = 0;
+    memset(g_client.chat_input_buffer, 0, sizeof(g_client.chat_input_buffer));
 
     // 에러 다이얼로그 상태 초기화
     g_client.dialog_active = false;
@@ -37,6 +41,10 @@ void init_client_state() {
     // 연결 끊김 감지 초기화
     g_client.connection_lost = false;
     memset(g_client.disconnect_message, 0, sizeof(g_client.disconnect_message));
+
+    // 서버 연결 정보 기본값 설정
+    strcpy(g_client.server_host, SERVER_DEFAULT_HOST);
+    g_client.server_port = SERVER_DEFAULT_PORT;
 
     init_game_state(&g_client.game_state);
 }
