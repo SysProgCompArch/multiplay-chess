@@ -385,8 +385,8 @@ void draw_game_menu(WINDOW *menu_win) {
 void draw_player_info(WINDOW *player_win, const char *player_name, bool is_me, team_t team, bool is_current_turn, int time_remaining) {
     werase(player_win);
 
-    // 플레이어 팀에 따른 색상 설정
-    int color_pair = (team == TEAM_WHITE) ? COLOR_PAIR_WHITE_PLAYER : COLOR_PAIR_BLACK_PLAYER;
+    // 현재 턴 여부에 따른 색상 설정 (현재 턴: 흰색 배경, 대기: 검은색 배경)
+    int color_pair = is_current_turn ? COLOR_PAIR_WHITE_PLAYER : COLOR_PAIR_BLACK_PLAYER;
     wattron(player_win, COLOR_PAIR(color_pair));
 
     // 전체 윈도우를 팀 색상으로 채우기
