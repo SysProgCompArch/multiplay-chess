@@ -50,6 +50,9 @@ typedef struct
     // 서버 연결 정보
     char server_host[256];
     int  server_port;
+
+    // 화면 업데이트 요청 플래그 (네트워크 스레드에서 설정)
+    volatile bool screen_update_requested;
 } client_state_t;
 
 // 전역 상태 접근 함수들

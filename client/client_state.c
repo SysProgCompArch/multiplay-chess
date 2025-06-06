@@ -46,6 +46,9 @@ void init_client_state() {
     strcpy(g_client.server_host, SERVER_DEFAULT_HOST);
     g_client.server_port = SERVER_DEFAULT_PORT;
 
+    // 화면 업데이트 플래그 초기화
+    g_client.screen_update_requested = false;
+
     init_game_state(&g_client.game_state);
 }
 

@@ -143,11 +143,23 @@ int main(int argc, char *argv[]) {
 
     // 첫 화면 그리기
     draw_main_screen();
+    refresh();  // 초기 화면은 즉시 표시
+
+    // 메인 루프 진입 전 강제 화면 업데이트 (초기 표시 보장)
+    pthread_mutex_lock(&screen_mutex);
+    draw_current_screen();
+    pthread_mutex_unlock(&screen_mutex);
+    refresh();
 
     LOG_INFO("Starting main game loop");
 
     // 메인 게임 루프
+    // 이전 화면 상태를 추적하여 상태 변경 감지
+    screen_state_t prev_screen = SCREEN_MAIN;
+
     while (1) {
+        bool need_screen_update = false;  // 화면 업데이트 필요 여부 플래그
+
         // 종료 요청 확인 (SIGINT)
         if (shutdown_requested) {
             LOG_INFO("Shutdown requested, exiting gracefully");
@@ -159,6 +171,39 @@ int main(int argc, char *argv[]) {
             terminal_resized = 0;
             LOG_INFO("Handling terminal resize");
             handle_terminal_resize();
+            need_screen_update = true;  // 리사이즈 후에는 화면 업데이트 필요
+        }
+
+        // 네트워크 스레드에 의한 화면 상태 변경 감지
+        pthread_mutex_lock(&screen_mutex);
+        screen_state_t current_screen           = client->current_screen;
+        bool           network_update_requested = client->screen_update_requested;
+        if (network_update_requested) {
+            client->screen_update_requested = false;  // 플래그 리셋
+            LOG_DEBUG("Network update flag detected and reset");
+        }
+        pthread_mutex_unlock(&screen_mutex);
+
+        if (current_screen != prev_screen) {
+            LOG_INFO("Screen state changed from %d to %d", prev_screen, current_screen);
+            need_screen_update = true;
+            prev_screen        = current_screen;
+
+            // 게임 화면으로 전환 시 즉시 강제 업데이트
+            if (current_screen == SCREEN_GAME) {
+                LOG_INFO("Detected transition to game screen, forcing immediate update");
+                pthread_mutex_lock(&screen_mutex);
+                if (!client->dialog_active) {
+                    draw_current_screen();
+                }
+                pthread_mutex_unlock(&screen_mutex);
+                refresh();
+            }
+        }
+
+        if (network_update_requested) {
+            LOG_DEBUG("Network thread requested screen update");
+            need_screen_update = true;
         }
 
         // 입력 처리 (논블로킹)
@@ -184,17 +229,22 @@ int main(int argc, char *argv[]) {
                 if (client->connection_lost) {
                     client->connection_lost = false;
                     client->current_screen  = SCREEN_MAIN;
+                    prev_screen             = SCREEN_MAIN;  // 이전 상태도 업데이트
                     LOG_INFO("User acknowledged connection lost dialog, returned to main screen");
                 } else if (client->game_state.opponent_disconnected) {
                     client->game_state.opponent_disconnected = false;
                     client->current_screen                   = SCREEN_MAIN;
+                    prev_screen                              = SCREEN_MAIN;  // 이전 상태도 업데이트
                     LOG_INFO("User acknowledged opponent disconnected dialog, returned to main screen");
                 }
 
                 pthread_mutex_unlock(&screen_mutex);
+                need_screen_update = true;  // 다이얼로그 닫힌 후 화면 업데이트 필요
             }
         } else if (ch != ERR && !dialog_active) {
             LOG_DEBUG("Input received: %d", ch);
+            need_screen_update = true;  // 사용자 입력이 있으면 화면 업데이트 필요
+
             // 실제 키 입력이 있을 때만 처리
             if (ch == KEY_MOUSE) {
                 MEVENT event;
@@ -211,6 +261,7 @@ int main(int argc, char *argv[]) {
                                 LOG_INFO("User selected start matching");
                                 if (get_username_dialog()) {
                                     start_matching();
+                                    prev_screen = SCREEN_MATCHING;  // 상태 변경 반영
                                 }
                                 break;
                             case '2':
@@ -234,6 +285,7 @@ int main(int argc, char *argv[]) {
                             case 'C':
                                 LOG_INFO("User cancelled matching");
                                 cancel_matching();
+                                prev_screen = SCREEN_MAIN;  // 상태 변경 반영
                                 break;
                         }
                         break;
@@ -251,6 +303,7 @@ int main(int argc, char *argv[]) {
                                 LOG_INFO("User resigned the game");
                                 add_chat_message_safe("System", "You resigned the game.");
                                 client->current_screen = SCREEN_MAIN;
+                                prev_screen            = SCREEN_MAIN;  // 상태 변경 반영
                                 break;
                             case '2':
                                 // 무승부 제안
@@ -268,6 +321,7 @@ int main(int argc, char *argv[]) {
                                 // 메인 화면으로 돌아가기
                                 LOG_INFO("User returned to main screen from game");
                                 client->current_screen = SCREEN_MAIN;
+                                prev_screen            = SCREEN_MAIN;  // 상태 변경 반영
                                 break;
                             case 27:  // ESC
                                 if (client->chat_input_mode) {
@@ -321,16 +375,46 @@ int main(int argc, char *argv[]) {
             pthread_mutex_unlock(&screen_mutex);
         }
 
-        // 화면 업데이트 (매번 수행)
-        pthread_mutex_lock(&screen_mutex);
+        // 화면 업데이트 (필요한 경우에만 수행)
+        // 게임 화면에서는 매칭 애니메이션이나 타이머 때문에 주기적 업데이트가 필요할 수 있음
+        static time_t last_update_time       = 0;
+        time_t        current_time           = time(NULL);
+        bool          periodic_update_needed = ((current_screen == SCREEN_MATCHING || current_screen == SCREEN_GAME) &&
+                                       current_time - last_update_time >= 1);  // 매칭 및 게임 화면에서는 1초마다 업데이트
 
-        // 에러 다이얼로그가 활성화되어 있으면 화면 업데이트를 건너뜀
-        if (!client->dialog_active) {
-            draw_current_screen();
+        // 네트워크 스레드에서 요청된 업데이트나 상태 변경이 있으면 즉시 업데이트
+        if (need_screen_update || periodic_update_needed) {
+            pthread_mutex_lock(&screen_mutex);
+
+            // 에러 다이얼로그가 활성화되어 있으면 화면 업데이트를 건너뜀
+            if (!client->dialog_active) {
+                LOG_DEBUG("Updating screen - need_update: %d, periodic: %d, screen: %d",
+                          need_screen_update, periodic_update_needed, current_screen);
+                draw_current_screen();
+            }
+
+            pthread_mutex_unlock(&screen_mutex);
+            refresh();
+
+            if (periodic_update_needed) {
+                last_update_time = current_time;
+            }
         }
 
-        pthread_mutex_unlock(&screen_mutex);
-        refresh();
+        // 네트워크 이벤트가 있을 때 즉시 반응하도록 추가 확인
+        // 주로 게임 화면 전환을 위한 추가 보장
+        if (!need_screen_update && !periodic_update_needed) {
+            pthread_mutex_lock(&screen_mutex);
+            if (client->screen_update_requested) {
+                LOG_INFO("Additional network update detected, forcing screen refresh");
+                client->screen_update_requested = false;
+                draw_current_screen();
+                pthread_mutex_unlock(&screen_mutex);
+                refresh();
+            } else {
+                pthread_mutex_unlock(&screen_mutex);
+            }
+        }
     }
 
     // 프로그램 종료 (이 코드는 도달하지 않음)

@@ -92,6 +92,9 @@ void *network_thread(void *arg) {
             if (client->current_screen == SCREEN_GAME) {
                 client->connection_lost = true;
                 strcpy(client->disconnect_message, "Connection lost");
+
+                // 화면 업데이트 요청
+                client->screen_update_requested = true;
             }
             pthread_mutex_unlock(&network_mutex);
 

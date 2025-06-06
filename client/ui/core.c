@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "../client_state.h"
+#include "logger.h"
 #include "ui.h"
 
 // 전역 다이얼로그 윈도우
@@ -35,8 +36,8 @@ void init_ncurses() {
 
     init_colors();
 
-    clear();
-    refresh();
+    // clear();  // 초기화 시 clear() 제거
+    // refresh();  // 초기화 시 refresh() 제거
 }
 
 // ncurses 정리
@@ -50,7 +51,7 @@ void cleanup_ncurses() {
 void handle_terminal_resize() {
     // ncurses 화면 크기 업데이트
     endwin();
-    refresh();
+    // refresh();  // refresh 호출 제거 - endwin() 후에는 불필요
 
     // 터미널 크기 확인
     int rows, cols;
@@ -66,6 +67,9 @@ void handle_terminal_resize() {
         return;
     }
 
+    // 리사이즈 시 전체 화면 지우기
+    clear();
+
     // 현재 화면을 다시 그리기
     client_state_t *client = get_client_state();
 
@@ -73,7 +77,7 @@ void handle_terminal_resize() {
     draw_current_screen();
     pthread_mutex_unlock(&screen_mutex);
 
-    refresh();
+    // refresh();  // 최종 refresh는 메인 루프에서 처리
 }
 
 // 테두리 그리기
@@ -89,6 +93,16 @@ void draw_current_screen() {
 
     // mutex는 호출하는 쪽에서 처리하도록 변경
     screen_state_t current_screen = client->current_screen;
+
+    // 이전 화면 상태와 비교를 위한 정적 변수
+    static screen_state_t last_drawn_screen = SCREEN_MAIN;
+
+    // 화면 상태가 변경되었을 때만 전체 화면 지우기
+    if (current_screen != last_drawn_screen) {
+        clear();  // 화면 전환 시에만 전체 화면 지우기
+        last_drawn_screen = current_screen;
+        LOG_DEBUG("Screen transition detected, clearing display");
+    }
 
     switch (current_screen) {
         case SCREEN_MAIN:
@@ -136,8 +150,17 @@ bool get_username_dialog() {
     if (strlen(input) > 0) {
         client_state_t *client = get_client_state();
         strncpy(client->username, input, sizeof(client->username) - 1);
+
+        // 다이얼로그 후 화면 완전히 새로 그리기
+        clear();
+        refresh();
+
         return true;
     }
+
+    // 취소된 경우에도 화면 새로 그리기
+    clear();
+    refresh();
 
     return false;
 }

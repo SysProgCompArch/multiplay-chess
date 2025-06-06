@@ -1,3 +1,4 @@
+#include <pthread.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -32,6 +33,9 @@ int handle_match_game_response(ServerMessage *msg) {
 
                 // 클라이언트 상태 업데이트
                 client_state_t *client = get_client_state();
+
+                pthread_mutex_lock(&screen_mutex);
+
                 strncpy(client->game_state.opponent_player, opponent_name, sizeof(client->game_state.opponent_player) - 1);
                 client->game_state.opponent_player[sizeof(client->game_state.opponent_player) - 1] = '\0';
 
@@ -41,6 +45,14 @@ int handle_match_game_response(ServerMessage *msg) {
                 client->game_state.local_team       = (msg->match_game_res->assigned_color == COLOR__COLOR_WHITE) ? TEAM_WHITE : TEAM_BLACK;
                 client->game_state.game_in_progress = true;
                 client->current_screen              = SCREEN_GAME;
+
+                // 네트워크 스레드에서 상태가 변경되었음을 메인 루프에 알림
+                client->screen_update_requested = true;
+
+                pthread_mutex_unlock(&screen_mutex);
+
+                LOG_INFO("Game state updated: screen=%d, team=%d, opponent=%s",
+                         client->current_screen, client->game_state.local_team, opponent_name);
             }
         } else {
             LOG_WARN("Matchmaking failed: %s",

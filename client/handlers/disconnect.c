@@ -32,6 +32,9 @@ int handle_opponent_disconnected_broadcast(ServerMessage *msg) {
     client->game_state.opponent_disconnected = true;
     snprintf(client->game_state.opponent_disconnect_message, sizeof(client->game_state.opponent_disconnect_message),
              "Your opponent has disconnected.\n%s team wins the game!", winner_text);
+
+    // 화면 업데이트 요청
+    client->screen_update_requested = true;
     pthread_mutex_unlock(&screen_mutex);
 
     // 게임 상태 초기화
