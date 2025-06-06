@@ -356,28 +356,47 @@ void draw_game_screen() {
     int chat_width, input_width;
     calculate_chat_dimensions(cols, &chat_width, &input_width);
 
-    // 체스판은 고정 위치와 크기 (왼쪽 여백 2)
-    WINDOW *board_win = newwin(BOARD_HEIGHT, BOARD_WIDTH, 1, 2);
+    // 플레이어 정보 및 체스판 위치 계산
+    int player_info_height = 1;                       // 플레이어 정보창 높이
+    int board_start_y      = 1 + player_info_height;  // 상대방 정보창 + 간격
+
+    // 상대방 정보창 (체스판 위)
+    game_state_t *game          = &client->game_state;
+    team_t        opponent_team = (game->local_team == TEAM_WHITE) ? TEAM_BLACK : TEAM_WHITE;
+    bool          opponent_turn = (game->board_state.current_turn == opponent_team);
+    int           opponent_time = (opponent_team == TEAM_WHITE) ? game->white_time_remaining : game->black_time_remaining;
+
+    WINDOW *opponent_info_win = newwin(player_info_height, BOARD_WIDTH, 1, 2);
+    draw_player_info(opponent_info_win, get_opponent_name_client(), false, opponent_team, opponent_turn, opponent_time);
+
+    // 체스판 (가운데)
+    WINDOW *board_win = newwin(BOARD_HEIGHT, BOARD_WIDTH, board_start_y, 2);
     draw_chess_board(board_win);
 
-    // 채팅창은 동적 크기, 채팅창 높이도 터미널 높이에 맞춰 조정
-    int     chat_height  = (rows > 30) ? rows - 10 : BOARD_HEIGHT;  // 체스보드와 같은 높이로 설정
-    int     chat_start_x = 2 + BOARD_WIDTH + 1;                     // 왼쪽여백 + 체스판 + 중간여백(1)
-    WINDOW *chat_win     = newwin(chat_height, chat_width, 1, chat_start_x);
+    // 내 정보창 (체스판 아래)
+    bool my_turn = (game->board_state.current_turn == game->local_team);
+    int  my_time = (game->local_team == TEAM_WHITE) ? game->white_time_remaining : game->black_time_remaining;
+
+    WINDOW *my_info_win = newwin(player_info_height, BOARD_WIDTH, board_start_y + BOARD_HEIGHT, 2);
+    draw_player_info(my_info_win, client->username, true, game->local_team, my_turn, my_time);
+
+    // 채팅창 높이를 체스판과 맞춤 (플레이어 정보창 2개 + 체스판 높이)
+    int     total_game_height = player_info_height * 2 + BOARD_HEIGHT;
+    int     chat_start_x      = 2 + BOARD_WIDTH + 1;                                         // 왼쪽여백 + 체스판 + 중간여백(1)
+    WINDOW *chat_win          = newwin(total_game_height - 2, chat_width, 2, chat_start_x);  // 위아래 한칸씩 줄임
     draw_chat_area(chat_win);
 
-    // 입력창은 채팅창 아래에 위치 (채팅창과 간격 1로 줄임)
-    WINDOW *input_win = newwin(INPUT_HEIGHT, input_width, chat_height + 1, chat_start_x);
+    // 입력창은 채팅창 아래에 위치
+    WINDOW *input_win = newwin(INPUT_HEIGHT, input_width, 2 + (total_game_height - 2), chat_start_x);
     draw_chat_input(input_win);
 
-    // 게임 메뉴는 체스판 아래에 고정 (체스판과 간격 1로 줄임)
-    WINDOW *menu_win = newwin(10, 20, BOARD_HEIGHT + 1, 2);
+    // 게임 메뉴는 내 정보창 아래에 위치
+    WINDOW *menu_win = newwin(10, 20, board_start_y + BOARD_HEIGHT + player_info_height, 2);
     draw_game_menu(menu_win);
 
-    mvprintw(0, 2, "Player: %s vs %s", client->username, get_opponent_name_client());
-    mvprintw(0, cols - 20, "Status: Playing");
-
+    wrefresh(opponent_info_win);
     wrefresh(board_win);
+    wrefresh(my_info_win);
     wrefresh(chat_win);
     wrefresh(input_win);
     wrefresh(menu_win);
@@ -385,6 +404,54 @@ void draw_game_screen() {
     // 연결 상태 표시
     draw_connection_status();
     refresh();
+}
+
+// 플레이어 정보 표시
+void draw_player_info(WINDOW *player_win, const char *player_name, bool is_me, team_t team, bool is_current_turn, int time_remaining) {
+    werase(player_win);
+
+    // 플레이어 팀에 따른 색상 설정
+    int color_pair = (team == TEAM_WHITE) ? COLOR_PAIR_WHITE_PLAYER : COLOR_PAIR_BLACK_PLAYER;
+    wattron(player_win, COLOR_PAIR(color_pair));
+
+    // 전체 윈도우를 팀 색상으로 채우기
+    int height, width;
+    getmaxyx(player_win, height, width);
+
+    for (int i = 0; i < height; i++) {
+        mvwprintw(player_win, i, 0, "%*s", width, " ");
+    }
+
+    // 플레이어 이름 표시 (왼쪽)
+    char display_name[64];
+    if (is_me) {
+        snprintf(display_name, sizeof(display_name), "%s (ME)", player_name);
+    } else {
+        snprintf(display_name, sizeof(display_name), "%s", player_name);
+    }
+
+    // 현재 턴이면 강조 표시
+    if (is_current_turn) {
+        wattron(player_win, A_BOLD);
+        mvwprintw(player_win, 0, 1, "► %s", display_name);
+        wattroff(player_win, A_BOLD);
+    } else {
+        mvwprintw(player_win, 0, 1, "  %s", display_name);
+    }
+
+    // 타이머 표시 (오른쪽 정렬)
+    int  minutes = time_remaining / 60;
+    int  seconds = time_remaining % 60;
+    char timer_str[16];
+    snprintf(timer_str, sizeof(timer_str), "%02d:%02d", minutes, seconds);
+
+    int timer_x = width - strlen(timer_str) - 1;
+    if (timer_x > strlen(display_name) + 4) {  // 이름과 겹치지 않도록
+        mvwprintw(player_win, 0, timer_x, "%s", timer_str);
+    }
+
+    wattroff(player_win, COLOR_PAIR(color_pair));
+    wrefresh(player_win);
 }
 
 // 매칭 타이머 업데이트 (매초 호출)
