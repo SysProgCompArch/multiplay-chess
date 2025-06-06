@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "../client_state.h"
+#include "../game_state.h"
 #include "handlers.h"
 #include "logger.h"
 
@@ -42,17 +43,29 @@ int handle_match_game_response(ServerMessage *msg) {
                 strncpy(client->game_state.local_player, client->username, sizeof(client->game_state.local_player) - 1);
                 client->game_state.local_player[sizeof(client->game_state.local_player) - 1] = '\0';
 
-                client->game_state.local_team       = (msg->match_game_res->assigned_color == COLOR__COLOR_WHITE) ? TEAM_WHITE : TEAM_BLACK;
+                // 프로토콜 Color를 team_t로 변환 (COLOR_WHITE=1 -> TEAM_WHITE=0, COLOR_BLACK=2 -> TEAM_BLACK=1)
+                if (msg->match_game_res->assigned_color == COLOR__COLOR_WHITE) {
+                    client->game_state.local_team = TEAM_WHITE;
+                } else if (msg->match_game_res->assigned_color == COLOR__COLOR_BLACK) {
+                    client->game_state.local_team = TEAM_BLACK;
+                } else {
+                    LOG_ERROR("Invalid assigned color: %d", msg->match_game_res->assigned_color);
+                    client->game_state.local_team = TEAM_WHITE;  // 기본값
+                }
                 client->game_state.game_in_progress = true;
                 client->current_screen              = SCREEN_GAME;
+
+                // 게임 시작 시 보드 상태 초기화 (체스는 항상 WHITE가 먼저 시작)
+                init_board_state(&client->game_state.board_state);
+                client->game_state.board_state.current_turn = TEAM_WHITE;
 
                 // 네트워크 스레드에서 상태가 변경되었음을 메인 루프에 알림
                 client->screen_update_requested = true;
 
                 pthread_mutex_unlock(&screen_mutex);
 
-                LOG_INFO("Game state updated: screen=%d, team=%d, opponent=%s",
-                         client->current_screen, client->game_state.local_team, opponent_name);
+                LOG_INFO("Game state updated: screen=%d, local_team=%d, assigned_color=%d, opponent=%s",
+                         client->current_screen, client->game_state.local_team, msg->match_game_res->assigned_color, opponent_name);
             }
         } else {
             LOG_WARN("Matchmaking failed: %s",

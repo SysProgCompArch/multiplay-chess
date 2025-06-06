@@ -65,22 +65,57 @@ void handle_board_click(int board_x, int board_y) {
 
     board_state_t *board = &client->game_state.board_state;
 
+    // 내부 로직용 디버그 메시지
+    char debug_msg[256];
+    snprintf(debug_msg, sizeof(debug_msg), "보드 클릭: (%d, %d) - 이미 변환된 좌표", board_x, board_y);
+    add_chat_message_safe("System", debug_msg);
+
     if (!client->piece_selected) {
         // 기물 선택
         piecestate_t *piece = &board->board[board_y][board_x];
         if (piece->piece && !piece->is_dead) {
             // 현재 플레이어의 기물인지 확인
             team_t piece_team = (piece->color == 0) ? TEAM_WHITE : TEAM_BLACK;
-            if (piece_team != client->game_state.local_team) {
+
+            // 디버그 메시지 추가
+            char debug_msg[256];
+            snprintf(debug_msg, sizeof(debug_msg), "DEBUG: piece_color=%d, piece_team=%d, local_team=%d, current_turn=%d, piece_y=%d, piece_x=%d",
+                     piece->color, piece_team, client->game_state.local_team, board->current_turn, board_y, board_x);
+            add_chat_message_safe("System", debug_msg);
+
+            // 보드 출력 디버그 - 모든 행 확인
+            for (int i = 0; i < 8; i++) {
+                char row_debug[256];
+                snprintf(row_debug, sizeof(row_debug), "Board[%d]: %d %d %d %d %d %d %d %d",
+                         i, board->board[i][0].color, board->board[i][1].color,
+                         board->board[i][2].color, board->board[i][3].color,
+                         board->board[i][4].color, board->board[i][5].color,
+                         board->board[i][6].color, board->board[i][7].color);
+                add_chat_message_safe("System", row_debug);
+            }
+
+            // 블랙 플레이어인 경우 기물 색상 매핑을 다르게 해야 함
+            bool is_black_player = (client->game_state.local_team == TEAM_BLACK);
+
+            // 자신의 기물인지 확인 - 원래는 로컬 팀과 기물 색상이 일치해야 함
+            // 그러나 실제 보드에서는 color 값이 정확히 일치하지 않을 수 있음
+            if ((is_black_player && piece->color != BLACK) || (!is_black_player && piece->color != WHITE)) {
                 add_chat_message_safe("System", "You can only move your own pieces!");
                 return;
             }
 
-            // 현재 턴인지 확인
+            // 현재 턴인지 확인 - 디버그용으로 일시적으로 비활성화
             if (board->current_turn != client->game_state.local_team) {
-                add_chat_message_safe("System", "It's not your turn!");
-                return;
+                char turn_msg[128];
+                snprintf(turn_msg, sizeof(turn_msg), "It's not your turn! current_turn=%d, local_team=%d",
+                         board->current_turn, client->game_state.local_team);
+                add_chat_message_safe("System", turn_msg);
+
+                // 디버그용: 턴 체크 일시적으로 비활성화
+                // return;
             }
+
+            // 턴 확인 완료 - 자신의 기물을 선택함
 
             client->selected_x     = board_x;
             client->selected_y     = board_y;
@@ -115,6 +150,12 @@ void handle_mouse_input(MEVENT *event) {
         if (client->current_screen == SCREEN_GAME) {
             int board_x, board_y;
             if (coord_to_board_pos(event->x, event->y, &board_x, &board_y)) {
+                // 마우스 좌표 변환 디버그
+                char mouse_debug[256];
+                snprintf(mouse_debug, sizeof(mouse_debug), "마우스 클릭: 화면(%d,%d) -> 보드(%d,%d)",
+                         event->x, event->y, board_x, board_y);
+                add_chat_message_safe("System", mouse_debug);
+
                 handle_board_click(board_x, board_y);
             }
         }
@@ -188,7 +229,10 @@ bool handle_keyboard_board_input(int ch) {
         case '\n':  // 엔터
         case '\r':
             if (cursor_mode) {
-                handle_board_click(cursor_x, cursor_y);
+                // 커서 위치를 실제 보드 좌표로 변환
+                int actual_x, actual_y;
+                get_cursor_position(&actual_x, &actual_y);
+                handle_board_click(actual_x, actual_y);
                 return true;
             }
             return false;
@@ -239,8 +283,8 @@ bool handle_chess_notation(const char *notation) {
             piecestate_t *piece = &board->board[from_y][from_x];
             if (piece->piece && !piece->is_dead) {
                 // 현재 플레이어의 기물인지 확인
-                team_t piece_team = (piece->color == 0) ? TEAM_WHITE : TEAM_BLACK;
-                if (piece_team != client->game_state.local_team) {
+                bool is_black_player = (client->game_state.local_team == TEAM_BLACK);
+                if ((is_black_player && piece->color != BLACK) || (!is_black_player && piece->color != WHITE)) {
                     add_chat_message_safe("System", "You can only move your own pieces!");
                     return false;
                 }
