@@ -82,4 +82,7 @@ bool is_stalemate_client(board_state_t *board, team_t team);
 bool        game_is_white_player(const game_state_t *state);
 const char *get_opponent_name(const game_state_t *state);
 
+// 서버 동기화 함수
+bool apply_move_from_server(board_state_t *board, const char *from, const char *to);
+
 #endif  // GAME_STATE_H

@@ -316,3 +316,75 @@ void send_chat_message(const char *message) {
         LOG_DEBUG("Chat message sent successfully");
     }
 }
+
+// 체스 좌표를 배열 인덱스로 변환 (예: "a1" -> (0, 0))
+static bool parse_chess_coordinate_network(const char *coord, int *x, int *y) {
+    if (!coord || strlen(coord) != 2) {
+        return false;
+    }
+
+    char file = coord[0];  // a-h
+    char rank = coord[1];  // 1-8
+
+    if (file < 'a' || file > 'h' || rank < '1' || rank > '8') {
+        return false;
+    }
+
+    *x = file - 'a';  // 0-7
+    *y = rank - '1';  // 0-7
+
+    return true;
+}
+
+// 기물 이동 요청 전송
+int send_move_request(const char *from, const char *to) {
+    LOG_INFO("Sending move request: %s -> %s", from, to);
+    client_state_t *client = get_client_state();
+
+    if (!client->connected) {
+        LOG_WARN("Cannot send move request: not connected to server");
+        add_chat_message_safe("System", "Cannot send move: not connected");
+        return -1;
+    }
+
+    if (!from || !to) {
+        LOG_ERROR("Invalid move coordinates: from=%s, to=%s", from, to);
+        return -1;
+    }
+
+    // 좌표 유효성 검사
+    int from_x, from_y, to_x, to_y;
+    if (!parse_chess_coordinate_network(from, &from_x, &from_y)) {
+        LOG_ERROR("Invalid 'from' coordinate: %s", from);
+        add_chat_message_safe("System", "Invalid source coordinate");
+        return -1;
+    }
+
+    if (!parse_chess_coordinate_network(to, &to_x, &to_y)) {
+        LOG_ERROR("Invalid 'to' coordinate: %s", to);
+        add_chat_message_safe("System", "Invalid destination coordinate");
+        return -1;
+    }
+
+    // MoveRequest 메시지 생성
+    ClientMessage client_msg = CLIENT_MESSAGE__INIT;
+    MoveRequest   move_req   = MOVE_REQUEST__INIT;
+
+    move_req.from = (char *)from;
+    move_req.to   = (char *)to;
+
+    // TODO: timestamp 설정 (필요시)
+
+    client_msg.msg_case = CLIENT_MESSAGE__MSG_MOVE;
+    client_msg.move     = &move_req;
+
+    // 메시지 전송
+    if (send_client_message(client->socket_fd, &client_msg) < 0) {
+        LOG_ERROR("Failed to send move request");
+        add_chat_message_safe("System", "Failed to send move request");
+        return -1;
+    }
+
+    LOG_DEBUG("Move request sent successfully: %s -> %s", from, to);
+    return 0;
+}

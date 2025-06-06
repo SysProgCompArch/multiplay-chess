@@ -27,7 +27,7 @@ typedef struct _ServerMessage ServerMessage;
 typedef struct _PingResponse PingResponse;
 typedef struct _EchoResponse EchoResponse;
 typedef struct _MatchGameResponse MatchGameResponse;
-typedef struct _MoveResult MoveResult;
+typedef struct _MoveResponse MoveResponse;
 typedef struct _MoveBroadcast MoveBroadcast;
 typedef struct _ResignBroadcast ResignBroadcast;
 typedef struct _ChatBroadcast ChatBroadcast;
@@ -206,7 +206,7 @@ typedef enum {
   SERVER_MESSAGE__MSG_PING_RES = 10,
   SERVER_MESSAGE__MSG_ECHO_RES = 11,
   SERVER_MESSAGE__MSG_MATCH_GAME_RES = 20,
-  SERVER_MESSAGE__MSG_MOVE_RESULT = 21,
+  SERVER_MESSAGE__MSG_MOVE_RES = 21,
   SERVER_MESSAGE__MSG_MOVE_BROADCAST = 22,
   SERVER_MESSAGE__MSG_RESIGN_BROADCAST = 23,
   SERVER_MESSAGE__MSG_CHAT_BROADCAST = 24,
@@ -230,7 +230,7 @@ struct  _ServerMessage
     PingResponse *ping_res;
     EchoResponse *echo_res;
     MatchGameResponse *match_game_res;
-    MoveResult *move_result;
+    MoveResponse *move_res;
     MoveBroadcast *move_broadcast;
     ResignBroadcast *resign_broadcast;
     ChatBroadcast *chat_broadcast;
@@ -296,7 +296,7 @@ struct  _MatchGameResponse
 /*
  * 단일 클라이언트에게 보내는 "내가 보낸 MoveRequest에 대한 결과"
  */
-struct  _MoveResult
+struct  _MoveResponse
 {
   ProtobufCMessage base;
   char *game_id;
@@ -315,8 +315,8 @@ struct  _MoveResult
   char *updated_fen;
   Google__Protobuf__Timestamp *timestamp;
 };
-#define MOVE_RESULT__INIT \
- { PROTOBUF_C_MESSAGE_INIT (&move_result__descriptor) \
+#define MOVE_RESPONSE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&move_response__descriptor) \
     , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, 0, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, NULL }
 
 
@@ -640,24 +640,24 @@ MatchGameResponse *
 void   match_game_response__free_unpacked
                      (MatchGameResponse *message,
                       ProtobufCAllocator *allocator);
-/* MoveResult methods */
-void   move_result__init
-                     (MoveResult         *message);
-size_t move_result__get_packed_size
-                     (const MoveResult   *message);
-size_t move_result__pack
-                     (const MoveResult   *message,
+/* MoveResponse methods */
+void   move_response__init
+                     (MoveResponse         *message);
+size_t move_response__get_packed_size
+                     (const MoveResponse   *message);
+size_t move_response__pack
+                     (const MoveResponse   *message,
                       uint8_t             *out);
-size_t move_result__pack_to_buffer
-                     (const MoveResult   *message,
+size_t move_response__pack_to_buffer
+                     (const MoveResponse   *message,
                       ProtobufCBuffer     *buffer);
-MoveResult *
-       move_result__unpack
+MoveResponse *
+       move_response__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data);
-void   move_result__free_unpacked
-                     (MoveResult *message,
+void   move_response__free_unpacked
+                     (MoveResponse *message,
                       ProtobufCAllocator *allocator);
 /* MoveBroadcast methods */
 void   move_broadcast__init
@@ -789,8 +789,8 @@ typedef void (*EchoResponse_Closure)
 typedef void (*MatchGameResponse_Closure)
                  (const MatchGameResponse *message,
                   void *closure_data);
-typedef void (*MoveResult_Closure)
-                 (const MoveResult *message,
+typedef void (*MoveResponse_Closure)
+                 (const MoveResponse *message,
                   void *closure_data);
 typedef void (*MoveBroadcast_Closure)
                  (const MoveBroadcast *message,
@@ -827,7 +827,7 @@ extern const ProtobufCMessageDescriptor server_message__descriptor;
 extern const ProtobufCMessageDescriptor ping_response__descriptor;
 extern const ProtobufCMessageDescriptor echo_response__descriptor;
 extern const ProtobufCMessageDescriptor match_game_response__descriptor;
-extern const ProtobufCMessageDescriptor move_result__descriptor;
+extern const ProtobufCMessageDescriptor move_response__descriptor;
 extern const ProtobufCMessageDescriptor move_broadcast__descriptor;
 extern const ProtobufCMessageDescriptor resign_broadcast__descriptor;
 extern const ProtobufCMessageDescriptor chat_broadcast__descriptor;

@@ -502,49 +502,49 @@ void   match_game_response__free_unpacked
   assert(message->base.descriptor == &match_game_response__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   move_result__init
-                     (MoveResult         *message)
+void   move_response__init
+                     (MoveResponse         *message)
 {
-  static const MoveResult init_value = MOVE_RESULT__INIT;
+  static const MoveResponse init_value = MOVE_RESPONSE__INIT;
   *message = init_value;
 }
-size_t move_result__get_packed_size
-                     (const MoveResult *message)
+size_t move_response__get_packed_size
+                     (const MoveResponse *message)
 {
-  assert(message->base.descriptor == &move_result__descriptor);
+  assert(message->base.descriptor == &move_response__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t move_result__pack
-                     (const MoveResult *message,
+size_t move_response__pack
+                     (const MoveResponse *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &move_result__descriptor);
+  assert(message->base.descriptor == &move_response__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t move_result__pack_to_buffer
-                     (const MoveResult *message,
+size_t move_response__pack_to_buffer
+                     (const MoveResponse *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &move_result__descriptor);
+  assert(message->base.descriptor == &move_response__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-MoveResult *
-       move_result__unpack
+MoveResponse *
+       move_response__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (MoveResult *)
-     protobuf_c_message_unpack (&move_result__descriptor,
+  return (MoveResponse *)
+     protobuf_c_message_unpack (&move_response__descriptor,
                                 allocator, len, data);
 }
-void   move_result__free_unpacked
-                     (MoveResult *message,
+void   move_response__free_unpacked
+                     (MoveResponse *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &move_result__descriptor);
+  assert(message->base.descriptor == &move_response__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 void   move_broadcast__init
@@ -1221,13 +1221,13 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[10] =
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "move_result",
+    "move_res",
     21,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(ServerMessage, msg_case),
-    offsetof(ServerMessage, move_result),
-    &move_result__descriptor,
+    offsetof(ServerMessage, move_res),
+    &move_response__descriptor,
     NULL,
     0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
@@ -1299,7 +1299,7 @@ static const unsigned server_message__field_indices_by_name[] = {
   9,   /* field[9] = error */
   3,   /* field[3] = match_game_res */
   5,   /* field[5] = move_broadcast */
-  4,   /* field[4] = move_result */
+  4,   /* field[4] = move_res */
   8,   /* field[8] = opponent_disconnected */
   1,   /* field[1] = ping_res */
   6,   /* field[6] = resign_broadcast */
@@ -1494,7 +1494,7 @@ const ProtobufCMessageDescriptor match_game_response__descriptor =
   (ProtobufCMessageInit) match_game_response__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor move_result__field_descriptors[6] =
+static const ProtobufCFieldDescriptor move_response__field_descriptors[6] =
 {
   {
     "game_id",
@@ -1502,7 +1502,7 @@ static const ProtobufCFieldDescriptor move_result__field_descriptors[6] =
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(MoveResult, game_id),
+    offsetof(MoveResponse, game_id),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
@@ -1514,7 +1514,7 @@ static const ProtobufCFieldDescriptor move_result__field_descriptors[6] =
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(MoveResult, player_id),
+    offsetof(MoveResponse, player_id),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
@@ -1526,7 +1526,7 @@ static const ProtobufCFieldDescriptor move_result__field_descriptors[6] =
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_BOOL,
     0,   /* quantifier_offset */
-    offsetof(MoveResult, success),
+    offsetof(MoveResponse, success),
     NULL,
     NULL,
     0,             /* flags */
@@ -1538,7 +1538,7 @@ static const ProtobufCFieldDescriptor move_result__field_descriptors[6] =
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(MoveResult, message),
+    offsetof(MoveResponse, message),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
@@ -1550,7 +1550,7 @@ static const ProtobufCFieldDescriptor move_result__field_descriptors[6] =
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(MoveResult, updated_fen),
+    offsetof(MoveResponse, updated_fen),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
@@ -1562,14 +1562,14 @@ static const ProtobufCFieldDescriptor move_result__field_descriptors[6] =
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     0,   /* quantifier_offset */
-    offsetof(MoveResult, timestamp),
+    offsetof(MoveResponse, timestamp),
     &google__protobuf__timestamp__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
-static const unsigned move_result__field_indices_by_name[] = {
+static const unsigned move_response__field_indices_by_name[] = {
   0,   /* field[0] = game_id */
   3,   /* field[3] = message */
   1,   /* field[1] = player_id */
@@ -1577,24 +1577,24 @@ static const unsigned move_result__field_indices_by_name[] = {
   5,   /* field[5] = timestamp */
   4,   /* field[4] = updated_fen */
 };
-static const ProtobufCIntRange move_result__number_ranges[1 + 1] =
+static const ProtobufCIntRange move_response__number_ranges[1 + 1] =
 {
   { 1, 0 },
   { 0, 6 }
 };
-const ProtobufCMessageDescriptor move_result__descriptor =
+const ProtobufCMessageDescriptor move_response__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "MoveResult",
-  "MoveResult",
-  "MoveResult",
+  "MoveResponse",
+  "MoveResponse",
+  "MoveResponse",
   "",
-  sizeof(MoveResult),
+  sizeof(MoveResponse),
   6,
-  move_result__field_descriptors,
-  move_result__field_indices_by_name,
-  1,  move_result__number_ranges,
-  (ProtobufCMessageInit) move_result__init,
+  move_response__field_descriptors,
+  move_response__field_indices_by_name,
+  1,  move_response__number_ranges,
+  (ProtobufCMessageInit) move_response__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
 static const ProtobufCFieldDescriptor move_broadcast__field_descriptors[6] =

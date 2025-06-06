@@ -97,7 +97,7 @@ message ServerMessage {
     PingResponse       ping_res         = 10;
     EchoResponse       echo_res         = 11;
     MatchGameResponse  match_game_res   = 20;
-    MoveResult         move_result      = 21;
+    MoveResponse       move_res         = 21;
     MoveBroadcast      move_broadcast   = 22;
     ResignBroadcast    resign_broadcast = 23;
     ChatBroadcast      chat_broadcast   = 24;
@@ -127,7 +127,7 @@ message MatchGameResponse {
 }
 
 // 단일 클라이언트에게 보내는 "내가 보낸 MoveRequest에 대한 결과"
-message MoveResult {
+message MoveResponse {
   string game_id    = 1;
   string player_id  = 2; // 요청 보낸 유저
   bool success      = 3;

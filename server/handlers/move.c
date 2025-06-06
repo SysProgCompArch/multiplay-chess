@@ -37,15 +37,15 @@ void format_chess_coordinate(int x, int y, char *coord) {
 // 헬퍼 함수: 에러 응답 전송
 int send_move_error(int fd, const char *game_id, const char *player_id, const char *error_msg) {
     ServerMessage response    = SERVER_MESSAGE__INIT;
-    MoveResult    move_result = MOVE_RESULT__INIT;
+    MoveResponse  move_result = MOVE_RESPONSE__INIT;
 
     move_result.game_id   = (char *)game_id;
     move_result.player_id = (char *)player_id;
     move_result.success   = false;
     move_result.message   = (char *)error_msg;
 
-    response.msg_case    = SERVER_MESSAGE__MSG_MOVE_RESULT;
-    response.move_result = &move_result;
+    response.msg_case = SERVER_MESSAGE__MSG_MOVE_RES;
+    response.move_res = &move_result;
 
     return send_server_message(fd, &response);
 }
@@ -53,7 +53,7 @@ int send_move_error(int fd, const char *game_id, const char *player_id, const ch
 // 헬퍼 함수: 성공 응답 전송
 int send_move_success(int fd, const char *game_id, const char *player_id, const char *updated_fen) {
     ServerMessage response    = SERVER_MESSAGE__INIT;
-    MoveResult    move_result = MOVE_RESULT__INIT;
+    MoveResponse  move_result = MOVE_RESPONSE__INIT;
 
     move_result.game_id     = (char *)game_id;
     move_result.player_id   = (char *)player_id;
@@ -61,15 +61,15 @@ int send_move_success(int fd, const char *game_id, const char *player_id, const 
     move_result.message     = "Move successful";
     move_result.updated_fen = (char *)updated_fen;
 
-    response.msg_case    = SERVER_MESSAGE__MSG_MOVE_RESULT;
-    response.move_result = &move_result;
+    response.msg_case = SERVER_MESSAGE__MSG_MOVE_RES;
+    response.move_res = &move_result;
 
     return send_server_message(fd, &response);
 }
 
-// 헬퍼 함수: 상대방에게 이동 브로드캐스트
-int broadcast_move_to_opponent(int opponent_fd, const char *game_id, const char *player_id,
-                               const char *from, const char *to) {
+// 헬퍼 함수: 이동 브로드캐스트
+int broadcast_move(int opponent_fd, const char *game_id, const char *player_id,
+                   const char *from, const char *to) {
     ServerMessage broadcast      = SERVER_MESSAGE__INIT;
     MoveBroadcast move_broadcast = MOVE_BROADCAST__INIT;
 
@@ -166,9 +166,16 @@ int handle_move_message(int fd, ClientMessage *req) {
     }
 
     // 상대방에게 이동 브로드캐스트
-    if (broadcast_move_to_opponent(opponent_fd, game->game_id, player_id,
-                                   move_req->from, move_req->to) < 0) {
+    if (broadcast_move(opponent_fd, game->game_id, player_id,
+                       move_req->from, move_req->to) < 0) {
         LOG_ERROR("Failed to broadcast move to opponent fd=%d", opponent_fd);
+        // 이미 이동은 적용되었으므로, 브로드캐스트 실패만 로그하고 계속 진행
+    }
+
+    // 요청자에게도 이동 브로드캐스트
+    if (broadcast_move(fd, game->game_id, player_id,
+                       move_req->from, move_req->to) < 0) {
+        LOG_ERROR("Failed to broadcast move to requester fd=%d", fd);
         // 이미 이동은 적용되었으므로, 브로드캐스트 실패만 로그하고 계속 진행
     }
 

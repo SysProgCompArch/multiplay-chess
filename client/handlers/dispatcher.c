@@ -32,6 +32,12 @@ int dispatch_server_message(ServerMessage *msg) {
         case SERVER_MESSAGE__MSG_ERROR:
             return handle_error_response(msg);
 
+        case SERVER_MESSAGE__MSG_MOVE_RES:
+            return handle_move_response(msg);
+
+        case SERVER_MESSAGE__MSG_MOVE_BROADCAST:
+            return handle_move_broadcast(msg);
+
         default:
             LOG_WARN("Unknown server message type: %d", msg->msg_case);
             add_chat_message_safe("System", "Unknown server message");

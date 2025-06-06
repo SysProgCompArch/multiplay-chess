@@ -23,6 +23,9 @@ bool should_attempt_reconnect();
 // 채팅 관련
 void send_chat_message(const char *message);
 
+// 게임 관련
+int send_move_request(const char *from, const char *to);
+
 #define RECONNECT_INTERVAL 5  // 5초마다 재연결 시도
 
 #endif  // CLIENT_CLIENT_NETWORK_H

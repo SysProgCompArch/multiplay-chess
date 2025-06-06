@@ -1,5 +1,6 @@
 #include <string.h>
 
+#include "../client_network.h"  // send_move_request 함수를 위해 변경
 #include "../client_state.h"
 #include "piece.h"
 #include "ui.h"
@@ -39,16 +40,19 @@ bool coord_to_board_pos(int screen_x, int screen_y, int *board_x, int *board_y) 
 
     // 범위 확인
     if (display_x >= 0 && display_x < BOARD_SIZE && display_y >= 0 && display_y < BOARD_SIZE) {
-        // 블랙 플레이어인지 확인하여 좌표 변환
+        // UI에서 체스 보드를 그릴 때 항상 y좌표를 뒤집어서 그리므로
+        // 화면 좌표를 실제 보드 배열 인덱스로 변환할 때도 이를 고려해야 함
         client_state_t *client          = get_client_state();
         bool            is_black_player = (client->game_state.local_team == TEAM_BLACK);
 
         if (is_black_player) {
+            // 블랙 플레이어: x, y 모두 뒤집기
             *board_x = 7 - display_x;
-            *board_y = 7 - display_y;
+            *board_y = display_y;  // y는 UI에서 이미 뒤집혀있으므로 그대로 사용
         } else {
+            // 화이트 플레이어: x는 그대로, y는 UI 뒤집기 보정
             *board_x = display_x;
-            *board_y = display_y;
+            *board_y = 7 - display_y;  // UI에서 뒤집어 그렸으므로 다시 뒤집어서 보정
         }
         return true;
     }
@@ -128,13 +132,27 @@ void handle_board_click(int board_x, int board_y) {
             client->piece_selected = false;
             add_chat_message_safe("System", "Selection cancelled.");
         } else {
-            // 다른 위치 클릭 - 이동 시도
-            if (make_move(board, client->selected_x, client->selected_y, board_x, board_y)) {
-                add_chat_message_safe("System", "Piece moved.");
+            // 다른 위치 클릭 - 서버로 이동 요청 전송
+            char from_coord[3], to_coord[3];
+
+            // 보드 좌표를 체스 표기법으로 변환
+            // 배열 인덱스를 체스 표기법으로 변환: y=0->rank8, y=6->rank2, y=7->rank1
+            from_coord[0] = 'a' + client->selected_x;
+            from_coord[1] = '1' + (7 - client->selected_y);  // 배열 인덱스를 rank로 변환
+            from_coord[2] = '\0';
+
+            to_coord[0] = 'a' + board_x;
+            to_coord[1] = '1' + (7 - board_y);  // 배열 인덱스를 rank로 변환
+            to_coord[2] = '\0';
+
+            // 서버로 이동 요청 전송
+            if (send_move_request(from_coord, to_coord) == 0) {
+                char move_msg[64];
+                snprintf(move_msg, sizeof(move_msg), "Move request sent: %s -> %s", from_coord, to_coord);
+                add_chat_message_safe("System", move_msg);
                 client->piece_selected = false;
-                // TODO: 서버에 이동 정보 전송
             } else {
-                add_chat_message_safe("System", "Invalid move.");
+                add_chat_message_safe("System", "Failed to send move request.");
             }
         }
     }
@@ -264,13 +282,13 @@ bool handle_chess_notation(const char *notation) {
 
     // 간단한 표기법 파싱 (예: e2e4, a1b2)
     if (strlen(notation) == 4) {
-        // 출발지 파싱
-        int from_x = notation[0] - 'a';
-        int from_y = 8 - (notation[1] - '0');
+        // 출발지 파싱 - 체스 표기법을 배열 인덱스로 변환
+        int from_x = notation[0] - 'a';        // a=0, b=1, ..., h=7
+        int from_y = 7 - (notation[1] - '1');  // rank1=7, rank2=6, ..., rank8=0
 
-        // 도착지 파싱
-        int to_x = notation[2] - 'a';
-        int to_y = 8 - (notation[3] - '0');
+        // 도착지 파싱 - 체스 표기법을 배열 인덱스로 변환
+        int to_x = notation[2] - 'a';        // a=0, b=1, ..., h=7
+        int to_y = 7 - (notation[3] - '1');  // rank1=7, rank2=6, ..., rank8=0
 
         // 범위 체크
         if (from_x >= 0 && from_x < 8 && from_y >= 0 && from_y < 8 &&
@@ -293,15 +311,22 @@ bool handle_chess_notation(const char *notation) {
                     return false;
                 }
 
-                // 이동 시도
-                if (make_move(board, from_x, from_y, to_x, to_y)) {
+                // 서버로 이동 요청 전송
+                char from_coord[3], to_coord[3];
+                from_coord[0] = notation[0];
+                from_coord[1] = notation[1];
+                from_coord[2] = '\0';
+                to_coord[0]   = notation[2];
+                to_coord[1]   = notation[3];
+                to_coord[2]   = '\0';
+
+                if (send_move_request(from_coord, to_coord) == 0) {
                     char move_msg[64];
-                    snprintf(move_msg, sizeof(move_msg), "Move: %s", notation);
+                    snprintf(move_msg, sizeof(move_msg), "Move request sent: %s", notation);
                     add_chat_message_safe("System", move_msg);
-                    // TODO: 서버에 이동 정보 전송
                     return true;
                 } else {
-                    add_chat_message_safe("System", "Invalid move notation.");
+                    add_chat_message_safe("System", "Failed to send move request.");
                 }
             } else {
                 add_chat_message_safe("System", "No piece at starting position.");

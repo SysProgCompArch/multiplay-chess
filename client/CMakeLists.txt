@@ -18,6 +18,7 @@ add_executable(client
     handlers/error.c
     handlers/disconnect.c
     handlers/dispatcher.c
+    handlers/move.c
 )
 
 # ncurses와 pthread 라이브러리 찾기

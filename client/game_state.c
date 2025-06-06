@@ -220,3 +220,48 @@ bool game_is_white_player(const game_state_t *state) {
 const char *get_opponent_name(const game_state_t *state) {
     return state->opponent_player;
 }
+
+// 서버로부터 받은 이동을 보드에 적용
+bool apply_move_from_server(board_state_t *board, const char *from, const char *to) {
+    if (!from || !to || strlen(from) != 2 || strlen(to) != 2) {
+        return false;
+    }
+
+    // 체스 좌표를 배열 인덱스로 변환
+    int from_x = from[0] - 'a';        // a=0, b=1, ..., h=7
+    int from_y = 7 - (from[1] - '1');  // rank1=7, rank2=6, ..., rank8=0
+    int to_x   = to[0] - 'a';          // a=0, b=1, ..., h=7
+    int to_y   = 7 - (to[1] - '1');    // rank1=7, rank2=6, ..., rank8=0
+
+    // 범위 체크
+    if (from_x < 0 || from_x >= 8 || from_y < 0 || from_y >= 8 ||
+        to_x < 0 || to_x >= 8 || to_y < 0 || to_y >= 8) {
+        return false;
+    }
+
+    // 출발지에 기물이 있는지 확인
+    piecestate_t *from_piece = &board->board[from_y][from_x];
+    if (!from_piece->piece || from_piece->is_dead) {
+        return false;
+    }
+
+    // 목표 위치 확인
+    piecestate_t *to_piece = &board->board[to_y][to_x];
+
+    // 기물 이동
+    *to_piece               = *from_piece;
+    to_piece->x             = to_x;
+    to_piece->y             = to_y;
+    to_piece->is_first_move = false;
+
+    // 원래 위치 비우기
+    from_piece->piece   = NULL;
+    from_piece->is_dead = false;
+
+    // 턴 변경
+    board->current_turn = (board->current_turn == TEAM_WHITE) ? TEAM_BLACK : TEAM_WHITE;
+
+    // TODO: 특수 규칙 처리 (캐슬링, 앙파상, 프로모션 등)
+
+    return true;
+}
