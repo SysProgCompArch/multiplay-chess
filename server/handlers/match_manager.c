@@ -8,6 +8,7 @@
 
 #include "logger.h"
 #include "network.h"
+#include "utils.h"  // 체스판 초기화를 위해 추가
 
 // 매칭 매니저 전역 인스턴스
 MatchManager g_match_manager;
@@ -89,6 +90,9 @@ MatchResult add_player_to_matching(int fd, const char *player_id) {
                     strcpy(game->game_id, generate_game_id());
                     game->game_start_time = time(NULL);
                     game->is_active       = true;
+
+                    // 체스판 초기화 (표준 시작 위치)
+                    init_startpos(&game->game_state);
 
                     if (current_is_white) {
                         game->white_player_fd = fd;

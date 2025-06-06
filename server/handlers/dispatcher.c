@@ -30,10 +30,11 @@ int dispatch_client_message(int fd, ClientMessage *msg) {
             LOG_DEBUG("Handling CHAT message from fd=%d", fd);
             return handle_chat_message(fd, msg);
 
+        case CLIENT_MESSAGE__MSG_MOVE:
+            LOG_DEBUG("Handling MOVE message from fd=%d", fd);
+            return handle_move_message(fd, msg);
+
             // 나중에 추가될 메시지 타입들
-            // case CLIENT_MESSAGE__MSG_MOVE:
-            //     return handle_move_message(fd, msg);
-            //
             // case CLIENT_MESSAGE__MSG_JOIN_GAME:
             //     return handle_join_game_message(fd, msg);
 

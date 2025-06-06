@@ -78,7 +78,7 @@ typedef enum {
   CLIENT_MESSAGE__MSG_PING = 10,
   CLIENT_MESSAGE__MSG_ECHO = 11,
   CLIENT_MESSAGE__MSG_MATCH_GAME = 20,
-  CLIENT_MESSAGE__MSG_MAKE_MOVE = 21,
+  CLIENT_MESSAGE__MSG_MOVE = 21,
   CLIENT_MESSAGE__MSG_RESIGN = 22,
   CLIENT_MESSAGE__MSG_CHAT = 23
     PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(CLIENT_MESSAGE__MSG)
@@ -99,7 +99,7 @@ struct  _ClientMessage
     PingRequest *ping;
     EchoRequest *echo;
     MatchGameRequest *match_game;
-    MoveRequest *make_move;
+    MoveRequest *move;
     ResignRequest *resign;
     ChatRequest *chat;
   };

@@ -194,21 +194,21 @@ bool make_move(board_state_t *board, int from_x, int from_y, int to_x, int to_y)
     return true;
 }
 
-// 체크 상태 확인
-bool is_in_check(board_state_t *board, team_t team) {
-    // TODO: 실제 체크 검증 로직 구현
+// 체크 상태 확인 (클라이언트용 래퍼 함수)
+bool is_in_check_client(board_state_t *board, team_t team) {
+    // TODO: board_state_t를 game_t로 변환해서 common/rule.c의 is_in_check 호출
     return false;
 }
 
-// 체크메이트 확인
-bool is_checkmate(board_state_t *board, team_t team) {
-    // TODO: 실제 체크메이트 검증 로직 구현
+// 체크메이트 확인 (클라이언트용 래퍼 함수)
+bool is_checkmate_client(board_state_t *board, team_t team) {
+    // TODO: board_state_t를 game_t로 변환해서 common/rule.c의 is_checkmate 호출
     return false;
 }
 
-// 스테일메이트 확인
-bool is_stalemate(board_state_t *board, team_t team) {
-    // TODO: 실제 스테일메이트 검증 로직 구현
+// 스테일메이트 확인 (클라이언트용 래퍼 함수)
+bool is_stalemate_client(board_state_t *board, team_t team) {
+    // TODO: board_state_t를 game_t로 변환해서 common/rule.c의 is_stalemate 호출
     return false;
 }
 

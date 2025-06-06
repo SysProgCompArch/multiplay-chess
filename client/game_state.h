@@ -74,9 +74,9 @@ void reset_board_to_starting_position(board_state_t *board);
 void add_chat_message(game_state_t *state, const char *sender, const char *message);
 bool is_valid_move(board_state_t *board, int from_x, int from_y, int to_x, int to_y);
 bool make_move(board_state_t *board, int from_x, int from_y, int to_x, int to_y);
-bool is_in_check(board_state_t *board, team_t team);
-bool is_checkmate(board_state_t *board, team_t team);
-bool is_stalemate(board_state_t *board, team_t team);
+bool is_in_check_client(board_state_t *board, team_t team);
+bool is_checkmate_client(board_state_t *board, team_t team);
+bool is_stalemate_client(board_state_t *board, team_t team);
 
 // 편의 함수들 (클라이언트 상태 호환성)
 bool        game_is_white_player(const game_state_t *state);

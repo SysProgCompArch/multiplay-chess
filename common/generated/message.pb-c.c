@@ -823,12 +823,12 @@ static const ProtobufCFieldDescriptor client_message__field_descriptors[7] =
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "make_move",
+    "move",
     21,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(ClientMessage, msg_case),
-    offsetof(ClientMessage, make_move),
+    offsetof(ClientMessage, move),
     &move_request__descriptor,
     NULL,
     0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
@@ -862,8 +862,8 @@ static const ProtobufCFieldDescriptor client_message__field_descriptors[7] =
 static const unsigned client_message__field_indices_by_name[] = {
   6,   /* field[6] = chat */
   2,   /* field[2] = echo */
-  4,   /* field[4] = make_move */
   3,   /* field[3] = match_game */
+  4,   /* field[4] = move */
   1,   /* field[1] = ping */
   5,   /* field[5] = resign */
   0,   /* field[0] = version */

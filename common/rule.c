@@ -234,3 +234,85 @@ void apply_move(game_t *G, int sx, int sy, int dx, int dy) {
     dst->is_first_move = 0;
     G->side_to_move    = 1 - G->side_to_move;
 }
+
+// 체크 상태 확인
+bool is_in_check(const game_t *G, int color) {
+    // 킹의 위치 찾기
+    int king_x = -1, king_y = -1;
+    for (int x = 0; x < 8; x++) {
+        for (int y = 0; y < 8; y++) {
+            const piecestate_t *ps = &G->board[x][y];
+            if (!ps->is_dead && ps->color == color && ps->piece->type == KING) {
+                king_x = x;
+                king_y = y;
+                break;
+            }
+        }
+        if (king_x != -1) break;
+    }
+
+    if (king_x == -1) return false;  // 킹이 없으면 체크가 아님
+
+    return is_square_attacked(G, king_x, king_y, 1 - color);
+}
+
+// 체크메이트 확인
+bool is_checkmate(const game_t *G) {
+    int color = G->side_to_move;
+
+    // 체크 상태가 아니면 체크메이트가 아님
+    if (!is_in_check(G, color)) {
+        return false;
+    }
+
+    // 모든 가능한 수를 시도해서 체크에서 벗어날 수 있는지 확인
+    for (int sx = 0; sx < 8; sx++) {
+        for (int sy = 0; sy < 8; sy++) {
+            const piecestate_t *src = &G->board[sx][sy];
+            if (src->is_dead || src->color != color) continue;
+
+            for (int dx = 0; dx < 8; dx++) {
+                for (int dy = 0; dy < 8; dy++) {
+                    if (is_move_legal(G, sx, sy, dx, dy)) {
+                        return false;  // 합법적인 수가 있으면 체크메이트가 아님
+                    }
+                }
+            }
+        }
+    }
+
+    return true;  // 합법적인 수가 없으면 체크메이트
+}
+
+// 스테일메이트 확인
+bool is_stalemate(const game_t *G) {
+    int color = G->side_to_move;
+
+    // 체크 상태이면 스테일메이트가 아님
+    if (is_in_check(G, color)) {
+        return false;
+    }
+
+    // 모든 가능한 수를 시도해서 합법적인 수가 있는지 확인
+    for (int sx = 0; sx < 8; sx++) {
+        for (int sy = 0; sy < 8; sy++) {
+            const piecestate_t *src = &G->board[sx][sy];
+            if (src->is_dead || src->color != color) continue;
+
+            for (int dx = 0; dx < 8; dx++) {
+                for (int dy = 0; dy < 8; dy++) {
+                    if (is_move_legal(G, sx, sy, dx, dy)) {
+                        return false;  // 합법적인 수가 있으면 스테일메이트가 아님
+                    }
+                }
+            }
+        }
+    }
+
+    return true;  // 합법적인 수가 없으면 스테일메이트
+}
+
+// 50수 규칙 확인
+bool is_fifty_move_rule(const game_t *G) {
+    return G->halfmove_clock >= 100;  // 50수 = 100 half-moves
+}

@@ -43,7 +43,7 @@ message ClientMessage {
     PingRequest      ping      = 10;
     EchoRequest      echo      = 11;
     MatchGameRequest match_game = 20;
-    MoveRequest      make_move = 21;
+    MoveRequest      move = 21;
     ResignRequest    resign    = 22;
     ChatRequest      chat      = 23;
   }

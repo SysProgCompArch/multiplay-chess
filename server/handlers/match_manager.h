@@ -6,6 +6,7 @@
 #include <time.h>
 
 #include "message.pb-c.h"
+#include "rule.h"  // 체스 게임 상태 관리를 위해 추가
 
 #define MAX_WAITING_PLAYERS 100
 #define MAX_ACTIVE_GAMES    50
@@ -37,6 +38,7 @@ typedef struct
     char   black_player_id[64];          // 검은색 플레이어 ID
     time_t game_start_time;              // 게임 시작 시간
     bool   is_active;                    // 게임 활성 상태
+    game_t game_state;                   // 체스 게임 보드 상태
 } ActiveGame;
 
 // 매칭 결과 구조체
