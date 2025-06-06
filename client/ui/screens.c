@@ -361,8 +361,8 @@ void draw_game_screen() {
     draw_chess_board(board_win);
 
     // 채팅창은 동적 크기, 채팅창 높이도 터미널 높이에 맞춰 조정
-    int     chat_height  = (rows > 30) ? rows - 10 : CHAT_HEIGHT;  // 최소 높이 유지
-    int     chat_start_x = 2 + BOARD_WIDTH + 1;                    // 왼쪽여백 + 체스판 + 중간여백(1)
+    int     chat_height  = (rows > 30) ? rows - 10 : BOARD_HEIGHT;  // 체스보드와 같은 높이로 설정
+    int     chat_start_x = 2 + BOARD_WIDTH + 1;                     // 왼쪽여백 + 체스판 + 중간여백(1)
     WINDOW *chat_win     = newwin(chat_height, chat_width, 1, chat_start_x);
     draw_chat_area(chat_win);
 
