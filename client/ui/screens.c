@@ -217,9 +217,9 @@ void draw_chess_board(WINDOW *board_win) {
             if (is_selected) {
                 wattron(board_win, COLOR_PAIR(COLOR_PAIR_SELECTED_SQUARE));
             } else if ((row + col) % 2 == 0) {
-                wattron(board_win, COLOR_PAIR(COLOR_PAIR_BOARD_WHITE));
-            } else {
                 wattron(board_win, COLOR_PAIR(COLOR_PAIR_BOARD_BLACK));
+            } else {
+                wattron(board_win, COLOR_PAIR(COLOR_PAIR_BOARD_WHITE));
             }
             // 3줄로 한 칸 출력
             mvwprintw(board_win, y, x, "       ");
