@@ -41,6 +41,7 @@ void handle_terminal_resize();
 void draw_main_screen();
 void draw_matching_screen();
 void draw_game_screen();
+void draw_connection_status();
 
 // 화면 전환 공통 함수
 void draw_current_screen();
@@ -56,6 +57,7 @@ void draw_chess_board(WINDOW *board_win);
 void draw_chat_area(WINDOW *chat_win);
 void draw_game_menu(WINDOW *menu_win);
 char get_piece_char(piece_t *piece, int team);
+void calculate_possible_moves(game_state_t *game_state, int selected_x, int selected_y, bool piece_selected);
 
 // 입력 처리
 void handle_mouse_input(MEVENT *event);

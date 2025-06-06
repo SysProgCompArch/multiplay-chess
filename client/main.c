@@ -238,8 +238,12 @@ int main(int argc, char *argv[]) {
                     LOG_INFO("User acknowledged opponent disconnected dialog, returned to main screen");
                 }
 
+                // 화면을 초기화하고 즉시 메인 화면 그리기
+                clear();
+                draw_current_screen();
                 pthread_mutex_unlock(&screen_mutex);
-                need_screen_update = true;  // 다이얼로그 닫힌 후 화면 업데이트 필요
+                refresh();                   // 화면 즉시 갱신
+                need_screen_update = false;  // 이미 화면을 업데이트했으므로 플래그 끄기
             }
         } else if (ch != ERR && !dialog_active) {
             LOG_DEBUG("Input received: %d", ch);
@@ -355,7 +359,7 @@ int main(int argc, char *argv[]) {
             }
         }
 
-        // 연결 끊김 상태 확인 및 다이얼로그 표시
+        // 연결 끊김 상태 확인 및 다이얼로그 표시 (우선순위: 즉시 표시)
         pthread_mutex_lock(&screen_mutex);
         if (client->connection_lost && !client->dialog_active) {
             client->dialog_active = true;
@@ -364,6 +368,8 @@ int main(int argc, char *argv[]) {
             // 연결 끊김 다이얼로그 표시 (키 입력 처리 없음)
             draw_dialog("Connection Lost", client->disconnect_message, "OK");
             pthread_mutex_unlock(&screen_mutex);
+            refresh();  // 다이얼로그를 즉시 화면에 표시
+            continue;   // 다른 처리를 건너뛰고 다시 루프 시작
         } else if (client->game_state.opponent_disconnected && !client->dialog_active) {
             client->dialog_active = true;
             LOG_INFO("Showing opponent disconnected dialog");
@@ -371,6 +377,8 @@ int main(int argc, char *argv[]) {
             // 상대방 연결 끊김 다이얼로그 표시 (키 입력 처리 없음)
             draw_dialog("Opponent Disconnected", client->game_state.opponent_disconnect_message, "OK");
             pthread_mutex_unlock(&screen_mutex);
+            refresh();  // 다이얼로그를 즉시 화면에 표시
+            continue;   // 다른 처리를 건너뛰고 다시 루프 시작
         } else {
             pthread_mutex_unlock(&screen_mutex);
         }
@@ -408,9 +416,16 @@ int main(int argc, char *argv[]) {
             if (client->screen_update_requested) {
                 LOG_INFO("Additional network update detected, forcing screen refresh");
                 client->screen_update_requested = false;
-                draw_current_screen();
-                pthread_mutex_unlock(&screen_mutex);
-                refresh();
+
+                // 다이얼로그가 활성화되어 있지 않을 때만 화면 업데이트
+                if (!client->dialog_active) {
+                    draw_current_screen();
+                    pthread_mutex_unlock(&screen_mutex);
+                    refresh();
+                } else {
+                    pthread_mutex_unlock(&screen_mutex);
+                    // 다이얼로그가 활성화된 경우에는 다이얼로그 표시 로직에서 처리됨
+                }
             } else {
                 pthread_mutex_unlock(&screen_mutex);
             }

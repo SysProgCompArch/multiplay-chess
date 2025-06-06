@@ -58,6 +58,10 @@ typedef struct
     int            white_time_remaining;  // 초 단위
     int            black_time_remaining;  // 초 단위
 
+    // 이동 가능 위치 표시
+    bool possible_moves[8][8];  // 이동 가능한 위치 표시 (8x8 보드)
+    bool capture_moves[8][8];   // 캡처 가능한 위치 표시 (8x8 보드)
+
     // 상대방 연결 끊김 감지
     bool opponent_disconnected;
     char opponent_disconnect_message[256];

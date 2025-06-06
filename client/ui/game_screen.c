@@ -5,44 +5,133 @@
 #include "piece.h"
 #include "ui.h"
 
-// 체스 말 ASCII 문자 반환
-char get_piece_char(piece_t *piece, int team) {
-    if (!piece)
-        return ' ';
+// common/rule.c의 함수들을 직접 선언 (헤더 충돌 방지)
+typedef struct {
+    piecestate_t board[8][8];
+    int          side_to_move;
+    int          halfmove_clock;
+    bool         white_can_castle_kingside;
+    bool         white_can_castle_queenside;
+    bool         black_can_castle_kingside;
+    bool         black_can_castle_queenside;
+    int          en_passant_x, en_passant_y;
+} game_t;
 
-    // 흰색 팀 (0) - 대문자, 검은색 팀 (1) - 소문자
+bool is_move_legal(const game_t *G, int sx, int sy, int dx, int dy);
+
+// 체스 말 유니코드 문자 반환
+const char *get_piece_unicode(piece_t *piece, int team) {
+    if (!piece)
+        return " ";
+
+    // 흰색 팀 (0) - 흰색 유니코드, 검은색 팀 (1) - 검은색 유니코드
     if (team == 0) {  // 흰색
         switch (piece->type) {
             case KING:
-                return 'K';
+                return "♔";
             case QUEEN:
-                return 'Q';
+                return "♕";
             case ROOK:
-                return 'R';
+                return "♖";
             case BISHOP:
-                return 'B';
+                return "♗";
             case KNIGHT:
-                return 'N';
+                return "♘";
             case PAWN:
-                return 'P';
+                return "♙";
         }
     } else {  // 검은색
         switch (piece->type) {
             case KING:
-                return 'k';
+                return "♚";
             case QUEEN:
-                return 'q';
+                return "♛";
             case ROOK:
-                return 'r';
+                return "♜";
             case BISHOP:
-                return 'b';
+                return "♝";
             case KNIGHT:
-                return 'n';
+                return "♞";
             case PAWN:
-                return 'p';
+                return "♟";
         }
     }
-    return ' ';
+    return " ";
+}
+
+// board_state_t를 game_t로 변환하는 함수
+void convert_board_state_to_game(const board_state_t *board_state, game_t *game) {
+    // 기본 초기화
+    memset(game, 0, sizeof(game_t));
+
+    // 보드 상태 복사
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            game->board[x][y] = board_state->board[y][x];
+        }
+    }
+
+    // 턴 정보 복사
+    game->side_to_move = (board_state->current_turn == TEAM_WHITE) ? WHITE : BLACK;
+
+    // 캐슬링 권리 설정 (TODO: 실제 게임 상태에서 가져와야 함)
+    game->white_can_castle_kingside  = !board_state->white_king_moved && !board_state->white_rook_kingside_moved;
+    game->white_can_castle_queenside = !board_state->white_king_moved && !board_state->white_rook_queenside_moved;
+    game->black_can_castle_kingside  = !board_state->black_king_moved && !board_state->black_rook_kingside_moved;
+    game->black_can_castle_queenside = !board_state->black_king_moved && !board_state->black_rook_queenside_moved;
+
+    // 앙파상 설정
+    game->en_passant_x = board_state->en_passant_target_x;
+    game->en_passant_y = board_state->en_passant_target_y;
+
+    // 기타 정보
+    game->halfmove_clock = board_state->halfmove_clock;
+}
+
+// 선택된 기물의 이동 가능한 위치들을 계산하는 함수
+void calculate_possible_moves(game_state_t *game_state, int selected_x, int selected_y, bool piece_selected) {
+    // 배열 초기화
+    memset(game_state->possible_moves, false, sizeof(game_state->possible_moves));
+    memset(game_state->capture_moves, false, sizeof(game_state->capture_moves));
+
+    if (!piece_selected) {
+        return;
+    }
+
+    // board_state를 game_t로 변환
+    game_t game;
+    convert_board_state_to_game(&game_state->board_state, &game);
+
+    int sx = selected_x;
+    int sy = selected_y;
+
+    // 선택된 위치에 기물이 있는지 확인
+    piecestate_t *selected_piece = &game_state->board_state.board[sy][sx];
+    if (!selected_piece->piece || selected_piece->is_dead) {
+        return;
+    }
+
+    // 모든 위치에 대해 이동 가능한지 검사
+    for (int dy = 0; dy < 8; dy++) {
+        for (int dx = 0; dx < 8; dx++) {
+            if (sx == dx && sy == dy) {
+                continue;  // 같은 위치는 제외
+            }
+
+            // common/rule.c의 is_move_legal 함수 사용
+            if (is_move_legal(&game, sx, sy, dx, dy)) {
+                piecestate_t *target_piece = &game_state->board_state.board[dy][dx];
+
+                // 목표 위치에 상대 기물이 있으면 캡처 가능 위치로 표시
+                if (target_piece->piece && !target_piece->is_dead &&
+                    target_piece->color != selected_piece->color) {
+                    game_state->capture_moves[dy][dx] = true;
+                } else {
+                    game_state->possible_moves[dy][dx] = true;
+                }
+            }
+        }
+    }
 }
 
 // 체스 보드 그리기
@@ -72,11 +161,19 @@ void draw_chess_board(WINDOW *board_win) {
             get_cursor_position(&cursor_x, &cursor_y);
             bool is_cursor = (is_cursor_mode() && cursor_x == col && cursor_y == row);
 
-            // 색상
+            // 이동 가능 위치 확인
+            bool is_possible_move = client->game_state.possible_moves[row][col];
+            bool is_capture_move  = client->game_state.capture_moves[row][col];
+
+            // 색상 (우선순위: 선택됨 > 커서 > 캡처 > 이동가능 > 기본)
             if (is_selected) {
                 wattron(board_win, COLOR_PAIR(COLOR_PAIR_SELECTED_SQUARE));
             } else if (is_cursor) {
                 wattron(board_win, COLOR_PAIR(COLOR_PAIR_CURSOR_SQUARE));
+            } else if (is_capture_move) {
+                wattron(board_win, COLOR_PAIR(COLOR_PAIR_CAPTURE_MOVE));
+            } else if (is_possible_move) {
+                wattron(board_win, COLOR_PAIR(COLOR_PAIR_POSSIBLE_MOVE));
             } else if ((row + col) % 2 == 0) {
                 wattron(board_win, COLOR_PAIR(COLOR_PAIR_BOARD_BLACK));
             } else {
@@ -86,8 +183,8 @@ void draw_chess_board(WINDOW *board_win) {
             mvwprintw(board_win, y, x, "       ");
             piecestate_t *piece = &board->board[row][col];
             if (piece->piece && !piece->is_dead) {
-                char piece_char = get_piece_char(piece->piece, 0);  // 임시로 흰색
-                mvwprintw(board_win, y + 1, x, "   %c   ", piece_char);
+                const char *piece_unicode = get_piece_unicode(piece->piece, piece->color);
+                mvwprintw(board_win, y + 1, x, "   %s   ", piece_unicode);
             } else if (is_cursor) {
                 mvwprintw(board_win, y + 1, x, "   *   ");
             } else {
@@ -99,6 +196,10 @@ void draw_chess_board(WINDOW *board_win) {
                 wattroff(board_win, COLOR_PAIR(COLOR_PAIR_SELECTED_SQUARE));
             } else if (is_cursor) {
                 wattroff(board_win, COLOR_PAIR(COLOR_PAIR_CURSOR_SQUARE));
+            } else if (is_capture_move) {
+                wattroff(board_win, COLOR_PAIR(COLOR_PAIR_CAPTURE_MOVE));
+            } else if (is_possible_move) {
+                wattroff(board_win, COLOR_PAIR(COLOR_PAIR_POSSIBLE_MOVE));
             } else if ((row + col) % 2 == 0) {
                 wattroff(board_win, COLOR_PAIR(COLOR_PAIR_BOARD_WHITE));
             } else {
@@ -301,6 +402,10 @@ void draw_game_screen() {
 
     // 체스판 (가운데)
     WINDOW *board_win = newwin(BOARD_HEIGHT, BOARD_WIDTH, board_start_y, 2);
+
+    // 이동 가능한 위치 계산
+    calculate_possible_moves(&client->game_state, client->selected_x, client->selected_y, client->piece_selected);
+
     draw_chess_board(board_win);
 
     // 내 정보창 (체스판 아래)

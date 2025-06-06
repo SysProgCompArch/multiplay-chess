@@ -22,6 +22,10 @@ void init_game_state(game_state_t *state) {
     state->white_time_remaining = 600;  // 10분
     state->black_time_remaining = 600;  // 10분
 
+    // 이동 가능 위치 배열 초기화
+    memset(state->possible_moves, false, sizeof(state->possible_moves));
+    memset(state->capture_moves, false, sizeof(state->capture_moves));
+
     // 상대방 연결 끊김 감지 초기화
     state->opponent_disconnected = false;
     memset(state->opponent_disconnect_message, 0, sizeof(state->opponent_disconnect_message));
