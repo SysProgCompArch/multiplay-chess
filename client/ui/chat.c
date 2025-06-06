@@ -1,4 +1,5 @@
 #include <ncursesw/ncurses.h>
+#include <pthread.h>
 #include <string.h>
 
 #include "../client_network.h"
@@ -42,6 +43,12 @@ void handle_chat_input(int ch) {
                 client->chat_input_buffer[client->chat_input_cursor] = '\0';
                 LOG_INFO("Sending chat message: %s", client->chat_input_buffer);
                 send_chat_message(client->chat_input_buffer);
+
+                // 채팅 전송 후 즉시 화면 업데이트
+                pthread_mutex_lock(&screen_mutex);
+                draw_current_screen();
+                pthread_mutex_unlock(&screen_mutex);
+                refresh();
             }
             disable_chat_input();
             break;

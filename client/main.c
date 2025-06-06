@@ -37,7 +37,6 @@ void cleanup_and_exit(int exit_code) {
     exit(exit_code);
 }
 
-// 신호 처리기 - SIGINT 종료 처리, SIGWINCH 처리
 void handle_sigint(int sig) {
     shutdown_requested = 1;
     LOG_INFO("SIGINT received, requesting graceful shutdown");
@@ -105,7 +104,7 @@ int main() {
         }
 
         // 입력 처리 (논블로킹)
-        timeout(1000);  // 1초 타임아웃
+        timeout(100);  // 0.1초 타임아웃 (반응성 향상)
         int ch = getch();
 
         // 에러 다이얼로그가 활성화되어 있는지 확인
