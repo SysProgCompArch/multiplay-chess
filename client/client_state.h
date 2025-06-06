@@ -47,7 +47,7 @@ typedef struct
     time_t last_reconnect_attempt;
 
     // 에러 다이얼로그 상태
-    bool error_dialog_active;
+    bool dialog_active;
 
     // 연결 끊김 감지
     bool connection_lost;

@@ -25,7 +25,7 @@ void cleanup_and_exit(int exit_code) {
     cleanup_network();
 
     // UI 다이얼로그 정리
-    close_error_dialog();
+    close_dialog();
 
     // ncurses 정리
     cleanup_ncurses();
@@ -110,7 +110,7 @@ int main() {
 
         // 에러 다이얼로그가 활성화되어 있는지 확인
         pthread_mutex_lock(&screen_mutex);
-        bool dialog_active = client->error_dialog_active;
+        bool dialog_active = client->dialog_active;
         pthread_mutex_unlock(&screen_mutex);
 
         if (ch != ERR && dialog_active) {
@@ -120,8 +120,8 @@ int main() {
                 pthread_mutex_lock(&screen_mutex);
 
                 // 다이얼로그 닫기
-                close_error_dialog();
-                client->error_dialog_active = false;
+                close_dialog();
+                client->dialog_active = false;
 
                 // 연결 끊김 타입에 따라 상태 리셋
                 if (client->connection_lost) {
@@ -235,19 +235,19 @@ int main() {
 
         // 연결 끊김 상태 확인 및 다이얼로그 표시
         pthread_mutex_lock(&screen_mutex);
-        if (client->connection_lost && !client->error_dialog_active) {
-            client->error_dialog_active = true;
+        if (client->connection_lost && !client->dialog_active) {
+            client->dialog_active = true;
             LOG_INFO("Showing connection lost dialog");
 
             // 연결 끊김 다이얼로그 표시 (키 입력 처리 없음)
-            draw_error_dialog("Connection Lost", client->disconnect_message, "OK");
+            draw_dialog("Connection Lost", client->disconnect_message, "OK");
             pthread_mutex_unlock(&screen_mutex);
-        } else if (client->opponent_disconnected && !client->error_dialog_active) {
-            client->error_dialog_active = true;
+        } else if (client->opponent_disconnected && !client->dialog_active) {
+            client->dialog_active = true;
             LOG_INFO("Showing opponent disconnected dialog");
 
             // 상대방 연결 끊김 다이얼로그 표시 (키 입력 처리 없음)
-            draw_error_dialog("Opponent Disconnected", client->opponent_disconnect_message, "OK");
+            draw_dialog("Opponent Disconnected", client->opponent_disconnect_message, "OK");
             pthread_mutex_unlock(&screen_mutex);
         } else {
             pthread_mutex_unlock(&screen_mutex);
@@ -257,7 +257,7 @@ int main() {
         pthread_mutex_lock(&screen_mutex);
 
         // 에러 다이얼로그가 활성화되어 있으면 화면 업데이트를 건너뜀
-        if (!client->error_dialog_active) {
+        if (!client->dialog_active) {
             draw_current_screen();
         }
 

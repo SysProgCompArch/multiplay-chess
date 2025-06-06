@@ -30,7 +30,7 @@ void init_client_state() {
     g_client.chat_input_cursor = 0;
 
     // 에러 다이얼로그 상태 초기화
-    g_client.error_dialog_active = false;
+    g_client.dialog_active = false;
 
     // 연결 끊김 감지 초기화
     g_client.connection_lost = false;
