@@ -24,14 +24,21 @@ int handle_match_game_response(ServerMessage *msg) {
                          msg->match_game_res->game_id ? msg->match_game_res->game_id : "unknown",
                          msg->match_game_res->assigned_color == COLOR__COLOR_WHITE ? "WHITE" : "BLACK");
 
+                // 상대방 이름 확인
+                const char *opponent_name = msg->match_game_res->opponent_name ? msg->match_game_res->opponent_name : "Opponent";
+                LOG_INFO("Opponent name: %s", opponent_name);
+
                 add_chat_message_safe("System", "Match found! Game starting...");
 
                 // 클라이언트 상태 업데이트
                 client_state_t *client = get_client_state();
-                strcpy(client->opponent_name, "Opponent");
-                strcpy(client->game_state.opponent_player, "Opponent");
-                client->is_white                    = (msg->match_game_res->assigned_color == COLOR__COLOR_WHITE);
-                client->game_state.local_team       = client->is_white ? TEAM_WHITE : TEAM_BLACK;
+                strncpy(client->game_state.opponent_player, opponent_name, sizeof(client->game_state.opponent_player) - 1);
+                client->game_state.opponent_player[sizeof(client->game_state.opponent_player) - 1] = '\0';
+
+                strncpy(client->game_state.local_player, client->username, sizeof(client->game_state.local_player) - 1);
+                client->game_state.local_player[sizeof(client->game_state.local_player) - 1] = '\0';
+
+                client->game_state.local_team       = (msg->match_game_res->assigned_color == COLOR__COLOR_WHITE) ? TEAM_WHITE : TEAM_BLACK;
                 client->game_state.game_in_progress = true;
                 client->current_screen              = SCREEN_GAME;
             }

@@ -29,8 +29,8 @@ int handle_opponent_disconnected_broadcast(ServerMessage *msg) {
     // 상대방 연결 끊김 다이얼로그 설정
     client_state_t *client = get_client_state();
     pthread_mutex_lock(&screen_mutex);
-    client->opponent_disconnected = true;
-    snprintf(client->opponent_disconnect_message, sizeof(client->opponent_disconnect_message),
+    client->game_state.opponent_disconnected = true;
+    snprintf(client->game_state.opponent_disconnect_message, sizeof(client->game_state.opponent_disconnect_message),
              "Your opponent has disconnected.\n%s team wins the game!", winner_text);
     pthread_mutex_unlock(&screen_mutex);
 

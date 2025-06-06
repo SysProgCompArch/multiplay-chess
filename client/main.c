@@ -127,9 +127,9 @@ int main() {
                     client->connection_lost = false;
                     client->current_screen  = SCREEN_MAIN;
                     LOG_INFO("User acknowledged connection lost dialog, returned to main screen");
-                } else if (client->opponent_disconnected) {
-                    client->opponent_disconnected = false;
-                    client->current_screen        = SCREEN_MAIN;
+                } else if (client->game_state.opponent_disconnected) {
+                    client->game_state.opponent_disconnected = false;
+                    client->current_screen                   = SCREEN_MAIN;
                     LOG_INFO("User acknowledged opponent disconnected dialog, returned to main screen");
                 }
 
@@ -241,12 +241,12 @@ int main() {
             // 연결 끊김 다이얼로그 표시 (키 입력 처리 없음)
             draw_dialog("Connection Lost", client->disconnect_message, "OK");
             pthread_mutex_unlock(&screen_mutex);
-        } else if (client->opponent_disconnected && !client->dialog_active) {
+        } else if (client->game_state.opponent_disconnected && !client->dialog_active) {
             client->dialog_active = true;
             LOG_INFO("Showing opponent disconnected dialog");
 
             // 상대방 연결 끊김 다이얼로그 표시 (키 입력 처리 없음)
-            draw_dialog("Opponent Disconnected", client->opponent_disconnect_message, "OK");
+            draw_dialog("Opponent Disconnected", client->game_state.opponent_disconnect_message, "OK");
             pthread_mutex_unlock(&screen_mutex);
         } else {
             pthread_mutex_unlock(&screen_mutex);

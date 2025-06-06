@@ -13,6 +13,5 @@ int handle_ping_response(ServerMessage *msg) {
     LOG_DEBUG("Ping response received from server: %s",
               msg->ping_res ? msg->ping_res->message : "no message");
 
-    add_chat_message_safe("Server", "Ping response received");
     return 0;
 }

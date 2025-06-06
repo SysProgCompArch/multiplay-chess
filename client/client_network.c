@@ -57,7 +57,7 @@ void *network_thread(void *arg) {
     client_state_t *client = get_client_state();
 
     // 초기 연결 시도
-    add_chat_message_safe("System", "Connecting to server...");
+    LOG_INFO("Connecting to server...");
     client->last_reconnect_attempt = 0;  // 초기 연결은 즉시 시도
 
     while (network_thread_running) {
@@ -104,7 +104,7 @@ void *network_thread(void *arg) {
                 break;
             }
 
-            add_chat_message_safe("System", "Connection lost. Reconnecting...");
+            LOG_INFO("Connection lost. Reconnecting...");
             continue;
         }
 
@@ -124,7 +124,6 @@ void *network_thread(void *arg) {
         client->socket_fd = -1;
     }
 
-    add_chat_message_safe("System", "Disconnected from server");
     LOG_INFO("Network thread terminated");
 
     return NULL;
@@ -146,7 +145,7 @@ void start_reconnect() {
         first_connect = false;
         // 초기 연결 시도 메시지는 이미 출력됨
     } else {
-        add_chat_message_safe("System", "Reconnecting...");
+        LOG_INFO("Reconnecting...");
     }
 
     client->socket_fd = connect_to_server();
@@ -158,7 +157,7 @@ void start_reconnect() {
         pthread_mutex_unlock(&network_mutex);
 
         if (first_connect) {
-            add_chat_message_safe("System", "Failed to connect to server");
+            LOG_INFO("Failed to connect to server");
         }
         return;
     }
@@ -170,9 +169,9 @@ void start_reconnect() {
 
     LOG_INFO("Connection successful, sending ping");
     if (first_connect) {
-        add_chat_message_safe("System", "Connected to server!");
+        LOG_INFO("Connected to server!");
     } else {
-        add_chat_message_safe("System", "Reconnected to server!");
+        LOG_INFO("Reconnected to server!");
     }
 
     // 서버에 ping 메시지 전송하여 연결 확인
@@ -184,7 +183,6 @@ void start_reconnect() {
 
     if (send_client_message(client->socket_fd, &ping_msg) < 0) {
         LOG_ERROR("Failed to send ping message");
-        add_chat_message_safe("System", "Connection verification failed");
         pthread_mutex_lock(&network_mutex);
         client->connected = false;
         pthread_mutex_unlock(&network_mutex);
@@ -230,12 +228,10 @@ void start_matching() {
 
         if (send_client_message(client->socket_fd, &match_msg) < 0) {
             LOG_ERROR("Failed to send match request");
-            add_chat_message_safe("System", "Failed to send match request");
             client->current_screen = SCREEN_MAIN;
         }
     } else {
         LOG_WARN("Cannot start matching: not connected to server");
-        add_chat_message_safe("System", "Not connected to server");
         client->current_screen = SCREEN_MAIN;
     }
 }
@@ -313,7 +309,6 @@ void send_chat_message(const char *message) {
 
     if (send_client_message(client->socket_fd, &chat_msg) < 0) {
         LOG_ERROR("Failed to send chat message");
-        add_chat_message_safe("System", "Failed to send message");
     } else {
         LOG_DEBUG("Chat message sent successfully");
     }

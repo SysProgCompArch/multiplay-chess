@@ -60,7 +60,7 @@ char *generate_game_id(void) {
 
 // 플레이어를 매칭에 추가
 MatchResult add_player_to_matching(int fd, const char *player_id) {
-    MatchResult result = {MATCH_STATUS_ERROR, NULL, COLOR__COLOR_UNSPECIFIED, -1, "Unknown error"};
+    MatchResult result = {MATCH_STATUS_ERROR, NULL, COLOR__COLOR_UNSPECIFIED, -1, NULL, "Unknown error"};
 
     if (!player_id) {
         result.error_message = "Player ID is null";
@@ -96,12 +96,14 @@ MatchResult add_player_to_matching(int fd, const char *player_id) {
                         strcpy(game->white_player_id, player_id);
                         strcpy(game->black_player_id, waiting_player->player_id);
                         result.assigned_color = COLOR__COLOR_WHITE;
+                        result.opponent_name  = waiting_player->player_id;
                     } else {
                         game->white_player_fd = waiting_player->fd;
                         game->black_player_fd = fd;
                         strcpy(game->white_player_id, waiting_player->player_id);
                         strcpy(game->black_player_id, player_id);
                         result.assigned_color = COLOR__COLOR_BLACK;
+                        result.opponent_name  = game->white_player_id;
                     }
 
                     g_match_manager.active_game_count++;
@@ -147,6 +149,7 @@ MatchResult add_player_to_matching(int fd, const char *player_id) {
             result.status         = MATCH_STATUS_WAITING;
             result.game_id        = "";
             result.assigned_color = COLOR__COLOR_UNSPECIFIED;
+            result.opponent_name  = NULL;
             result.error_message  = NULL;
 
             LOG_INFO("Player %s(fd=%d) added to waiting queue", player_id, fd);

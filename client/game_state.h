@@ -57,6 +57,10 @@ typedef struct
     time_t         game_start_time;
     int            white_time_remaining;  // 초 단위
     int            black_time_remaining;  // 초 단위
+
+    // 상대방 연결 끊김 감지
+    bool opponent_disconnected;
+    char opponent_disconnect_message[256];
 } game_state_t;
 
 // 함수 선언
@@ -69,5 +73,9 @@ bool make_move(board_state_t *board, int from_x, int from_y, int to_x, int to_y)
 bool is_in_check(board_state_t *board, team_t team);
 bool is_checkmate(board_state_t *board, team_t team);
 bool is_stalemate(board_state_t *board, team_t team);
+
+// 편의 함수들 (클라이언트 상태 호환성)
+bool        game_is_white_player(const game_state_t *state);
+const char *get_opponent_name(const game_state_t *state);
 
 #endif  // GAME_STATE_H

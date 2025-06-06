@@ -374,7 +374,7 @@ void draw_game_screen() {
     WINDOW *menu_win = newwin(10, 20, BOARD_HEIGHT + 1, 2);
     draw_game_menu(menu_win);
 
-    mvprintw(0, 2, "Player: %s vs %s", client->username, client->opponent_name);
+    mvprintw(0, 2, "Player: %s vs %s", client->username, get_opponent_name_client());
     mvprintw(0, cols - 20, "Status: Playing");
 
     wrefresh(board_win);

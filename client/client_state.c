@@ -2,6 +2,8 @@
 
 #include <string.h>
 
+#include "logger.h"
+
 // 전역 클라이언트 상태
 static client_state_t g_client = {0};
 
@@ -36,16 +38,21 @@ void init_client_state() {
     g_client.connection_lost = false;
     memset(g_client.disconnect_message, 0, sizeof(g_client.disconnect_message));
 
-    // 상대방 연결 끊김 감지 초기화
-    g_client.opponent_disconnected = false;
-    memset(g_client.opponent_disconnect_message, 0, sizeof(g_client.opponent_disconnect_message));
-
     init_game_state(&g_client.game_state);
 }
 
-// 안전한 채팅 메시지 추가
+// 채팅 메시지 추가 (게임 상태에 추가)
 void add_chat_message_safe(const char *sender, const char *message) {
     pthread_mutex_lock(&screen_mutex);
     add_chat_message(&g_client.game_state, sender, message);
     pthread_mutex_unlock(&screen_mutex);
+}
+
+// 편의 함수들 (게임 상태에서 가져오기)
+bool client_is_white() {
+    return game_is_white_player(&g_client.game_state);
+}
+
+const char *get_opponent_name_client() {
+    return get_opponent_name(&g_client.game_state);
 }

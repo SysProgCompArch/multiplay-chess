@@ -1,5 +1,6 @@
 #include "game_state.h"
 
+#include <pthread.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -9,6 +10,9 @@
 // piece_table 외부 선언 (common/piece.c에 정의됨)
 extern piece_t *piece_table[2][6];
 
+// 스레드 동기화 (외부에서 정의됨)
+extern pthread_mutex_t screen_mutex;
+
 // 게임 상태 초기화
 void init_game_state(game_state_t *state) {
     memset(state, 0, sizeof(game_state_t));
@@ -17,6 +21,10 @@ void init_game_state(game_state_t *state) {
     state->game_in_progress     = false;
     state->white_time_remaining = 600;  // 10분
     state->black_time_remaining = 600;  // 10분
+
+    // 상대방 연결 끊김 감지 초기화
+    state->opponent_disconnected = false;
+    memset(state->opponent_disconnect_message, 0, sizeof(state->opponent_disconnect_message));
 }
 
 // 보드 상태 초기화
@@ -198,4 +206,13 @@ bool is_checkmate(board_state_t *board, team_t team) {
 bool is_stalemate(board_state_t *board, team_t team) {
     // TODO: 실제 스테일메이트 검증 로직 구현
     return false;
+}
+
+// 편의 함수들 (클라이언트 상태 호환성)
+bool game_is_white_player(const game_state_t *state) {
+    return state->local_team == TEAM_WHITE;
+}
+
+const char *get_opponent_name(const game_state_t *state) {
+    return state->opponent_player;
 }

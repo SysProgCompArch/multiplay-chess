@@ -27,10 +27,8 @@ typedef enum {
 typedef struct
 {
     char           username[MAX_CHAT_NAME];
-    char           opponent_name[MAX_PLAYER_NAME];
     int            socket_fd;
     bool           connected;
-    bool           is_white;
     screen_state_t current_screen;
     time_t         match_start_time;
     game_state_t   game_state;
@@ -52,10 +50,6 @@ typedef struct
     // 연결 끊김 감지
     bool connection_lost;
     char disconnect_message[256];
-
-    // 상대방 연결 끊김 감지
-    bool opponent_disconnected;
-    char opponent_disconnect_message[256];
 } client_state_t;
 
 // 전역 상태 접근 함수들
@@ -68,7 +62,11 @@ extern pthread_mutex_t network_mutex;
 extern pthread_t       network_thread_id;
 extern bool            network_thread_running;
 
-// 안전한 채팅 메시지 추가 (mutex 처리됨)
+// 채팅 메시지 추가 (게임 상태에 추가)
 void add_chat_message_safe(const char *sender, const char *message);
+
+// 편의 함수들 (게임 상태에서 가져오기)
+bool        client_is_white();
+const char *get_opponent_name_client();
 
 #endif  // CLIENT_STATE_H

@@ -72,6 +72,7 @@ int handle_match_game_message(int fd, ClientMessage *req) {
             match_resp.message        = "Match found! Game starting...";
             match_resp.game_id        = result.game_id;
             match_resp.assigned_color = result.assigned_color;
+            match_resp.opponent_name  = result.opponent_name ? result.opponent_name : "";
 
             response.msg_case       = SERVER_MESSAGE__MSG_MATCH_GAME_RES;
             response.match_game_res = &match_resp;
@@ -80,11 +81,19 @@ int handle_match_game_message(int fd, ClientMessage *req) {
 
             // 상대방에게도 게임 시작 알림 전송
             if (send_result >= 0 && result.opponent_fd >= 0) {
+                // 상대방의 상대방 이름은 현재 플레이어 이름
+                ActiveGame *game                = find_game_by_player_fd(fd);
+                char       *current_player_name = NULL;
+                if (game) {
+                    current_player_name = (game->white_player_fd == fd) ? game->white_player_id : game->black_player_id;
+                }
+
                 MatchGameResponse opponent_resp = MATCH_GAME_RESPONSE__INIT;
                 opponent_resp.success           = true;
                 opponent_resp.message           = "Match found! Game starting...";
                 opponent_resp.game_id           = result.game_id;
                 opponent_resp.assigned_color    = (result.assigned_color == COLOR__COLOR_WHITE) ? COLOR__COLOR_BLACK : COLOR__COLOR_WHITE;
+                opponent_resp.opponent_name     = current_player_name ? current_player_name : "";
 
                 ServerMessage opponent_msg  = SERVER_MESSAGE__INIT;
                 opponent_msg.msg_case       = SERVER_MESSAGE__MSG_MATCH_GAME_RES;

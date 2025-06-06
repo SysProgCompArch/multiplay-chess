@@ -128,20 +128,21 @@ message MatchGameResponse {
   // 게임에 이미 상대가 있어서 바로 시작되는 경우, 
   // 상대 ID나 색(WHITE/BLACK)도 함께 알려줄 수 있음
   Color assigned_color = 4;
+  string opponent_name = 5; // 상대방 이름 (게임 시작 시)
 }
 
-// 단일 클라이언트에게 보내는 “내가 보낸 MoveRequest에 대한 결과”
+// 단일 클라이언트에게 보내는 "내가 보낸 MoveRequest에 대한 결과"
 message MoveResult {
   string game_id    = 1;
   string player_id  = 2; // 요청 보낸 유저
   bool success      = 3;
-  string message    = 4; // 예: “이동할 수 없는 기물입니다”
+  string message    = 4; // 예: "이동할 수 없는 기물입니다"
   // (선택) 업데이트된 체스판 FEN이나 PGN 등을 포함할 수도 있음
   string updated_fen = 5;
   google.protobuf.Timestamp timestamp = 6;
 }
 
-// 제로 모든 관련 클라이언트(특히 상대편)에게 브로드캐스트되는 “이동 알림”
+// 제로 모든 관련 클라이언트(특히 상대편)에게 브로드캐스트되는 "이동 알림"
 message MoveBroadcast {
   string game_id      = 1;
   string player_id    = 2; // 실제로 이동을 수행한 플레이어
