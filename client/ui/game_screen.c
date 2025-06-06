@@ -184,7 +184,7 @@ void draw_chess_board(WINDOW *board_win) {
             piecestate_t *piece = &board->board[row][col];
             if (piece->piece && !piece->is_dead) {
                 const char *piece_unicode = get_piece_unicode(piece->piece, piece->color);
-                mvwprintw(board_win, y + 1, x, "%s", piece_unicode);
+                mvwprintw(board_win, y + 1, x, " %s ", piece_unicode);
             } else if (is_cursor) {
                 mvwprintw(board_win, y + 1, x, "   *   ");
             } else {
