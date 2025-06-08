@@ -41,11 +41,81 @@ void cleanup_and_exit(int exit_code) {
 void handle_sigint(int sig) {
     shutdown_requested = 1;
     LOG_INFO("SIGINT received, requesting graceful shutdown");
+    // 메인 스레드가 getch()에서 블로킹된 경우를 위해 강제로 깨우기
+    // ncurses 환경에서 안전하게 처리하기 위해 ungetch 사용
+    ungetch(KEY_RESIZE);  // 임의의 키 이벤트를 발생시켜 getch() 블로킹 해제
+}
+
+void handle_sigtstp(int sig) {
+    LOG_INFO("SIGTSTP received, cleaning up before suspension");
+    // ncurses 정리 후 프로세스 일시정지
+    cleanup_ncurses();
+
+    // 기본 SIGTSTP 핸들러로 복원
+    signal(SIGTSTP, SIG_DFL);
+    raise(SIGTSTP);
+}
+
+void handle_sigcont(int sig) {
+    LOG_INFO("SIGCONT received, resuming");
+    // ncurses 재초기화
+    init_ncurses();
+    // SIGTSTP 핸들러 다시 등록
+    signal(SIGTSTP, handle_sigtstp);
+    // 화면 강제 새로고침
+    terminal_resized = 1;
 }
 
 void handle_sigwinch(int sig) {
     terminal_resized = 1;
     LOG_DEBUG("Terminal resize signal received");
+}
+
+// 시그널 핸들러 설정 함수
+void setup_signal_handlers() {
+    struct sigaction sa;
+
+    // SIGINT 핸들러 설정 (더 안전한 sigaction 사용)
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = handle_sigint;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;  // 시스템 콜 재시작
+    if (sigaction(SIGINT, &sa, NULL) == -1) {
+        LOG_ERROR("Failed to set SIGINT handler");
+        exit(1);
+    }
+
+    // SIGTSTP 핸들러 설정 (Ctrl+Z)
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = handle_sigtstp;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    if (sigaction(SIGTSTP, &sa, NULL) == -1) {
+        LOG_ERROR("Failed to set SIGTSTP handler");
+        exit(1);
+    }
+
+    // SIGCONT 핸들러 설정 (프로세스 재개)
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = handle_sigcont;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    if (sigaction(SIGCONT, &sa, NULL) == -1) {
+        LOG_ERROR("Failed to set SIGCONT handler");
+        exit(1);
+    }
+
+    // SIGWINCH 핸들러 설정 (터미널 크기 변경)
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = handle_sigwinch;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    if (sigaction(SIGWINCH, &sa, NULL) == -1) {
+        LOG_ERROR("Failed to set SIGWINCH handler");
+        exit(1);
+    }
+
+    LOG_DEBUG("Signal handlers registered (SIGINT, SIGTSTP, SIGCONT, SIGWINCH)");
 }
 
 // 사용법 출력
@@ -113,10 +183,8 @@ int main(int argc, char *argv[]) {
     LOG_INFO("Chess client starting... (PID: %d)", getpid());
     LOG_INFO("Target server: %s:%d", server_host, server_port);
 
-    // 신호 처리기 등록
-    signal(SIGINT, handle_sigint);
-    signal(SIGWINCH, handle_sigwinch);
-    LOG_DEBUG("Signal handlers registered (SIGINT, SIGWINCH)");
+    // 시그널 핸들러 등록
+    setup_signal_handlers();
 
     // 클라이언트 상태 초기화
     init_client_state();
@@ -206,9 +274,15 @@ int main(int argc, char *argv[]) {
             need_screen_update = true;
         }
 
-        // 입력 처리 (논블로킹)
-        timeout(100);  // 0.1초 타임아웃 (반응성 향상)
+        // 입력 처리 (논블로킹) - 시그널 처리를 위해 더 짧은 타임아웃 사용
+        timeout(50);  // 0.05초 타임아웃 (시그널 반응성 향상)
         int ch = getch();
+
+        // getch() 이후 즉시 시그널 상태 재확인
+        if (shutdown_requested) {
+            LOG_INFO("Shutdown requested detected after getch()");
+            cleanup_and_exit(0);
+        }
 
         // 에러 다이얼로그가 활성화되어 있는지 확인
         pthread_mutex_lock(&screen_mutex);
