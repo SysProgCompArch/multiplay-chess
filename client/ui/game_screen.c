@@ -383,14 +383,20 @@ void draw_game_menu(WINDOW *menu_win) {
 }
 
 // 플레이어 정보 표시
-void draw_player_info(WINDOW *player_win, const char *player_name, bool is_me, team_t team, bool is_current_turn, int time_remaining) {
+void draw_player_info(WINDOW *player_win, const char *player_name, bool is_me, team_t team, bool is_current_turn, int time_remaining, bool is_in_check) {
     werase(player_win);
 
-    // 현재 턴 여부에 따른 색상 설정 (현재 턴: 흰색 배경, 대기: 검은색 배경)
-    int color_pair = is_current_turn ? COLOR_PAIR_WHITE_PLAYER : COLOR_PAIR_BLACK_PLAYER;
+    // 체크 상태에 따른 색상 설정
+    int color_pair;
+    if (is_in_check) {
+        color_pair = COLOR_PAIR_CHECK_PLAYER;  // 체크 상태: 붉은 배경, 흰 글자
+    } else {
+        color_pair = is_current_turn ? COLOR_PAIR_WHITE_PLAYER : COLOR_PAIR_BLACK_PLAYER;
+    }
+
     wattron(player_win, COLOR_PAIR(color_pair));
 
-    // 전체 윈도우를 팀 색상으로 채우기
+    // 전체 윈도우를 배경색으로 채우기
     int height, width;
     getmaxyx(player_win, height, width);
 
@@ -417,15 +423,37 @@ void draw_player_info(WINDOW *player_win, const char *player_name, bool is_me, t
         mvwprintw(player_win, 0, 1, "  %s", display_name);
     }
 
-    // 타이머 표시 (오른쪽 정렬)
-    int  minutes = time_remaining / 60;
-    int  seconds = time_remaining % 60;
-    char timer_str[16];
-    snprintf(timer_str, sizeof(timer_str), "%02d:%02d", minutes, seconds);
+    // 체크 상태일 때 CHECK 텍스트 표시
+    if (is_in_check) {
+        // 타이머 표시 위치 계산
+        int  minutes = time_remaining / 60;
+        int  seconds = time_remaining % 60;
+        char timer_str[16];
+        snprintf(timer_str, sizeof(timer_str), "%02d:%02d", minutes, seconds);
 
-    int timer_x = width - strlen(timer_str) - 1;
-    if (timer_x > strlen(display_name) + 4) {  // 이름과 겹치지 않도록
+        int timer_x = width - strlen(timer_str) - 1;
+        int check_x = timer_x - strlen("CHECK") - 1;  // CHECK + 공백
+
+        // CHECK 표시 (볼드체)
+        if (check_x > strlen(display_name) + 4) {
+            wattron(player_win, A_BOLD);
+            mvwprintw(player_win, 0, check_x, "CHECK ");
+            wattroff(player_win, A_BOLD);
+        }
+
+        // 타이머 표시
         mvwprintw(player_win, 0, timer_x, "%s", timer_str);
+    } else {
+        // 체크 상태가 아닐 때는 타이머만 표시
+        int  minutes = time_remaining / 60;
+        int  seconds = time_remaining % 60;
+        char timer_str[16];
+        snprintf(timer_str, sizeof(timer_str), "%02d:%02d", minutes, seconds);
+
+        int timer_x = width - strlen(timer_str) - 1;
+        if (timer_x > strlen(display_name) + 4) {
+            mvwprintw(player_win, 0, timer_x, "%s", timer_str);
+        }
     }
 
     wattroff(player_win, COLOR_PAIR(color_pair));
@@ -474,7 +502,8 @@ void draw_game_screen() {
     int           opponent_time = (opponent_team == TEAM_WHITE) ? game_state->white_time_remaining : game_state->black_time_remaining;
 
     WINDOW *opponent_info_win = newwin(player_info_height, BOARD_WIDTH, 1, 2);
-    draw_player_info(opponent_info_win, get_opponent_name_client(), false, opponent_team, opponent_turn, opponent_time);
+    bool    opponent_in_check = (opponent_team == TEAM_WHITE) ? game_state->white_in_check : game_state->black_in_check;
+    draw_player_info(opponent_info_win, get_opponent_name_client(), false, opponent_team, opponent_turn, opponent_time, opponent_in_check);
 
     // 체스판 (가운데)
     WINDOW *board_win = newwin(BOARD_HEIGHT, BOARD_WIDTH, board_start_y, 2);
@@ -489,7 +518,8 @@ void draw_game_screen() {
     int  my_time = (game_state->local_team == TEAM_WHITE) ? game_state->white_time_remaining : game_state->black_time_remaining;
 
     WINDOW *my_info_win = newwin(player_info_height, BOARD_WIDTH, board_start_y + BOARD_HEIGHT, 2);
-    draw_player_info(my_info_win, client->username, true, game_state->local_team, my_turn, my_time);
+    bool    my_in_check = (game_state->local_team == TEAM_WHITE) ? game_state->white_in_check : game_state->black_in_check;
+    draw_player_info(my_info_win, client->username, true, game_state->local_team, my_turn, my_time, my_in_check);
 
     // 채팅창 높이를 체스판과 맞춤 (플레이어 정보창 2개 + 체스판 높이)
     int     total_game_height = player_info_height * 2 + BOARD_HEIGHT;

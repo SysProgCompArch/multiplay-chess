@@ -87,6 +87,6 @@ void update_match_timer();
 void calculate_chat_dimensions(int terminal_cols, int *chat_width, int *input_width);
 
 // 플레이어 정보 표시
-void draw_player_info(WINDOW *player_win, const char *player_name, bool is_me, team_t team, bool is_current_turn, int time_remaining);
+void draw_player_info(WINDOW *player_win, const char *player_name, bool is_me, team_t team, bool is_current_turn, int time_remaining, bool is_in_check);
 
 #endif  // CLIENT_UI_H

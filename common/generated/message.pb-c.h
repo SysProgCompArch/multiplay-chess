@@ -209,9 +209,10 @@ typedef enum {
   SERVER_MESSAGE__MSG_MATCH_GAME_RES = 20,
   SERVER_MESSAGE__MSG_MOVE_RES = 21,
   SERVER_MESSAGE__MSG_MOVE_BROADCAST = 22,
-  SERVER_MESSAGE__MSG_RESIGN_BROADCAST = 23,
-  SERVER_MESSAGE__MSG_CHAT_BROADCAST = 24,
-  SERVER_MESSAGE__MSG_OPPONENT_DISCONNECTED = 25,
+  SERVER_MESSAGE__MSG_CHECK_BROADCAST = 23,
+  SERVER_MESSAGE__MSG_RESIGN_BROADCAST = 24,
+  SERVER_MESSAGE__MSG_CHAT_BROADCAST = 25,
+  SERVER_MESSAGE__MSG_OPPONENT_DISCONNECTED = 26,
   SERVER_MESSAGE__MSG_ERROR = 99
     PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(SERVER_MESSAGE__MSG)
 } ServerMessage__MsgCase;
@@ -233,6 +234,7 @@ struct  _ServerMessage
     MatchGameResponse *match_game_res;
     MoveResponse *move_res;
     MoveBroadcast *move_broadcast;
+    CheckBroadcast *check_broadcast;
     ResignBroadcast *resign_broadcast;
     ChatBroadcast *chat_broadcast;
     OpponentDisconnectedBroadcast *opponent_disconnected;
@@ -280,7 +282,7 @@ struct  _MatchGameResponse
    */
   char *message;
   /*
-   * 게임에 이미 상대가 있어서 바로 시작되는 경우, 
+   * 게임에 이미 상대가 있어서 바로 시작되는 경우,
    * 상대 ID나 색(WHITE/BLACK)도 함께 알려줄 수 있음
    */
   Color assigned_color;

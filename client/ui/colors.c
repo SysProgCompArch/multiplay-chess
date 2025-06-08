@@ -29,6 +29,12 @@ void init_colors() {
         // 기물 색상 쌍
         init_pair(COLOR_PAIR_MY_PIECE, EXT_COLOR_BRIGHT_WHITE, COLOR_BLACK);   // 내 기물: 밝은 흰색 (볼드로 표시됨)
         init_pair(COLOR_PAIR_OPPONENT_PIECE, EXT_COLOR_GRAY_14, COLOR_BLACK);  // 상대방 기물: 은은한 회색
+
+        // 체크 상태 색상 쌍
+        init_pair(COLOR_PAIR_RED, UI_ERROR, COLOR_BLACK);                      // 체크 상태: 빨간색 글자
+        init_pair(COLOR_PAIR_CHECK_WHITE, UI_ERROR, EXT_COLOR_BRIGHT_WHITE);   // 흰 배경에서 체크 표시
+        init_pair(COLOR_PAIR_CHECK_BLACK, UI_ERROR, COLOR_BLACK);              // 검은 배경에서 체크 표시
+        init_pair(COLOR_PAIR_CHECK_PLAYER, EXT_COLOR_BRIGHT_WHITE, UI_ERROR);  // 체크 상태 플레이어 정보창
     } else {
         init_pair(COLOR_PAIR_BORDER, COLOR_CYAN, COLOR_BLACK);
         init_pair(COLOR_PAIR_DIALOG_BORDER, COLOR_CYAN, COLOR_BLACK);
@@ -48,5 +54,11 @@ void init_colors() {
         // 기물 색상 쌍 (기본 색상)
         init_pair(COLOR_PAIR_MY_PIECE, COLOR_WHITE, COLOR_BLACK);        // 내 기물: 흰색 (볼드로 표시됨)
         init_pair(COLOR_PAIR_OPPONENT_PIECE, COLOR_BLACK, COLOR_BLACK);  // 상대방 기물: 검은색 (약간 어둡게)
+
+        // 체크 상태 색상 쌍 (기본 색상)
+        init_pair(COLOR_PAIR_RED, COLOR_RED, COLOR_BLACK);           // 체크 상태: 빨간색 글자
+        init_pair(COLOR_PAIR_CHECK_WHITE, COLOR_RED, COLOR_WHITE);   // 흰 배경에서 체크 표시
+        init_pair(COLOR_PAIR_CHECK_BLACK, COLOR_RED, COLOR_BLACK);   // 검은 배경에서 체크 표시
+        init_pair(COLOR_PAIR_CHECK_PLAYER, COLOR_WHITE, COLOR_RED);  // 체크 상태 플레이어 정보창
     }
 }

@@ -97,9 +97,10 @@ message ServerMessage {
     MatchGameResponse             match_game_res        = 20;
     MoveResponse                  move_res              = 21;
     MoveBroadcast                 move_broadcast        = 22;
-    ResignBroadcast               resign_broadcast      = 23;
-    ChatBroadcast                 chat_broadcast        = 24;
-    OpponentDisconnectedBroadcast opponent_disconnected = 25;
+    CheckBroadcast                check_broadcast       = 23;
+    ResignBroadcast               resign_broadcast      = 24;
+    ChatBroadcast                 chat_broadcast        = 25;
+    OpponentDisconnectedBroadcast opponent_disconnected = 26;
     ErrorResponse                 error                 = 99;
     // 그 외 새 기능 추가 시 확장 가능
   }
@@ -144,6 +145,13 @@ message MoveBroadcast {
   PieceType promotion = 5;
 
   google.protobuf.Timestamp timestamp = 6;
+}
+
+message CheckBroadcast {
+  string                    game_id   = 1;
+  string                    player_id = 2;  // 체크 당한 플레이어
+  Color                     by_color  = 3;  // 체크 당한 색
+  google.protobuf.Timestamp timestamp = 4;
 }
 
 // 기권 시 브로드캐스트 (모든 관여자에게 알림)

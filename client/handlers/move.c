@@ -118,9 +118,11 @@ int handle_move_broadcast(ServerMessage *msg) {
         if (apply_move_from_server(&client->game_state.game, broadcast->from, broadcast->to)) {
             LOG_DEBUG("Board updated successfully: %s -> %s", broadcast->from, broadcast->to);
 
-            // 화면 업데이트 요청
+            // 이동 후 체크 상태 초기화 (새로운 체크 상황은 CheckBroadcast로 별도 전송됨)
             pthread_mutex_lock(&screen_mutex);
-            client->screen_update_requested = true;
+            client->game_state.white_in_check = false;
+            client->game_state.black_in_check = false;
+            client->screen_update_requested   = true;
             pthread_mutex_unlock(&screen_mutex);
 
         } else {

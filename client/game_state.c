@@ -30,6 +30,10 @@ void init_game_state(game_state_t *state) {
     state->black_time_remaining  = 600;  // 10분
     state->opponent_disconnected = false;
 
+    // 체크 상태 초기화
+    state->white_in_check = false;
+    state->black_in_check = false;
+
     // 이동 가능 위치 배열 초기화
     memset(state->possible_moves, false, sizeof(state->possible_moves));
     memset(state->capture_moves, false, sizeof(state->capture_moves));

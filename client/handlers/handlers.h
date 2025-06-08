@@ -15,6 +15,7 @@ int handle_opponent_disconnected_broadcast(ServerMessage *msg);
 int handle_error_response(ServerMessage *msg);
 int handle_move_response(ServerMessage *msg);
 int handle_move_broadcast(ServerMessage *msg);
+int handle_check_broadcast(ServerMessage *msg);
 
 // 메인 핸들러 디스패처
 int dispatch_server_message(ServerMessage *msg);

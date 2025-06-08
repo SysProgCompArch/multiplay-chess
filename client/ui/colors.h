@@ -128,5 +128,9 @@
 #define COLOR_PAIR_CAPTURE_MOVE    12
 #define COLOR_PAIR_MY_PIECE        13
 #define COLOR_PAIR_OPPONENT_PIECE  14
+#define COLOR_PAIR_RED             15  // 체크 상태 표시용
+#define COLOR_PAIR_CHECK_WHITE     16  // 흰색 플레이어 배경에서의 체크 표시
+#define COLOR_PAIR_CHECK_BLACK     17  // 검은색 플레이어 배경에서의 체크 표시
+#define COLOR_PAIR_CHECK_PLAYER    18  // 체크 상태 플레이어 정보창 (흰 글자 + 빨간 배경)
 
 #endif  // EXTENDED_COLORS_H

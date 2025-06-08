@@ -182,6 +182,32 @@ int handle_move_message(int fd, ClientMessage *req) {
         // 이미 이동은 적용되었으므로, 브로드캐스트 실패만 로그하고 계속 진행
     }
 
+    // 체크 상황 확인 및 브로드캐스트
+    color_t current_side = game->game_state.side_to_move;  // 이동 후 현재 턴 (상대방)
+    if (is_in_check(&game->game_state, current_side)) {
+        LOG_INFO("Check detected for %s in game %s",
+                 (current_side == TEAM_WHITE) ? "WHITE" : "BLACK", game->game_id);
+
+        // 체크 브로드캐스트 전송
+        ServerMessage  check_msg       = SERVER_MESSAGE__INIT;
+        CheckBroadcast check_broadcast = CHECK_BROADCAST__INIT;
+
+        check_broadcast.game_id   = game->game_id;
+        check_broadcast.player_id = (current_side == TEAM_WHITE) ? game->white_player_id : game->black_player_id;
+        check_broadcast.by_color  = (current_side == TEAM_WHITE) ? COLOR__COLOR_WHITE : COLOR__COLOR_BLACK;
+
+        check_msg.msg_case        = SERVER_MESSAGE__MSG_CHECK_BROADCAST;
+        check_msg.check_broadcast = &check_broadcast;
+
+        // 양쪽 플레이어 모두에게 체크 브로드캐스트 전송
+        if (send_server_message(game->white_player_fd, &check_msg) < 0) {
+            LOG_ERROR("Failed to send check broadcast to white player fd=%d", game->white_player_fd);
+        }
+        if (send_server_message(game->black_player_fd, &check_msg) < 0) {
+            LOG_ERROR("Failed to send check broadcast to black player fd=%d", game->black_player_fd);
+        }
+    }
+
     // 게임 종료 조건 확인 (체크메이트, 스테일메이트 등)
     if (is_checkmate(&game->game_state)) {
         LOG_INFO("Game %s ended by checkmate", game->game_id);

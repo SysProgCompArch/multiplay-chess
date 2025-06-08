@@ -44,6 +44,10 @@ typedef struct
     // 상대방 연결 끊김 감지
     bool opponent_disconnected;
     char opponent_disconnect_message[256];
+
+    // 체크 상태 정보
+    bool white_in_check;
+    bool black_in_check;
 } game_state_t;
 
 // 함수 선언

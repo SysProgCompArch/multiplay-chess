@@ -1215,7 +1215,7 @@ const ProtobufCMessageDescriptor chat_request__descriptor =
   (ProtobufCMessageInit) chat_request__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor server_message__field_descriptors[10] =
+static const ProtobufCFieldDescriptor server_message__field_descriptors[11] =
 {
   {
     "version",
@@ -1290,8 +1290,20 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[10] =
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "resign_broadcast",
+    "check_broadcast",
     23,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(ServerMessage, msg_case),
+    offsetof(ServerMessage, check_broadcast),
+    &check_broadcast__descriptor,
+    NULL,
+    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "resign_broadcast",
+    24,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(ServerMessage, msg_case),
@@ -1303,7 +1315,7 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[10] =
   },
   {
     "chat_broadcast",
-    24,
+    25,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(ServerMessage, msg_case),
@@ -1315,7 +1327,7 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[10] =
   },
   {
     "opponent_disconnected",
-    25,
+    26,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(ServerMessage, msg_case),
@@ -1339,15 +1351,16 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[10] =
   },
 };
 static const unsigned server_message__field_indices_by_name[] = {
-  7,   /* field[7] = chat_broadcast */
+  8,   /* field[8] = chat_broadcast */
+  6,   /* field[6] = check_broadcast */
   2,   /* field[2] = echo_res */
-  9,   /* field[9] = error */
+  10,   /* field[10] = error */
   3,   /* field[3] = match_game_res */
   5,   /* field[5] = move_broadcast */
   4,   /* field[4] = move_res */
-  8,   /* field[8] = opponent_disconnected */
+  9,   /* field[9] = opponent_disconnected */
   1,   /* field[1] = ping_res */
-  6,   /* field[6] = resign_broadcast */
+  7,   /* field[7] = resign_broadcast */
   0,   /* field[0] = version */
 };
 static const ProtobufCIntRange server_message__number_ranges[4 + 1] =
@@ -1355,8 +1368,8 @@ static const ProtobufCIntRange server_message__number_ranges[4 + 1] =
   { 1, 0 },
   { 10, 1 },
   { 20, 3 },
-  { 99, 9 },
-  { 0, 10 }
+  { 99, 10 },
+  { 0, 11 }
 };
 const ProtobufCMessageDescriptor server_message__descriptor =
 {
@@ -1366,7 +1379,7 @@ const ProtobufCMessageDescriptor server_message__descriptor =
   "ServerMessage",
   "",
   sizeof(ServerMessage),
-  10,
+  11,
   server_message__field_descriptors,
   server_message__field_indices_by_name,
   4,  server_message__number_ranges,
