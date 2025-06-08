@@ -220,14 +220,13 @@ void draw_chat_area(WINDOW *chat_win) {
     int win_height, win_width;
     getmaxyx(chat_win, win_height, win_width);
 
-    int max_display_lines = win_height - 4;  // 테두리(위1+아래1) + 제목(1) + 여백(1) 제외
+    int current_line      = 3;                        // 메시지 표시 시작 라인
+    int max_line          = win_height - 2;           // 아래 테두리 바로 위까지
+    int max_display_lines = max_line - current_line;  // 실제 사용 가능한 라인 수
     if (max_display_lines < 1) max_display_lines = 1;
 
     // 채팅 메시지 표시
     game_state_t *state = &client->game_state;
-
-    int current_line = 3;               // 메시지 표시 시작 라인
-    int max_line     = win_height - 2;  // 아래 테두리 바로 위까지
 
     // 역순으로 메시지를 처리하여 최신 메시지가 아래쪽에 표시되도록 함
     int total_lines_needed = 0;
@@ -244,8 +243,21 @@ void draw_chat_area(WINDOW *chat_win) {
         if (msg_len <= max_line_len) {
             total_lines_needed += 1;
         } else {
-            // 여러 줄 메시지의 라인 수 계산
-            int lines_for_msg = (msg_len + max_line_len - 1) / max_line_len;  // 올림 계산
+            // 여러 줄 메시지의 라인 수 계산 (들여쓰기 고려)
+            int indent = strlen(msg->sender) + 2;        // "sender: " 길이만큼 들여쓰기
+            if (indent > max_line_len - 10) indent = 4;  // 너무 긴 이름의 경우 기본 들여쓰기
+
+            int first_line_len = max_line_len;
+            int remaining_len  = msg_len - first_line_len;
+            int lines_for_msg  = 1;  // 첫 줄
+
+            // 나머지 줄들 (들여쓰기 적용)
+            if (remaining_len > 0) {
+                int subsequent_line_len = max_line_len - indent;
+                if (subsequent_line_len < 10) subsequent_line_len = 10;  // 최소 길이 보장
+                lines_for_msg += (remaining_len + subsequent_line_len - 1) / subsequent_line_len;
+            }
+
             total_lines_needed += lines_for_msg;
         }
 
@@ -271,7 +283,20 @@ void draw_chat_area(WINDOW *chat_win) {
         if (msg_len <= max_line_len) {
             lines_for_this_msg = 1;
         } else {
-            lines_for_this_msg = (msg_len + max_line_len - 1) / max_line_len;
+            // 여러 줄 메시지의 라인 수 계산 (들여쓰기 고려)
+            int indent = strlen(msg->sender) + 2;
+            if (indent > max_line_len - 10) indent = 4;
+
+            int first_line_len = max_line_len;
+            int remaining_len  = msg_len - first_line_len;
+            lines_for_this_msg = 1;  // 첫 줄
+
+            // 나머지 줄들 (들여쓰기 적용)
+            if (remaining_len > 0) {
+                int subsequent_line_len = max_line_len - indent;
+                if (subsequent_line_len < 10) subsequent_line_len = 10;
+                lines_for_this_msg += (remaining_len + subsequent_line_len - 1) / subsequent_line_len;
+            }
         }
 
         if (lines_counted + lines_for_this_msg > max_display_lines) {
