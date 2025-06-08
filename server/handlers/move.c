@@ -85,6 +85,37 @@ int broadcast_move(int opponent_fd, const char *game_id, const char *player_id,
     return send_server_message(opponent_fd, &broadcast);
 }
 
+// 헬퍼 함수: 게임 종료 브로드캐스트
+int send_game_end_broadcast(ActiveGame *game, const char *player_id, Color winner_color, GameEndType end_type) {
+    ServerMessage    game_end_msg       = SERVER_MESSAGE__INIT;
+    GameEndBroadcast game_end_broadcast = GAME_END_BROADCAST__INIT;
+
+    game_end_broadcast.game_id      = game->game_id;
+    game_end_broadcast.player_id    = (char *)player_id;
+    game_end_broadcast.winner_color = winner_color;
+    game_end_broadcast.end_type     = end_type;
+    // timestamp는 NULL로 두면 protobuf에서 자동으로 처리
+
+    game_end_msg.msg_case = SERVER_MESSAGE__MSG_GAME_END;
+    game_end_msg.game_end = &game_end_broadcast;
+
+    // 양쪽 플레이어 모두에게 게임 종료 브로드캐스트 전송
+    int result = 0;
+    if (send_server_message(game->white_player_fd, &game_end_msg) < 0) {
+        LOG_ERROR("Failed to send game end broadcast to white player fd=%d", game->white_player_fd);
+        result = -1;
+    }
+    if (send_server_message(game->black_player_fd, &game_end_msg) < 0) {
+        LOG_ERROR("Failed to send game end broadcast to black player fd=%d", game->black_player_fd);
+        result = -1;
+    }
+
+    LOG_INFO("Sent game end broadcast for game %s (end_type=%d, winner_color=%d)",
+             game->game_id, end_type, winner_color);
+
+    return result;
+}
+
 // 기물 옮김 요청 처리 핸들러
 int handle_move_message(int fd, ClientMessage *req) {
     if (req->msg_case != CLIENT_MESSAGE__MSG_MOVE) {
@@ -211,13 +242,32 @@ int handle_move_message(int fd, ClientMessage *req) {
     // 게임 종료 조건 확인 (체크메이트, 스테일메이트 등)
     if (is_checkmate(&game->game_state)) {
         LOG_INFO("Game %s ended by checkmate", game->game_id);
-        // TODO: 게임 종료 처리 및 브로드캐스트
+
+        // 체크메이트 - 상대방이 승리
+        Color winner_color = (current_side == TEAM_WHITE) ? COLOR__COLOR_BLACK : COLOR__COLOR_WHITE;
+        send_game_end_broadcast(game, current_side == TEAM_WHITE ? game->black_player_id : game->white_player_id,
+                                winner_color, GAME_END_TYPE__GAME_END_CHECKMATE);
+
+        // 게임 종료 및 매치 매니저에서 제거
+        remove_game(game->game_id);
+
     } else if (is_stalemate(&game->game_state)) {
         LOG_INFO("Game %s ended by stalemate", game->game_id);
-        // TODO: 게임 종료 처리 및 브로드캐스트
+
+        // 스테일메이트 - 무승부
+        send_game_end_broadcast(game, "", COLOR__COLOR_UNSPECIFIED, GAME_END_TYPE__GAME_END_STALEMATE);
+
+        // 게임 종료 및 매치 매니저에서 제거
+        remove_game(game->game_id);
+
     } else if (is_fifty_move_rule(&game->game_state)) {
         LOG_INFO("Game %s ended by fifty-move rule", game->game_id);
-        // TODO: 게임 종료 처리 및 브로드캐스트
+
+        // 50수 규칙 - 무승부
+        send_game_end_broadcast(game, "", COLOR__COLOR_UNSPECIFIED, GAME_END_TYPE__GAME_END_DRAW);
+
+        // 게임 종료 및 매치 매니저에서 제거
+        remove_game(game->game_id);
     }
 
     return 0;
