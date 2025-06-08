@@ -246,7 +246,7 @@ int main(int argc, char *argv[]) {
                 need_screen_update = false;  // 이미 화면을 업데이트했으므로 플래그 끄기
             }
         } else if (ch != ERR && !dialog_active) {
-            LOG_DEBUG("Input received: %d", ch);
+            // LOG_DEBUG("Input received: %d", ch);
             need_screen_update = true;  // 사용자 입력이 있으면 화면 업데이트 필요
 
             // 실제 키 입력이 있을 때만 처리
@@ -396,8 +396,6 @@ int main(int argc, char *argv[]) {
 
             // 에러 다이얼로그가 활성화되어 있으면 화면 업데이트를 건너뜀
             if (!client->dialog_active) {
-                LOG_DEBUG("Updating screen - need_update: %d, periodic: %d, screen: %d",
-                          need_screen_update, periodic_update_needed, current_screen);
                 draw_current_screen();
             }
 

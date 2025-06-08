@@ -2,11 +2,18 @@
 
 #include "../client_network.h"  // send_move_request 함수를 위해 변경
 #include "../client_state.h"
+#include "../logger.h"
 #include "piece.h"
 #include "ui.h"
 
 // 화면 좌표를 보드 좌표로 변환
 bool coord_to_board_pos(int screen_x, int screen_y, int *board_x, int *board_y) {
+    // NULL 포인터 검사
+    if (!board_x || !board_y) {
+        LOG_ERROR("board_x or board_y is NULL in coord_to_board_pos");
+        return false;
+    }
+
     // 보드 윈도우 시작 위치 (draw_game_screen에서 newwin 위치)
     int board_win_start_x = 2;
     int board_win_start_y = 1;
@@ -45,8 +52,13 @@ bool coord_to_board_pos(int screen_x, int screen_y, int *board_x, int *board_y) 
         // 블랙 플레이어: actual_row = 7 - row, actual_col = 7 - col
         // 역변환: display_x/y → actual_x/y
 
-        client_state_t *client          = get_client_state();
-        bool            is_black_player = (client->game_state.local_team == TEAM_BLACK);
+        client_state_t *client = get_client_state();
+        if (!client) {
+            LOG_ERROR("client is NULL in coord_to_board_pos");
+            return false;
+        }
+        
+        bool is_black_player = (client->game_state.local_team == TEAM_BLACK);
 
         if (is_black_player) {
             // 블랙 플레이어: actual_col = 7 - col, actual_row = 7 - row
@@ -59,6 +71,13 @@ bool coord_to_board_pos(int screen_x, int screen_y, int *board_x, int *board_y) 
             *board_x = display_x;
             *board_y = display_y;
         }
+
+        // 최종 결과 값이 올바른 범위인지 재확인
+        if (*board_x < 0 || *board_x >= 8 || *board_y < 0 || *board_y >= 8) {
+            LOG_ERROR("Calculated board coordinates out of bounds: (%d, %d)", *board_x, *board_y);
+            return false;
+        }
+
         return true;
     }
 
@@ -69,10 +88,29 @@ bool coord_to_board_pos(int screen_x, int screen_y, int *board_x, int *board_y) 
 void handle_board_click(int board_x, int board_y) {
     client_state_t *client = get_client_state();
 
+    // NULL 포인터 검사
+    if (!client) {
+        LOG_ERROR("client is NULL in handle_board_click");
+        return;
+    }
+
     if (client->current_screen != SCREEN_GAME)
         return;
 
+    // 배열 경계 검사 추가
+    if (board_x < 0 || board_x >= 8 || board_y < 0 || board_y >= 8) {
+        LOG_ERROR("Board coordinates out of bounds: (%d, %d)", board_x, board_y);
+        add_chat_message_safe("System", "Invalid board position clicked.");
+        return;
+    }
+
     board_state_t *board = &client->game_state.board_state;
+
+    // board 포인터 검사
+    if (!board) {
+        LOG_ERROR("board is NULL in handle_board_click");
+        return;
+    }
 
     // 내부 로직용 디버그 메시지
     char debug_msg[256];
@@ -80,7 +118,7 @@ void handle_board_click(int board_x, int board_y) {
     add_chat_message_safe("System", debug_msg);
 
     if (!client->piece_selected) {
-        // 기물 선택
+        // 기물 선택 - 경계 검사 후 배열 접근
         piecestate_t *piece = &board->board[board_y][board_x];
         if (piece->piece && !piece->is_dead) {
             // 현재 플레이어의 기물인지 확인
@@ -137,6 +175,15 @@ void handle_board_click(int board_x, int board_y) {
             client->piece_selected = false;
             add_chat_message_safe("System", "Selection cancelled.");
         } else {
+            // 좌표 유효성 재검사
+            if (client->selected_x < 0 || client->selected_x >= 8 || 
+                client->selected_y < 0 || client->selected_y >= 8) {
+                LOG_ERROR("Selected coordinates out of bounds: (%d, %d)", client->selected_x, client->selected_y);
+                client->piece_selected = false;
+                add_chat_message_safe("System", "Invalid selection, cancelled.");
+                return;
+            }
+
             // 다른 위치 클릭 - 서버로 이동 요청 전송
             char from_coord[3], to_coord[3];
 
@@ -165,7 +212,17 @@ void handle_board_click(int board_x, int board_y) {
 
 // 마우스 입력 처리
 void handle_mouse_input(MEVENT *event) {
+    // NULL 포인터 검사
+    if (!event) {
+        LOG_ERROR("event is NULL in handle_mouse_input");
+        return;
+    }
+
     client_state_t *client = get_client_state();
+    if (!client) {
+        LOG_ERROR("client is NULL in handle_mouse_input");
+        return;
+    }
 
     if (event->bstate & BUTTON1_CLICKED) {
         if (client->current_screen == SCREEN_GAME) {
@@ -204,9 +261,22 @@ bool is_cursor_mode() {
 }
 
 void get_cursor_position(int *x, int *y) {
+    // NULL 포인터 검사
+    if (!x || !y) {
+        LOG_ERROR("x or y is NULL in get_cursor_position");
+        return;
+    }
+
     // 블랙 플레이어인 경우 커서 좌표도 변환
-    client_state_t *client          = get_client_state();
-    bool            is_black_player = (client->game_state.local_team == TEAM_BLACK);
+    client_state_t *client = get_client_state();
+    if (!client) {
+        LOG_ERROR("client is NULL in get_cursor_position");
+        *x = cursor_x;
+        *y = cursor_y;
+        return;
+    }
+    
+    bool is_black_player = (client->game_state.local_team == TEAM_BLACK);
 
     if (is_black_player) {
         *x = 7 - cursor_x;
@@ -215,11 +285,24 @@ void get_cursor_position(int *x, int *y) {
         *x = cursor_x;
         *y = cursor_y;
     }
+
+    // 최종 결과가 유효한 범위인지 확인
+    if (*x < 0 || *x >= 8 || *y < 0 || *y >= 8) {
+        LOG_ERROR("Cursor position out of bounds: (%d, %d)", *x, *y);
+        *x = 0;
+        *y = 0;
+    }
 }
 
 // 키보드 입력으로 체스판 조작
 bool handle_keyboard_board_input(int ch) {
     client_state_t *client = get_client_state();
+
+    // NULL 포인터 검사
+    if (!client) {
+        LOG_ERROR("client is NULL in handle_keyboard_board_input");
+        return false;
+    }
 
     if (client->current_screen != SCREEN_GAME) {
         return false;
@@ -279,7 +362,17 @@ bool handle_keyboard_board_input(int ch) {
 
 // 체스 표기법 파싱 및 처리
 bool handle_chess_notation(const char *notation) {
+    // NULL 포인터 검사
+    if (!notation) {
+        LOG_ERROR("notation is NULL in handle_chess_notation");
+        return false;
+    }
+
     client_state_t *client = get_client_state();
+    if (!client) {
+        LOG_ERROR("client is NULL in handle_chess_notation");
+        return false;
+    }
 
     if (client->current_screen != SCREEN_GAME) {
         return false;
