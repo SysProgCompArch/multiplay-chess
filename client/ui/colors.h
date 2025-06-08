@@ -79,7 +79,7 @@
 // 체스 게임에 유용한 색상들
 #define CHESS_LIGHT_SQUARE    EXT_COLOR_WHITE
 #define CHESS_DARK_SQUARE     EXT_COLOR_BLACK
-#define CHESS_SELECTED_SQUARE RGB_COLOR(5, 5, 0)  // 밝은 노란색
+#define CHESS_SELECTED_SQUARE RGB_COLOR(5, 3, 0)  // 짙은 오렌지색
 #define CHESS_POSSIBLE_MOVE   RGB_COLOR(0, 3, 0)  // 연한 초록색
 #define CHESS_CAPTURE_MOVE    RGB_COLOR(3, 0, 0)  // 연한 빨간색
 #define CHESS_CHECK_HIGHLIGHT RGB_COLOR(5, 1, 1)  // 밝은 빨간색
@@ -106,12 +106,12 @@
 #define IS_GRAY_COLOR(c)     ((c) >= 232 && (c) <= 255)
 
 // RGB 색상에서 각 요소 추출
-#define RGB_RED_COMPONENT(c)   (((c) - 16) / 36)
-#define RGB_GREEN_COMPONENT(c) ((((c) - 16) % 36) / 6)
-#define RGB_BLUE_COMPONENT(c)  (((c) - 16) % 6)
+#define RGB_RED_COMPONENT(c)   (((c)-16) / 36)
+#define RGB_GREEN_COMPONENT(c) ((((c)-16) % 36) / 6)
+#define RGB_BLUE_COMPONENT(c)  (((c)-16) % 6)
 
 // 그레이 레벨 추출
-#define GRAY_LEVEL(c) ((c) - 232)
+#define GRAY_LEVEL(c) ((c)-232)
 
 // 색상 쌍 정의
 #define COLOR_PAIR_BORDER          1

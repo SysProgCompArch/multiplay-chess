@@ -14,7 +14,7 @@ void init_colors() {
         init_pair(COLOR_PAIR_BORDER, CHESS_BORDER, COLOR_BLACK);
         init_pair(COLOR_PAIR_DIALOG_BORDER, CHESS_DIALOG_BORDER, COLOR_BLACK);
         init_pair(COLOR_PAIR_SELECTED, EXT_COLOR_GOLD, COLOR_BLACK);
-        init_pair(COLOR_PAIR_SELECTED_SQUARE, CHESS_SELECTED_SQUARE, EXT_COLOR_GOLD);
+        init_pair(COLOR_PAIR_SELECTED_SQUARE, COLOR_BLACK, CHESS_SELECTED_SQUARE);
         init_pair(COLOR_PAIR_CURSOR_SQUARE, EXT_COLOR_GRAY_18, EXT_COLOR_GRAY_14);  // 연한 파란색 커서
 
         // 플레이어 정보 색상 쌍
@@ -33,7 +33,7 @@ void init_colors() {
         init_pair(COLOR_PAIR_BORDER, COLOR_CYAN, COLOR_BLACK);
         init_pair(COLOR_PAIR_DIALOG_BORDER, COLOR_CYAN, COLOR_BLACK);
         init_pair(COLOR_PAIR_SELECTED, COLOR_YELLOW, COLOR_BLACK);
-        init_pair(COLOR_PAIR_SELECTED_SQUARE, COLOR_CYAN, COLOR_BLACK);
+        init_pair(COLOR_PAIR_SELECTED_SQUARE, COLOR_BLACK, COLOR_YELLOW);
         init_pair(COLOR_PAIR_CURSOR_SQUARE, COLOR_BLUE, COLOR_CYAN);  // 파란색 커서 (기본 색상)
 
         // 플레이어 정보 색상 쌍 (기본 색상)
