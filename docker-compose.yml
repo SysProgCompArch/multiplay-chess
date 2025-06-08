@@ -6,4 +6,19 @@ services:
       context: .
       dockerfile: server/Dockerfile
     ports:
-      - 8080:8080
+      - "8080:8080"
+    volumes:
+      - ./logs:/app/logs
+    environment:
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    networks:
+      - chess-network
+
+networks:
+  chess-network:
+    driver: bridge
+
+volumes:
+  chess-logs:
+    driver: local 
