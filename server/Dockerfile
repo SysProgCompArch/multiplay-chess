@@ -23,13 +23,9 @@ WORKDIR /app
 # 프로젝트 파일 복사
 COPY . .
 
-# 빌드 디렉토리 생성 및 CMake 설정
-RUN mkdir -p build
-
 # CMake를 사용하여 서버만 빌드
-RUN cd build && \
-    cmake .. && \
-    cmake --build . --target server
+RUN cmake -S . -B build
+RUN cmake --build build --target server
 
 # 서버 실행 포트 노출 (기본 체스 서버 포트)
 EXPOSE 8080
