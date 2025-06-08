@@ -3,8 +3,8 @@ name: chess
 services:
   server:
     build:
-      context: ./server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server/Dockerfile
     ports:
       - "8080:8080"
     volumes:
