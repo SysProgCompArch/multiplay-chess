@@ -11,7 +11,7 @@ int handle_ping_response(ServerMessage *msg);
 int handle_echo_response(ServerMessage *msg);
 int handle_match_game_response(ServerMessage *msg);
 int handle_chat_broadcast(ServerMessage *msg);
-int handle_opponent_disconnected_broadcast(ServerMessage *msg);
+int handle_game_end_broadcast(ServerMessage *msg);
 int handle_error_response(ServerMessage *msg);
 int handle_move_response(ServerMessage *msg);
 int handle_move_broadcast(ServerMessage *msg);

@@ -637,49 +637,49 @@ void   check_broadcast__free_unpacked
   assert(message->base.descriptor == &check_broadcast__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-void   resign_broadcast__init
-                     (ResignBroadcast         *message)
+void   game_end_broadcast__init
+                     (GameEndBroadcast         *message)
 {
-  static const ResignBroadcast init_value = RESIGN_BROADCAST__INIT;
+  static const GameEndBroadcast init_value = GAME_END_BROADCAST__INIT;
   *message = init_value;
 }
-size_t resign_broadcast__get_packed_size
-                     (const ResignBroadcast *message)
+size_t game_end_broadcast__get_packed_size
+                     (const GameEndBroadcast *message)
 {
-  assert(message->base.descriptor == &resign_broadcast__descriptor);
+  assert(message->base.descriptor == &game_end_broadcast__descriptor);
   return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
 }
-size_t resign_broadcast__pack
-                     (const ResignBroadcast *message,
+size_t game_end_broadcast__pack
+                     (const GameEndBroadcast *message,
                       uint8_t       *out)
 {
-  assert(message->base.descriptor == &resign_broadcast__descriptor);
+  assert(message->base.descriptor == &game_end_broadcast__descriptor);
   return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
 }
-size_t resign_broadcast__pack_to_buffer
-                     (const ResignBroadcast *message,
+size_t game_end_broadcast__pack_to_buffer
+                     (const GameEndBroadcast *message,
                       ProtobufCBuffer *buffer)
 {
-  assert(message->base.descriptor == &resign_broadcast__descriptor);
+  assert(message->base.descriptor == &game_end_broadcast__descriptor);
   return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
 }
-ResignBroadcast *
-       resign_broadcast__unpack
+GameEndBroadcast *
+       game_end_broadcast__unpack
                      (ProtobufCAllocator  *allocator,
                       size_t               len,
                       const uint8_t       *data)
 {
-  return (ResignBroadcast *)
-     protobuf_c_message_unpack (&resign_broadcast__descriptor,
+  return (GameEndBroadcast *)
+     protobuf_c_message_unpack (&game_end_broadcast__descriptor,
                                 allocator, len, data);
 }
-void   resign_broadcast__free_unpacked
-                     (ResignBroadcast *message,
+void   game_end_broadcast__free_unpacked
+                     (GameEndBroadcast *message,
                       ProtobufCAllocator *allocator)
 {
   if(!message)
     return;
-  assert(message->base.descriptor == &resign_broadcast__descriptor);
+  assert(message->base.descriptor == &game_end_broadcast__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 void   chat_broadcast__init
@@ -725,51 +725,6 @@ void   chat_broadcast__free_unpacked
   if(!message)
     return;
   assert(message->base.descriptor == &chat_broadcast__descriptor);
-  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
-}
-void   opponent_disconnected_broadcast__init
-                     (OpponentDisconnectedBroadcast         *message)
-{
-  static const OpponentDisconnectedBroadcast init_value = OPPONENT_DISCONNECTED_BROADCAST__INIT;
-  *message = init_value;
-}
-size_t opponent_disconnected_broadcast__get_packed_size
-                     (const OpponentDisconnectedBroadcast *message)
-{
-  assert(message->base.descriptor == &opponent_disconnected_broadcast__descriptor);
-  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
-}
-size_t opponent_disconnected_broadcast__pack
-                     (const OpponentDisconnectedBroadcast *message,
-                      uint8_t       *out)
-{
-  assert(message->base.descriptor == &opponent_disconnected_broadcast__descriptor);
-  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
-}
-size_t opponent_disconnected_broadcast__pack_to_buffer
-                     (const OpponentDisconnectedBroadcast *message,
-                      ProtobufCBuffer *buffer)
-{
-  assert(message->base.descriptor == &opponent_disconnected_broadcast__descriptor);
-  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
-}
-OpponentDisconnectedBroadcast *
-       opponent_disconnected_broadcast__unpack
-                     (ProtobufCAllocator  *allocator,
-                      size_t               len,
-                      const uint8_t       *data)
-{
-  return (OpponentDisconnectedBroadcast *)
-     protobuf_c_message_unpack (&opponent_disconnected_broadcast__descriptor,
-                                allocator, len, data);
-}
-void   opponent_disconnected_broadcast__free_unpacked
-                     (OpponentDisconnectedBroadcast *message,
-                      ProtobufCAllocator *allocator)
-{
-  if(!message)
-    return;
-  assert(message->base.descriptor == &opponent_disconnected_broadcast__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 void   error_response__init
@@ -1215,7 +1170,7 @@ const ProtobufCMessageDescriptor chat_request__descriptor =
   (ProtobufCMessageInit) chat_request__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor server_message__field_descriptors[11] =
+static const ProtobufCFieldDescriptor server_message__field_descriptors[10] =
 {
   {
     "version",
@@ -1302,13 +1257,13 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[11] =
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "resign_broadcast",
+    "game_end",
     24,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(ServerMessage, msg_case),
-    offsetof(ServerMessage, resign_broadcast),
-    &resign_broadcast__descriptor,
+    offsetof(ServerMessage, game_end),
+    &game_end_broadcast__descriptor,
     NULL,
     0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
@@ -1321,18 +1276,6 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[11] =
     offsetof(ServerMessage, msg_case),
     offsetof(ServerMessage, chat_broadcast),
     &chat_broadcast__descriptor,
-    NULL,
-    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "opponent_disconnected",
-    26,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_MESSAGE,
-    offsetof(ServerMessage, msg_case),
-    offsetof(ServerMessage, opponent_disconnected),
-    &opponent_disconnected_broadcast__descriptor,
     NULL,
     0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
@@ -1354,13 +1297,12 @@ static const unsigned server_message__field_indices_by_name[] = {
   8,   /* field[8] = chat_broadcast */
   6,   /* field[6] = check_broadcast */
   2,   /* field[2] = echo_res */
-  10,   /* field[10] = error */
+  9,   /* field[9] = error */
+  7,   /* field[7] = game_end */
   3,   /* field[3] = match_game_res */
   5,   /* field[5] = move_broadcast */
   4,   /* field[4] = move_res */
-  9,   /* field[9] = opponent_disconnected */
   1,   /* field[1] = ping_res */
-  7,   /* field[7] = resign_broadcast */
   0,   /* field[0] = version */
 };
 static const ProtobufCIntRange server_message__number_ranges[4 + 1] =
@@ -1368,8 +1310,8 @@ static const ProtobufCIntRange server_message__number_ranges[4 + 1] =
   { 1, 0 },
   { 10, 1 },
   { 20, 3 },
-  { 99, 10 },
-  { 0, 11 }
+  { 99, 9 },
+  { 0, 10 }
 };
 const ProtobufCMessageDescriptor server_message__descriptor =
 {
@@ -1379,7 +1321,7 @@ const ProtobufCMessageDescriptor server_message__descriptor =
   "ServerMessage",
   "",
   sizeof(ServerMessage),
-  11,
+  10,
   server_message__field_descriptors,
   server_message__field_indices_by_name,
   4,  server_message__number_ranges,
@@ -1835,7 +1777,7 @@ const ProtobufCMessageDescriptor check_broadcast__descriptor =
   (ProtobufCMessageInit) check_broadcast__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor resign_broadcast__field_descriptors[4] =
+static const ProtobufCFieldDescriptor game_end_broadcast__field_descriptors[5] =
 {
   {
     "game_id",
@@ -1843,7 +1785,7 @@ static const ProtobufCFieldDescriptor resign_broadcast__field_descriptors[4] =
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(ResignBroadcast, game_id),
+    offsetof(GameEndBroadcast, game_id),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
@@ -1855,7 +1797,7 @@ static const ProtobufCFieldDescriptor resign_broadcast__field_descriptors[4] =
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_STRING,
     0,   /* quantifier_offset */
-    offsetof(ResignBroadcast, player_id),
+    offsetof(GameEndBroadcast, player_id),
     NULL,
     &protobuf_c_empty_string,
     0,             /* flags */
@@ -1867,49 +1809,62 @@ static const ProtobufCFieldDescriptor resign_broadcast__field_descriptors[4] =
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_ENUM,
     0,   /* quantifier_offset */
-    offsetof(ResignBroadcast, winner_color),
+    offsetof(GameEndBroadcast, winner_color),
     &color__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "timestamp",
+    "end_type",
     4,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_ENUM,
+    0,   /* quantifier_offset */
+    offsetof(GameEndBroadcast, end_type),
+    &game_end_type__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "timestamp",
+    5,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     0,   /* quantifier_offset */
-    offsetof(ResignBroadcast, timestamp),
+    offsetof(GameEndBroadcast, timestamp),
     &google__protobuf__timestamp__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
-static const unsigned resign_broadcast__field_indices_by_name[] = {
+static const unsigned game_end_broadcast__field_indices_by_name[] = {
+  3,   /* field[3] = end_type */
   0,   /* field[0] = game_id */
   1,   /* field[1] = player_id */
-  3,   /* field[3] = timestamp */
+  4,   /* field[4] = timestamp */
   2,   /* field[2] = winner_color */
 };
-static const ProtobufCIntRange resign_broadcast__number_ranges[1 + 1] =
+static const ProtobufCIntRange game_end_broadcast__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 4 }
+  { 0, 5 }
 };
-const ProtobufCMessageDescriptor resign_broadcast__descriptor =
+const ProtobufCMessageDescriptor game_end_broadcast__descriptor =
 {
   PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "ResignBroadcast",
-  "ResignBroadcast",
-  "ResignBroadcast",
+  "GameEndBroadcast",
+  "GameEndBroadcast",
+  "GameEndBroadcast",
   "",
-  sizeof(ResignBroadcast),
-  4,
-  resign_broadcast__field_descriptors,
-  resign_broadcast__field_indices_by_name,
-  1,  resign_broadcast__number_ranges,
-  (ProtobufCMessageInit) resign_broadcast__init,
+  sizeof(GameEndBroadcast),
+  5,
+  game_end_broadcast__field_descriptors,
+  game_end_broadcast__field_indices_by_name,
+  1,  game_end_broadcast__number_ranges,
+  (ProtobufCMessageInit) game_end_broadcast__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
 static const ProtobufCFieldDescriptor chat_broadcast__field_descriptors[3] =
@@ -1974,83 +1929,6 @@ const ProtobufCMessageDescriptor chat_broadcast__descriptor =
   chat_broadcast__field_indices_by_name,
   1,  chat_broadcast__number_ranges,
   (ProtobufCMessageInit) chat_broadcast__init,
-  NULL,NULL,NULL    /* reserved[123] */
-};
-static const ProtobufCFieldDescriptor opponent_disconnected_broadcast__field_descriptors[4] =
-{
-  {
-    "game_id",
-    1,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(OpponentDisconnectedBroadcast, game_id),
-    NULL,
-    &protobuf_c_empty_string,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "player_id",
-    2,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_STRING,
-    0,   /* quantifier_offset */
-    offsetof(OpponentDisconnectedBroadcast, player_id),
-    NULL,
-    &protobuf_c_empty_string,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "winner_color",
-    3,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_ENUM,
-    0,   /* quantifier_offset */
-    offsetof(OpponentDisconnectedBroadcast, winner_color),
-    &color__descriptor,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "timestamp",
-    4,
-    PROTOBUF_C_LABEL_NONE,
-    PROTOBUF_C_TYPE_MESSAGE,
-    0,   /* quantifier_offset */
-    offsetof(OpponentDisconnectedBroadcast, timestamp),
-    &google__protobuf__timestamp__descriptor,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-};
-static const unsigned opponent_disconnected_broadcast__field_indices_by_name[] = {
-  0,   /* field[0] = game_id */
-  1,   /* field[1] = player_id */
-  3,   /* field[3] = timestamp */
-  2,   /* field[2] = winner_color */
-};
-static const ProtobufCIntRange opponent_disconnected_broadcast__number_ranges[1 + 1] =
-{
-  { 1, 0 },
-  { 0, 4 }
-};
-const ProtobufCMessageDescriptor opponent_disconnected_broadcast__descriptor =
-{
-  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
-  "OpponentDisconnectedBroadcast",
-  "OpponentDisconnectedBroadcast",
-  "OpponentDisconnectedBroadcast",
-  "",
-  sizeof(OpponentDisconnectedBroadcast),
-  4,
-  opponent_disconnected_broadcast__field_descriptors,
-  opponent_disconnected_broadcast__field_indices_by_name,
-  1,  opponent_disconnected_broadcast__number_ranges,
-  (ProtobufCMessageInit) opponent_disconnected_broadcast__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
 static const ProtobufCFieldDescriptor error_response__field_descriptors[4] =
@@ -2224,5 +2102,43 @@ const ProtobufCEnumDescriptor color__descriptor =
   color__enum_values_by_name,
   1,
   color__value_ranges,
+  NULL,NULL,NULL,NULL   /* reserved[1234] */
+};
+static const ProtobufCEnumValue game_end_type__enum_values_by_number[7] =
+{
+  { "GAME_END_UNKNOWN", "GAME_END_TYPE__GAME_END_UNKNOWN", 0 },
+  { "GAME_END_RESIGN", "GAME_END_TYPE__GAME_END_RESIGN", 1 },
+  { "GAME_END_DISCONNECT", "GAME_END_TYPE__GAME_END_DISCONNECT", 2 },
+  { "GAME_END_CHECKMATE", "GAME_END_TYPE__GAME_END_CHECKMATE", 3 },
+  { "GAME_END_STALEMATE", "GAME_END_TYPE__GAME_END_STALEMATE", 4 },
+  { "GAME_END_DRAW", "GAME_END_TYPE__GAME_END_DRAW", 5 },
+  { "GAME_END_TIMEOUT", "GAME_END_TYPE__GAME_END_TIMEOUT", 6 },
+};
+static const ProtobufCIntRange game_end_type__value_ranges[] = {
+{0, 0},{0, 7}
+};
+static const ProtobufCEnumValueIndex game_end_type__enum_values_by_name[7] =
+{
+  { "GAME_END_CHECKMATE", 3 },
+  { "GAME_END_DISCONNECT", 2 },
+  { "GAME_END_DRAW", 5 },
+  { "GAME_END_RESIGN", 1 },
+  { "GAME_END_STALEMATE", 4 },
+  { "GAME_END_TIMEOUT", 6 },
+  { "GAME_END_UNKNOWN", 0 },
+};
+const ProtobufCEnumDescriptor game_end_type__descriptor =
+{
+  PROTOBUF_C__ENUM_DESCRIPTOR_MAGIC,
+  "GameEndType",
+  "GameEndType",
+  "GameEndType",
+  "",
+  7,
+  game_end_type__enum_values_by_number,
+  7,
+  game_end_type__enum_values_by_name,
+  1,
+  game_end_type__value_ranges,
   NULL,NULL,NULL,NULL   /* reserved[1234] */
 };

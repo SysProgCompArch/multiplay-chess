@@ -316,17 +316,18 @@ int handle_player_disconnect(int fd) {
             LOG_INFO("Player %s (fd=%d) disconnected from game %s, opponent is fd=%d",
                      disconnected_player_id, fd, game->game_id, opponent_fd);
 
-            // 상대방에게 연결 끊김 메시지 전송
-            ServerMessage                 disconnect_msg       = SERVER_MESSAGE__INIT;
-            OpponentDisconnectedBroadcast disconnect_broadcast = OPPONENT_DISCONNECTED_BROADCAST__INIT;
+            // 상대방에게 게임 종료 메시지 전송
+            ServerMessage    disconnect_msg     = SERVER_MESSAGE__INIT;
+            GameEndBroadcast game_end_broadcast = GAME_END_BROADCAST__INIT;
 
-            disconnect_broadcast.game_id      = game->game_id;
-            disconnect_broadcast.player_id    = disconnected_player_id;
-            disconnect_broadcast.winner_color = winner_color;
+            game_end_broadcast.game_id      = game->game_id;
+            game_end_broadcast.player_id    = disconnected_player_id;
+            game_end_broadcast.winner_color = winner_color;
+            game_end_broadcast.end_type     = GAME_END_TYPE__GAME_END_DISCONNECT;
             // timestamp는 NULL로 두면 protobuf에서 자동으로 처리
 
-            disconnect_msg.msg_case              = SERVER_MESSAGE__MSG_OPPONENT_DISCONNECTED;
-            disconnect_msg.opponent_disconnected = &disconnect_broadcast;
+            disconnect_msg.msg_case = SERVER_MESSAGE__MSG_GAME_END;
+            disconnect_msg.game_end = &game_end_broadcast;
 
             // 상대방에게 메시지 전송
             if (send_server_message(opponent_fd, &disconnect_msg) < 0) {

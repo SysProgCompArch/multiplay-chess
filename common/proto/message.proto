@@ -30,6 +30,17 @@ enum Color {
   COLOR_BLACK       = 2;
 }
 
+// 게임 종료 유형
+enum GameEndType {
+  GAME_END_UNKNOWN    = 0;
+  GAME_END_RESIGN     = 1;  // 기권으로 인한 종료
+  GAME_END_DISCONNECT = 2;  // 상대방 연결 끊김으로 인한 종료
+  GAME_END_CHECKMATE  = 3;  // 체크메이트로 인한 종료
+  GAME_END_STALEMATE  = 4;  // 스테일메이트로 인한 종료
+  GAME_END_DRAW       = 5;  // 무승부로 인한 종료
+  GAME_END_TIMEOUT    = 6;  // 시간 초과로 인한 종료
+}
+
 // ===================================================================
 // 클라이언트 → 서버 요청 메시지 (ClientMessage)
 // ===================================================================
@@ -92,16 +103,15 @@ message ServerMessage {
   ProtocolVersion version = 1;  // 프로토콜 버전
 
   oneof msg {
-    PingResponse                  ping_res              = 10;
-    EchoResponse                  echo_res              = 11;
-    MatchGameResponse             match_game_res        = 20;
-    MoveResponse                  move_res              = 21;
-    MoveBroadcast                 move_broadcast        = 22;
-    CheckBroadcast                check_broadcast       = 23;
-    ResignBroadcast               resign_broadcast      = 24;
-    ChatBroadcast                 chat_broadcast        = 25;
-    OpponentDisconnectedBroadcast opponent_disconnected = 26;
-    ErrorResponse                 error                 = 99;
+    PingResponse      ping_res        = 10;
+    EchoResponse      echo_res        = 11;
+    MatchGameResponse match_game_res  = 20;
+    MoveResponse      move_res        = 21;
+    MoveBroadcast     move_broadcast  = 22;
+    CheckBroadcast    check_broadcast = 23;
+    GameEndBroadcast  game_end        = 24;
+    ChatBroadcast     chat_broadcast  = 25;
+    ErrorResponse     error           = 99;
     // 그 외 새 기능 추가 시 확장 가능
   }
 }
@@ -154,12 +164,13 @@ message CheckBroadcast {
   google.protobuf.Timestamp timestamp = 4;
 }
 
-// 기권 시 브로드캐스트 (모든 관여자에게 알림)
-message ResignBroadcast {
-  string                    game_id      = 1;
-  string                    player_id    = 2;  // 기권한 플레이어
-  Color                     winner_color = 3;  // 승리자 색
-  google.protobuf.Timestamp timestamp    = 4;
+// 게임 종료 브로드캐스트 (모든 관련 클라이언트에게 알림)
+message GameEndBroadcast {
+  string                    game_id      = 1;  // 게임 ID
+  string                    player_id    = 2;  // 게임 종료를 발생시킨 플레이어 ID (기권한 플레이어, 연결 끊긴 플레이어 등)
+  Color                     winner_color = 3;  // 승리자 색 (무승부인 경우 COLOR_UNSPECIFIED)
+  GameEndType               end_type     = 4;  // 게임 종료 유형
+  google.protobuf.Timestamp timestamp    = 5;
 }
 
 // 채팅 메시지 브로드캐스트
@@ -167,14 +178,6 @@ message ChatBroadcast {
   string                    player_id = 1;
   string                    message   = 2;
   google.protobuf.Timestamp timestamp = 3;
-}
-
-// 상대방 연결 끊김 브로드캐스트
-message OpponentDisconnectedBroadcast {
-  string                    game_id      = 1;  // 게임 ID
-  string                    player_id    = 2;  // 연결이 끊어진 플레이어 ID
-  Color                     winner_color = 3;  // 승리자 색 (연결 끊김으로 인한 승리)
-  google.protobuf.Timestamp timestamp    = 4;
 }
 
 // 오류를 통일해서 보낼 때
