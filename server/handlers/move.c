@@ -144,16 +144,16 @@ int handle_move_message(int fd, ClientMessage *req) {
     }
 
     // 이동 가능성 검증
-    // 좌표계 불일치 해결: rule.c의 함수들은 (sx,sy) 파라미터를 board[sx][sy]로 접근하지만
-    // 다른 함수들은 board[y][x] 접근을 사용하므로, 좌표를 (y,x) 순서로 전달
-    if (!is_move_legal(&game->game_state, from_y, from_x, to_y, to_x)) {
+    // rule.c의 is_move_legal에서 sx=file(x), sy=rank(y)로 해석되므로
+    // 체스 좌표를 (file, rank) = (x, y) 순서로 전달
+    if (!is_move_legal(&game->game_state, from_x, from_y, to_x, to_y)) {
         LOG_WARN("Illegal move from fd=%d: %s -> %s", fd, move_req->from, move_req->to);
         return send_move_error(fd, game->game_id, player_id, "Illegal move");
     }
 
     // 이동 적용
-    // 좌표계 불일치 해결: apply_move 함수에 (y,x) 순서로 좌표 전달
-    apply_move(&game->game_state, from_y, from_x, to_y, to_x);
+    // apply_move 함수도 동일한 좌표 순서 사용
+    apply_move(&game->game_state, from_x, from_y, to_x, to_y);
 
     LOG_INFO("Move applied successfully for fd=%d: %s -> %s", fd, move_req->from, move_req->to);
 

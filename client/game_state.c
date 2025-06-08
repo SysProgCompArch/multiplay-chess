@@ -179,9 +179,8 @@ bool apply_move_from_server(game_t *game, const char *from, const char *to) {
     // 서버로부터 받은 이동은 이미 검증된 유효한 이동이므로 검증 없이 직접 적용
     // (클라이언트 상태와 서버 상태 간의 불일치로 인한 검증 실패를 방지)
     //
-    // 중요: apply_move 함수는 [x][y] 접근을 사용하지만, 나머지 코드들은 [y][x] 접근을 사용
-    // 따라서 좌표를 바꿔서 호출해야 함: (x,y) -> (y,x)
-    apply_move(game, from_y, from_x, to_y, to_x);
+    // rule.c 수정 후: apply_move 함수는 (file, rank) = (x, y) 순서로 받음
+    apply_move(game, from_x, from_y, to_x, to_y);
 
     // 이동 후 보드 상태 확인
     LOG_DEBUG("After apply_move:");

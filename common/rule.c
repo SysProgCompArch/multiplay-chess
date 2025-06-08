@@ -14,7 +14,7 @@ static inline bool in_board(int x, int y) {
 static bool is_square_attacked(const game_t *G, int x, int y, color_t by_color) {
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
-            const piecestate_t *ps = &G->board[i][j];
+            const piecestate_t *ps = &G->board[j][i];
             // NULL 포인터 검사 추가 - ps->piece가 NULL일 수 있음
             if (ps->is_dead || ps->piece == NULL || ps->color != by_color)
                 continue;
@@ -44,7 +44,7 @@ static bool is_square_attacked(const game_t *G, int x, int y, color_t by_color) 
                         while (in_board(nx, ny)) {
                             if (nx == x && ny == y)
                                 return true;
-                            if (!G->board[nx][ny].is_dead)
+                            if (!G->board[ny][nx].is_dead)
                                 break;
                             nx += o.x;
                             ny += o.y;
@@ -62,8 +62,8 @@ static bool is_square_attacked(const game_t *G, int x, int y, color_t by_color) 
 bool is_move_legal(const game_t *G, int sx, int sy, int dx, int dy) {
     if (!in_board(sx, sy) || !in_board(dx, dy))
         return false;
-    const piecestate_t *src = &G->board[sx][sy];
-    const piecestate_t *dst = &G->board[dx][dy];
+    const piecestate_t *src = &G->board[sy][sx];
+    const piecestate_t *dst = &G->board[dy][dx];
     // NULL 포인터 검사 추가
     if (src->is_dead || src->piece == NULL || src->color != G->side_to_move)
         return false;
@@ -80,10 +80,10 @@ bool is_move_legal(const game_t *G, int sx, int sy, int dx, int dy) {
             if (rx == 0 && ry == dir && dst->is_dead)
                 ok = true;
             // 두 칸 전진
-            else if (rx == 0 && ry == 2 * dir && !src->has_moved && dst->is_dead && G->board[sx][sy + dir].is_dead)
+            if (rx == 0 && ry == 2 * dir && !src->has_moved && dst->is_dead && G->board[sy + dir][sx].is_dead)
                 ok = true;
             // 대각선 캡처
-            else if (abs(rx) == 1 && ry == dir && (!dst->is_dead && dst->color != src->color || (dst->is_dead && G->en_passant_x == dx && G->en_passant_y == dy)))
+            if (abs(rx) == 1 && ry == dir && (!dst->is_dead && dst->color != src->color || (dst->is_dead && G->en_passant_x == dx && G->en_passant_y == dy)))
                 ok = true;
             break;
         }
@@ -104,7 +104,7 @@ bool is_move_legal(const game_t *G, int sx, int sy, int dx, int dy) {
                         int step = ks ? +1 : -1;
                         // 1) 중간 칸 비어있는지
                         for (int x = sx + step; x != dx; x += step)
-                            if (!G->board[x][sy].is_dead)
+                            if (!G->board[sy][x].is_dead)
                                 return false;
                         // 2) 지나가는 칸(출발칸, 중간칸, 도착칸) 모두 공격받지 않는지
                         for (int x = sx; x != dx + step; x += step)
@@ -133,7 +133,7 @@ bool is_move_legal(const game_t *G, int sx, int sy, int dx, int dy) {
                 // 중간 칸 확인
                 bool blocked = false;
                 for (int s = 1; s < dd; s++) {
-                    if (!G->board[sx + o.x * s][sy + o.y * s].is_dead) {
+                    if (!G->board[sy + o.y * s][sx + o.x * s].is_dead) {
                         blocked = true;
                         break;
                     }
@@ -161,8 +161,8 @@ bool is_move_legal(const game_t *G, int sx, int sy, int dx, int dy) {
 
 // 이동 적용
 void apply_move(game_t *G, int sx, int sy, int dx, int dy) {
-    piecestate_t *src = &G->board[sx][sy];
-    piecestate_t *dst = &G->board[dx][dy];
+    piecestate_t *src = &G->board[sy][sx];
+    piecestate_t *dst = &G->board[dy][dx];
 
     // NULL 포인터 검사 추가
     if (src->piece == NULL) {
@@ -177,7 +177,7 @@ void apply_move(game_t *G, int sx, int sy, int dx, int dy) {
 
     // 앙파상 캡처
     if (src->piece->type == PIECE_PAWN && dx == G->en_passant_x && dy == G->en_passant_y) {
-        piecestate_t *cap = &G->board[dx][sy];
+        piecestate_t *cap = &G->board[sy][dx];
         cap->is_dead      = 1;
         cap->piece        = NULL;
     }
@@ -192,10 +192,10 @@ void apply_move(game_t *G, int sx, int sy, int dx, int dy) {
         bool         ks                   = dx > sx;
         int          rook_from_x          = ks ? 7 : 0;
         int          rook_to_x            = ks ? dx - 1 : dx + 1;
-        piecestate_t rook                 = G->board[rook_from_x][dy];
-        G->board[rook_to_x][dy]           = rook;
-        G->board[rook_from_x][dy].is_dead = 1;
-        G->board[rook_from_x][dy].piece   = NULL;
+        piecestate_t rook                 = G->board[dy][rook_from_x];
+        G->board[dy][rook_to_x]           = rook;
+        G->board[dy][rook_from_x].is_dead = 1;
+        G->board[dy][rook_from_x].piece   = NULL;
     }
 
     // 캐슬링 권리 소멸
@@ -244,7 +244,7 @@ bool is_in_check(const game_t *G, color_t color) {
     int king_x = -1, king_y = -1;
     for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
-            const piecestate_t *ps = &G->board[x][y];
+            const piecestate_t *ps = &G->board[y][x];
             // NULL 포인터 검사 추가 - ps->piece가 NULL일 수 있음
             if (!ps->is_dead && ps->piece != NULL && ps->color == color && ps->piece->type == PIECE_KING) {
                 king_x = x;
@@ -272,7 +272,7 @@ bool is_checkmate(const game_t *G) {
     // 모든 가능한 수를 시도해서 체크에서 벗어날 수 있는지 확인
     for (int sx = 0; sx < 8; sx++) {
         for (int sy = 0; sy < 8; sy++) {
-            const piecestate_t *src = &G->board[sx][sy];
+            const piecestate_t *src = &G->board[sy][sx];
             if (src->is_dead || src->piece == NULL || src->color != color) continue;
 
             for (int dx = 0; dx < 8; dx++) {
@@ -300,7 +300,7 @@ bool is_stalemate(const game_t *G) {
     // 모든 가능한 수를 시도해서 합법적인 수가 있는지 확인
     for (int sx = 0; sx < 8; sx++) {
         for (int sy = 0; sy < 8; sy++) {
-            const piecestate_t *src = &G->board[sx][sy];
+            const piecestate_t *src = &G->board[sy][sx];
             if (src->is_dead || src->piece == NULL || src->color != color) continue;
 
             for (int dx = 0; dx < 8; dx++) {
