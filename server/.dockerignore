@@ -1,0 +1,35 @@
+# Git 관련 파일
+.git
+.gitignore
+.github
+
+# IDE 관련 파일
+.vscode
+.cursor
+.cache
+
+# 빌드 관련 파일 (컨테이너 내에서 새로 빌드하므로 제외)
+build/
+*.o
+*.a
+*.so
+
+# 로그 파일
+*.log
+logs/
+
+# 개발 관련 스크립트 (서버 컨테이너에서는 불필요)
+run_multiple_clients.sh
+watch_logs.sh
+run.sh
+
+# 문서 파일 (필요시 선택적으로 포함)
+# *.md
+
+# 기타 임시 파일
+*.tmp
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db 
