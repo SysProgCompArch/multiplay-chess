@@ -2,6 +2,7 @@
 
 #include <arpa/inet.h>
 #include <errno.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -21,30 +22,47 @@ int connect_to_server() {
 
     LOG_INFO("Attempting to connect to server %s:%d", client->server_host, client->server_port);
 
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-        log_perror("socket");
+    // getaddrinfo를 사용하여 DNS 해결 및 주소 변환
+    struct addrinfo hints, *result, *rp;
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family   = AF_INET;      // IPv4만 사용
+    hints.ai_socktype = SOCK_STREAM;  // TCP 소켓
+
+    char port_str[16];
+    snprintf(port_str, sizeof(port_str), "%d", client->server_port);
+
+    int gai_status = getaddrinfo(client->server_host, port_str, &hints, &result);
+    if (gai_status != 0) {
+        LOG_ERROR("getaddrinfo failed: %s", gai_strerror(gai_status));
         return -1;
     }
 
-    struct sockaddr_in serv_addr;
-    memset(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port   = htons(client->server_port);
+    int sockfd = -1;
+    // 반환된 주소들을 순회하며 연결 시도
+    for (rp = result; rp != NULL; rp = rp->ai_next) {
+        sockfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+        if (sockfd < 0) {
+            continue;  // 다음 주소로 시도
+        }
 
-    if (inet_pton(AF_INET, client->server_host, &serv_addr.sin_addr) <= 0) {
-        log_perror("inet_pton");
-        close(sockfd);
-        return -1;
-    }
+        if (connect(sockfd, rp->ai_addr, rp->ai_addrlen) == 0) {
+            LOG_INFO("Successfully connected to server, socket fd: %d", sockfd);
+            break;  // 연결 성공
+        }
 
-    if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+        // 연결 실패 시 소켓 닫고 다음 주소로 시도
         log_perror("connect");
         close(sockfd);
+        sockfd = -1;
+    }
+
+    freeaddrinfo(result);
+
+    if (sockfd < 0) {
+        LOG_ERROR("Could not connect to server %s:%d", client->server_host, client->server_port);
         return -1;
     }
 
-    LOG_INFO("Successfully connected to server, socket fd: %d", sockfd);
     return sockfd;
 }
 
