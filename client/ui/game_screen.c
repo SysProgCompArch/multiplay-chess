@@ -197,7 +197,22 @@ void draw_chess_board(WINDOW *board_win) {
             piecestate_t *piece = &board->board[actual_row][actual_col];
             if (piece->piece && !piece->is_dead) {
                 const char *piece_unicode = get_piece_unicode(piece->piece, piece->color);
-                mvwprintw(board_win, y + 1, x, " %s ", piece_unicode);
+
+                // 기물이 내 기물인지 상대방 기물인지 판단
+                team_t piece_team  = (piece->color == WHITE) ? TEAM_WHITE : TEAM_BLACK;
+                bool   is_my_piece = (piece_team == client->game_state.local_team);
+
+                if (is_my_piece) {
+                    // 내 기물: 볼드 속성만 추가 (배경색은 기존 칸 색상 유지)
+                    wattron(board_win, A_BOLD);
+                    mvwprintw(board_win, y + 1, x, " %s ", piece_unicode);
+                    wattroff(board_win, A_BOLD);
+                } else {
+                    // 상대방 기물: 어둡게 표시 (배경색은 기존 칸 색상 유지)
+                    wattron(board_win, A_DIM);
+                    mvwprintw(board_win, y + 1, x, " %s ", piece_unicode);
+                    wattroff(board_win, A_DIM);
+                }
             } else if (is_cursor) {
                 mvwprintw(board_win, y + 1, x, "   *   ");
             } else {

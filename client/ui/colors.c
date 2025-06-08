@@ -25,6 +25,10 @@ void init_colors() {
         // 이동 가능 위치 색상 쌍
         init_pair(COLOR_PAIR_POSSIBLE_MOVE, COLOR_BLACK, CHESS_POSSIBLE_MOVE);  // 이동 가능: 옅은 초록 배경
         init_pair(COLOR_PAIR_CAPTURE_MOVE, COLOR_BLACK, CHESS_CAPTURE_MOVE);    // 캡처 가능: 옅은 붉은 배경
+
+        // 기물 색상 쌍
+        init_pair(COLOR_PAIR_MY_PIECE, EXT_COLOR_BRIGHT_WHITE, COLOR_BLACK);   // 내 기물: 밝은 흰색 (볼드로 표시됨)
+        init_pair(COLOR_PAIR_OPPONENT_PIECE, EXT_COLOR_GRAY_14, COLOR_BLACK);  // 상대방 기물: 은은한 회색
     } else {
         init_pair(COLOR_PAIR_BORDER, COLOR_CYAN, COLOR_BLACK);
         init_pair(COLOR_PAIR_DIALOG_BORDER, COLOR_CYAN, COLOR_BLACK);
@@ -40,5 +44,9 @@ void init_colors() {
         // 이동 가능 위치 색상 쌍 (기본 색상)
         init_pair(COLOR_PAIR_POSSIBLE_MOVE, COLOR_BLACK, COLOR_GREEN);  // 이동 가능: 초록 배경
         init_pair(COLOR_PAIR_CAPTURE_MOVE, COLOR_BLACK, COLOR_RED);     // 캡처 가능: 붉은 배경
+
+        // 기물 색상 쌍 (기본 색상)
+        init_pair(COLOR_PAIR_MY_PIECE, COLOR_WHITE, COLOR_BLACK);        // 내 기물: 흰색 (볼드로 표시됨)
+        init_pair(COLOR_PAIR_OPPONENT_PIECE, COLOR_BLACK, COLOR_BLACK);  // 상대방 기물: 검은색 (약간 어둡게)
     }
 }
