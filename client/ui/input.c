@@ -49,9 +49,13 @@ bool coord_to_board_pos(int screen_x, int screen_y, int *board_x, int *board_y) 
     // 범위 확인
     if (display_x >= 0 && display_x < BOARD_SIZE && display_y >= 0 && display_y < BOARD_SIZE) {
         // 보드 그리기 로직과 일치시켜야 함:
-        // 화이트 플레이어: actual_row = row, actual_col = col
-        // 블랙 플레이어: actual_row = 7 - row, actual_col = 7 - col
-        // 역변환: display_x/y → actual_x/y
+        // draw_chess_board에서:
+        // - actual_row = is_black_player ? row : (7 - row)
+        // - actual_col = is_black_player ? (7 - col) : col
+        //
+        // 역변환하면:
+        // - White 플레이어: actual_col = display_x, actual_row = 7 - display_y
+        // - Black 플레이어: actual_col = 7 - display_x, actual_row = display_y
 
         client_state_t *client = get_client_state();
         if (!client) {
@@ -62,15 +66,13 @@ bool coord_to_board_pos(int screen_x, int screen_y, int *board_x, int *board_y) 
         bool is_black_player = (client->game_state.local_team == TEAM_BLACK);
 
         if (is_black_player) {
-            // 블랙 플레이어: actual_col = 7 - col, actual_row = 7 - row
-            // 역변환: actual_col = 7 - display_x, actual_row = 7 - display_y
+            // 블랙 플레이어: actual_col = 7 - col, actual_row = row
             *board_x = 7 - display_x;
-            *board_y = 7 - display_y;
-        } else {
-            // 화이트 플레이어: actual_col = col, actual_row = row
-            // 역변환: actual_col = display_x, actual_row = display_y
-            *board_x = display_x;
             *board_y = display_y;
+        } else {
+            // 화이트 플레이어: actual_col = col, actual_row = 7 - row
+            *board_x = display_x;
+            *board_y = 7 - display_y;
         }
 
         // 최종 결과 값이 올바른 범위인지 재확인
@@ -106,42 +108,32 @@ void handle_board_click(int board_x, int board_y) {
             // 현재 플레이어의 기물인지 확인
             team_t piece_team = piece->color;
 
-            // 디버그 메시지 추가
-            char debug_msg2[256];
-            snprintf(debug_msg2, sizeof(debug_msg2), "DEBUG: piece_color=%d, piece_team=%d, local_team=%d, current_turn=%d, piece_y=%d, piece_x=%d",
-                     piece->color, piece_team, client->game_state.local_team, game->side_to_move, board_y, board_x);
+            // 좌표 확인 메시지 (간단하게)
+            char coord_msg[64];
+            snprintf(coord_msg, sizeof(coord_msg), "Selected: %c%d (board[%d][%d])",
+                     'a' + board_x, board_y + 1, board_y, board_x);
 
             // 뮤텍스 잠금을 해제한 후 채팅 메시지 추가 (데드락 방지)
             pthread_mutex_unlock(&screen_mutex);
-            add_chat_message_safe("System", debug_msg2);
-
-            // 보드 출력 디버그 - 모든 행 확인
-            for (int i = 0; i < 8; i++) {
-                char row_debug[256];
-                snprintf(row_debug, sizeof(row_debug), "Board[%d]: %d %d %d %d %d %d %d %d",
-                         i, game->board[i][0].color, game->board[i][1].color,
-                         game->board[i][2].color, game->board[i][3].color,
-                         game->board[i][4].color, game->board[i][5].color,
-                         game->board[i][6].color, game->board[i][7].color);
-                add_chat_message_safe("System", row_debug);
-            }
+            add_chat_message_safe("System", coord_msg);
 
             // 뮤텍스 다시 잠금
             pthread_mutex_lock(&screen_mutex);
 
-            // 블랙 플레이어인 경우 기물 색상 매핑을 다르게 해야 함
-            bool is_black_player = (client->game_state.local_team == TEAM_BLACK);
-
-            // 자신의 기물인지 확인 - 원래는 로컬 팀과 기물 색상이 일치해야 함
-            // 그러나 실제 보드에서는 color 값이 정확히 일치하지 않을 수 있음
-
             // 현재 턴인지 확인
             if (game->side_to_move != client->game_state.local_team) {
                 char turn_msg[128];
-                snprintf(turn_msg, sizeof(turn_msg), "Not your turn! Current: %d, Local: %d",
-                         game->side_to_move, client->game_state.local_team);
+                snprintf(turn_msg, sizeof(turn_msg), "Not your turn! Current: %s",
+                         (game->side_to_move == TEAM_WHITE) ? "White" : "Black");
                 pthread_mutex_unlock(&screen_mutex);
                 add_chat_message_safe("System", turn_msg);
+                return;
+            }
+
+            // 자신의 기물인지 확인
+            if (piece_team != client->game_state.local_team) {
+                pthread_mutex_unlock(&screen_mutex);
+                add_chat_message_safe("System", "That's not your piece!");
                 return;
             }
 
