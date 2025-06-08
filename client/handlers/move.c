@@ -1,3 +1,4 @@
+#include <pthread.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -61,6 +62,12 @@ int handle_move_response(ServerMessage *msg) {
             LOG_DEBUG("Updated FEN: %s", result->updated_fen);
         }
 
+        // 화면 업데이트 요청
+        client_state_t *client = get_client_state();
+        pthread_mutex_lock(&screen_mutex);
+        client->screen_update_requested = true;
+        pthread_mutex_unlock(&screen_mutex);
+
         // UI는 자동으로 새로고침됩니다
 
     } else {
@@ -105,12 +112,26 @@ int handle_move_broadcast(ServerMessage *msg) {
     // 게임 보드 상태 업데이트
     if (broadcast->from && broadcast->to) {
         client_state_t *client = get_client_state();
-        if (apply_move_from_server(&client->game_state.board_state, broadcast->from, broadcast->to)) {
+
+        LOG_DEBUG("Applying move from server: %s -> %s", broadcast->from, broadcast->to);
+
+        if (apply_move_from_server(&client->game_state.game, broadcast->from, broadcast->to)) {
             LOG_DEBUG("Board updated successfully: %s -> %s", broadcast->from, broadcast->to);
+
+            // 화면 업데이트 요청
+            pthread_mutex_lock(&screen_mutex);
+            client->screen_update_requested = true;
+            pthread_mutex_unlock(&screen_mutex);
+
         } else {
-            LOG_ERROR("Failed to update board: %s -> %s", broadcast->from, broadcast->to);
-            add_chat_message_safe("System", "Failed to update board state");
+            LOG_ERROR("Failed to update board: %s -> %s (coordinates may be invalid)", broadcast->from, broadcast->to);
+            add_chat_message_safe("System", "Failed to update board state - invalid move coordinates");
         }
+    } else {
+        LOG_WARN("Move broadcast missing coordinates: from=%s, to=%s",
+                 broadcast->from ? broadcast->from : "NULL",
+                 broadcast->to ? broadcast->to : "NULL");
+        add_chat_message_safe("System", "Invalid move data received from server");
     }
 
     // 프로모션 처리

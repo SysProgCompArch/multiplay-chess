@@ -5,7 +5,9 @@
 #include <string.h>
 #include <time.h>
 
+#include "logger.h"  // LOG_DEBUG 함수를 위해 추가
 #include "piece.h"
+#include "utils.h"  // clear_board, fen_parse 함수를 위해 추가
 
 // piece_table 외부 선언 (common/piece.c에 정의됨)
 extern piece_t *piece_table[2][6];
@@ -16,105 +18,60 @@ extern pthread_mutex_t screen_mutex;
 // 게임 상태 초기화
 void init_game_state(game_state_t *state) {
     memset(state, 0, sizeof(game_state_t));
-    init_board_state(&state->board_state);
-    state->chat_count           = 0;
-    state->game_in_progress     = false;
-    state->white_time_remaining = 600;  // 10분
-    state->black_time_remaining = 600;  // 10분
+
+    // game_t 초기화
+    init_game(&state->game);
+
+    state->chat_count            = 0;
+    state->local_team            = TEAM_WHITE;
+    state->game_in_progress      = false;
+    state->game_start_time       = 0;
+    state->white_time_remaining  = 600;  // 10분
+    state->black_time_remaining  = 600;  // 10분
+    state->opponent_disconnected = false;
 
     // 이동 가능 위치 배열 초기화
     memset(state->possible_moves, false, sizeof(state->possible_moves));
     memset(state->capture_moves, false, sizeof(state->capture_moves));
-
-    // 상대방 연결 끊김 감지 초기화
-    state->opponent_disconnected = false;
-    memset(state->opponent_disconnect_message, 0, sizeof(state->opponent_disconnect_message));
 }
 
-// 보드 상태 초기화
-void init_board_state(board_state_t *board) {
-    memset(board, 0, sizeof(board_state_t));
+void init_game(game_t *game) {
+    memset(game, 0, sizeof(game_t));
 
-    // 보드 초기화 (모든 칸을 빈 칸으로)
-    for (int i = 0; i < BOARD_SIZE; i++) {
-        for (int j = 0; j < BOARD_SIZE; j++) {
-            board->board[i][j].piece       = NULL;
-            board->board[i][j].x           = j;
-            board->board[i][j].y           = i;
-            board->board[i][j].is_dead     = false;
-            board->board[i][j].is_promoted = false;
-        }
-    }
+    // 보드 초기화
+    clear_board(game);
 
-    board->en_passant_target_x = -1;
-    board->en_passant_target_y = -1;
-    board->current_turn        = TEAM_WHITE;
-    board->halfmove_clock      = 0;
-    board->fullmove_number     = 1;
+    // 시작 위치로 설정
+    reset_game_to_starting_position(game);
 
-    reset_board_to_starting_position(board);
+    // 게임 상태 초기화
+    game->side_to_move    = TEAM_WHITE;
+    game->halfmove_clock  = 0;
+    game->fullmove_number = 1;
+
+    // 캐슬링 권리 초기화
+    game->white_can_castle_kingside  = true;
+    game->white_can_castle_queenside = true;
+    game->black_can_castle_kingside  = true;
+    game->black_can_castle_queenside = true;
+
+    // 앙파상 초기화
+    game->en_passant_x = -1;
+    game->en_passant_y = -1;
 }
 
-// 체스 보드를 시작 위치로 설정
-void reset_board_to_starting_position(board_state_t *board) {
-    // 모든 칸 비우기
-    for (int i = 0; i < BOARD_SIZE; i++)
-        for (int j = 0; j < BOARD_SIZE; j++)
-            board->board[i][j].piece = NULL;
+void reset_game_to_starting_position(game_t *game) {
+    // FEN 문자열로 시작 위치 설정
+    const char *starting_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    fen_parse(game, starting_fen);
+}
 
-    // 흰색 기물 (아래쪽) - piece_table[0][piece_type] 사용
-    for (int x = 0; x < 8; x++) {
-        board->board[6][x].piece         = piece_table[0][PAWN];  // 흰색 폰
-        board->board[6][x].is_dead       = false;
-        board->board[6][x].x             = x;
-        board->board[6][x].y             = 6;
-        board->board[6][x].color         = 0;  // WHITE
-        board->board[6][x].is_first_move = true;
-        board->board[6][x].is_promoted   = false;
-    }
-    board->board[7][0].piece = piece_table[0][ROOK];    // 흰색 룩
-    board->board[7][1].piece = piece_table[0][KNIGHT];  // 흰색 나이트
-    board->board[7][2].piece = piece_table[0][BISHOP];  // 흰색 비숍
-    board->board[7][3].piece = piece_table[0][QUEEN];   // 흰색 퀸
-    board->board[7][4].piece = piece_table[0][KING];    // 흰색 킹
-    board->board[7][5].piece = piece_table[0][BISHOP];  // 흰색 비숍
-    board->board[7][6].piece = piece_table[0][KNIGHT];  // 흰색 나이트
-    board->board[7][7].piece = piece_table[0][ROOK];    // 흰색 룩
-    for (int x = 0; x < 8; x++) {
-        board->board[7][x].is_dead       = false;
-        board->board[7][x].x             = x;
-        board->board[7][x].y             = 7;
-        board->board[7][x].color         = 0;  // WHITE
-        board->board[7][x].is_first_move = true;
-        board->board[7][x].is_promoted   = false;
-    }
-
-    // 검은색 기물 (위쪽) - piece_table[1][piece_type] 사용
-    for (int x = 0; x < 8; x++) {
-        board->board[1][x].piece         = piece_table[1][PAWN];  // 검은색 폰
-        board->board[1][x].is_dead       = false;
-        board->board[1][x].x             = x;
-        board->board[1][x].y             = 1;
-        board->board[1][x].color         = 1;  // BLACK
-        board->board[1][x].is_first_move = true;
-        board->board[1][x].is_promoted   = false;
-    }
-    board->board[0][0].piece = piece_table[1][ROOK];    // 검은색 룩
-    board->board[0][1].piece = piece_table[1][KNIGHT];  // 검은색 나이트
-    board->board[0][2].piece = piece_table[1][BISHOP];  // 검은색 비숍
-    board->board[0][3].piece = piece_table[1][QUEEN];   // 검은색 퀸
-    board->board[0][4].piece = piece_table[1][KING];    // 검은색 킹
-    board->board[0][5].piece = piece_table[1][BISHOP];  // 검은색 비숍
-    board->board[0][6].piece = piece_table[1][KNIGHT];  // 검은색 나이트
-    board->board[0][7].piece = piece_table[1][ROOK];    // 검은색 룩
-    for (int x = 0; x < 8; x++) {
-        board->board[0][x].is_dead       = false;
-        board->board[0][x].x             = x;
-        board->board[0][x].y             = 0;
-        board->board[0][x].color         = 1;  // BLACK
-        board->board[0][x].is_first_move = true;
-        board->board[0][x].is_promoted   = false;
-    }
+// 플레이어 팀에 따라 보드를 적절히 초기화
+void reset_game_for_player(game_t *game, color_t player_team) {
+    // 플레이어 팀에 관계없이 항상 표준 FEN으로 초기화
+    // UI에서 플레이어 관점에 따라 표시를 뒤집어서 보여줌
+    const char *starting_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    fen_parse(game, starting_fen);
 }
 
 // 채팅 메시지 추가
@@ -139,77 +96,33 @@ void add_chat_message(game_state_t *state, const char *sender, const char *messa
 }
 
 // 유효한 수인지 확인 (기본 체크)
-bool is_valid_move(board_state_t *board, int from_x, int from_y, int to_x, int to_y) {
-    // 보드 경계 체크
-    if (from_x < 0 || from_x >= BOARD_SIZE || from_y < 0 || from_y >= BOARD_SIZE ||
-        to_x < 0 || to_x >= BOARD_SIZE || to_y < 0 || to_y >= BOARD_SIZE) {
-        return false;
-    }
-
-    // 출발 위치에 기물이 있는지 확인
-    piecestate_t *piece = &board->board[from_y][from_x];
-    if (!piece->piece || piece->is_dead) {
-        return false;
-    }
-
-    // 같은 위치로 이동하는지 확인
-    if (from_x == to_x && from_y == to_y) {
-        return false;
-    }
-
-    // TODO: 실제 체스 규칙 검증은 common/rule.c 함수들을 사용
-
-    return true;
+bool is_valid_move(game_t *game, int from_x, int from_y, int to_x, int to_y) {
+    return is_move_legal(game, from_x, from_y, to_x, to_y);
 }
 
 // 실제 수 실행
-bool make_move(board_state_t *board, int from_x, int from_y, int to_x, int to_y) {
-    if (!is_valid_move(board, from_x, from_y, to_x, to_y)) {
+bool make_move(game_t *game, int from_x, int from_y, int to_x, int to_y) {
+    if (!is_valid_move(game, from_x, from_y, to_x, to_y)) {
         return false;
     }
 
-    // 기물 이동
-    piecestate_t *from_piece = &board->board[from_y][from_x];
-    piecestate_t *to_piece   = &board->board[to_y][to_x];
-
-    // 목표 위치에 기물이 있다면 제거
-    if (to_piece->piece && !to_piece->is_dead) {
-        to_piece->is_dead = true;
-    }
-
-    // 기물 이동
-    *to_piece   = *from_piece;
-    to_piece->x = to_x;
-    to_piece->y = to_y;
-
-    // 원래 위치 비우기
-    from_piece->piece   = NULL;
-    from_piece->is_dead = false;
-
-    // 턴 변경
-    board->current_turn = (board->current_turn == TEAM_WHITE) ? TEAM_BLACK : TEAM_WHITE;
-
-    // TODO: 특수 규칙 처리 (캐슬링, 앙파상, 프로모션 등)
-
+    apply_move(game, from_x, from_y, to_x, to_y);
     return true;
 }
 
 // 체크 상태 확인 (클라이언트용 래퍼 함수)
-bool is_in_check_client(board_state_t *board, team_t team) {
-    // TODO: board_state_t를 game_t로 변환해서 common/rule.c의 is_in_check 호출
-    return false;
+bool is_in_check_client(game_t *game, team_t team) {
+    return is_in_check(game, team);
 }
 
 // 체크메이트 확인 (클라이언트용 래퍼 함수)
-bool is_checkmate_client(board_state_t *board, team_t team) {
-    // TODO: board_state_t를 game_t로 변환해서 common/rule.c의 is_checkmate 호출
-    return false;
+bool is_checkmate_client(game_t *game, team_t team) {
+    return is_checkmate(game);
 }
 
 // 스테일메이트 확인 (클라이언트용 래퍼 함수)
-bool is_stalemate_client(board_state_t *board, team_t team) {
-    // TODO: board_state_t를 game_t로 변환해서 common/rule.c의 is_stalemate 호출
-    return false;
+bool is_stalemate_client(game_t *game, team_t team) {
+    return is_stalemate(game);
 }
 
 // 편의 함수들 (클라이언트 상태 호환성)
@@ -222,46 +135,61 @@ const char *get_opponent_name(const game_state_t *state) {
 }
 
 // 서버로부터 받은 이동을 보드에 적용
-bool apply_move_from_server(board_state_t *board, const char *from, const char *to) {
-    if (!from || !to || strlen(from) != 2 || strlen(to) != 2) {
+bool apply_move_from_server(game_t *game, const char *from, const char *to) {
+    // NULL 포인터와 빈 문자열 검사
+    if (!game || !from || !to || strlen(from) != 2 || strlen(to) != 2) {
         return false;
     }
 
-    // 체스 좌표를 배열 인덱스로 변환
-    int from_x = from[0] - 'a';        // a=0, b=1, ..., h=7
-    int from_y = 7 - (from[1] - '1');  // rank1=7, rank2=6, ..., rank8=0
-    int to_x   = to[0] - 'a';          // a=0, b=1, ..., h=7
-    int to_y   = 7 - (to[1] - '1');    // rank1=7, rank2=6, ..., rank8=0
+    // 체스 표기법을 좌표로 변환
+    // 체스 표기법: "a1" = file 'a' (0-7), rank '1' (0-7)
+    // apply_move 함수는 (x, y) 형식으로 받으므로 file을 x, rank를 y로 변환
+    int from_x = from[0] - 'a';  // file (a-h) -> x (0-7)
+    int from_y = from[1] - '1';  // rank (1-8) -> y (0-7)
+    int to_x   = to[0] - 'a';    // file (a-h) -> x (0-7)
+    int to_y   = to[1] - '1';    // rank (1-8) -> y (0-7)
 
-    // 범위 체크
+    // 범위 검사
     if (from_x < 0 || from_x >= 8 || from_y < 0 || from_y >= 8 ||
         to_x < 0 || to_x >= 8 || to_y < 0 || to_y >= 8) {
         return false;
     }
 
-    // 출발지에 기물이 있는지 확인
-    piecestate_t *from_piece = &board->board[from_y][from_x];
-    if (!from_piece->piece || from_piece->is_dead) {
-        return false;
-    }
+    LOG_DEBUG("=== MOVE DEBUG START ===");
+    LOG_DEBUG("Applying server move: %s (%d,%d) -> %s (%d,%d)",
+              from, from_x, from_y, to, to_x, to_y);
 
-    // 목표 위치 확인
-    piecestate_t *to_piece = &board->board[to_y][to_x];
+    // 이동 전 보드 상태 확인 (두 가지 접근 방식으로 확인)
+    piecestate_t *src_xy = &game->board[from_x][from_y];  // [x][y] 접근
+    piecestate_t *src_yx = &game->board[from_y][from_x];  // [y][x] 접근
 
-    // 기물 이동
-    *to_piece               = *from_piece;
-    to_piece->x             = to_x;
-    to_piece->y             = to_y;
-    to_piece->is_first_move = false;
+    LOG_DEBUG("Source [%d][%d] (x,y): piece=%p, dead=%d",
+              from_x, from_y, (void *)src_xy->piece, src_xy->is_dead);
+    LOG_DEBUG("Source [%d][%d] (y,x): piece=%p, dead=%d",
+              from_y, from_x, (void *)src_yx->piece, src_yx->is_dead);
 
-    // 원래 위치 비우기
-    from_piece->piece   = NULL;
-    from_piece->is_dead = false;
+    piecestate_t *dst_xy = &game->board[to_x][to_y];  // [x][y] 접근
+    piecestate_t *dst_yx = &game->board[to_y][to_x];  // [y][x] 접근
 
-    // 턴 변경
-    board->current_turn = (board->current_turn == TEAM_WHITE) ? TEAM_BLACK : TEAM_WHITE;
+    LOG_DEBUG("Target [%d][%d] (x,y): piece=%p, dead=%d",
+              to_x, to_y, (void *)dst_xy->piece, dst_xy->is_dead);
+    LOG_DEBUG("Target [%d][%d] (y,x): piece=%p, dead=%d",
+              to_y, to_x, (void *)dst_yx->piece, dst_yx->is_dead);
 
-    // TODO: 특수 규칙 처리 (캐슬링, 앙파상, 프로모션 등)
+    // 서버로부터 받은 이동은 이미 검증된 유효한 이동이므로 검증 없이 직접 적용
+    // (클라이언트 상태와 서버 상태 간의 불일치로 인한 검증 실패를 방지)
+    //
+    // 중요: apply_move 함수는 [x][y] 접근을 사용하지만, 나머지 코드들은 [y][x] 접근을 사용
+    // 따라서 좌표를 바꿔서 호출해야 함: (x,y) -> (y,x)
+    apply_move(game, from_y, from_x, to_y, to_x);
+
+    // 이동 후 보드 상태 확인
+    LOG_DEBUG("After apply_move:");
+    LOG_DEBUG("Source [%d][%d] (x,y): piece=%p, dead=%d",
+              from_x, from_y, (void *)src_xy->piece, src_xy->is_dead);
+    LOG_DEBUG("Target [%d][%d] (x,y): piece=%p, dead=%d",
+              to_x, to_y, (void *)dst_xy->piece, dst_xy->is_dead);
+    LOG_DEBUG("=== MOVE DEBUG END ===");
 
     return true;
 }

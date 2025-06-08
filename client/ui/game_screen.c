@@ -3,89 +3,47 @@
 
 #include "../client_state.h"
 #include "piece.h"
+#include "rule.h"
 #include "ui.h"
 
-// common/rule.c의 함수들을 직접 선언 (헤더 충돌 방지)
-typedef struct {
-    piecestate_t board[8][8];
-    int          side_to_move;
-    int          halfmove_clock;
-    bool         white_can_castle_kingside;
-    bool         white_can_castle_queenside;
-    bool         black_can_castle_kingside;
-    bool         black_can_castle_queenside;
-    int          en_passant_x, en_passant_y;
-} game_t;
-
-bool is_move_legal(const game_t *G, int sx, int sy, int dx, int dy);
-
 // 체스 말 유니코드 문자 반환
-const char *get_piece_unicode(piece_t *piece, int team) {
+const char *get_piece_unicode(piece_t *piece, color_t color) {
     if (!piece)
         return " ";
 
     // 흰색 팀 (0) - 흰색 유니코드, 검은색 팀 (1) - 검은색 유니코드
-    if (team == 0) {  // 흰색
+    if (color == TEAM_WHITE) {  // 흰색
         switch (piece->type) {
-            case KING:
+            case PIECE_KING:
                 return "W KNG";
-            case QUEEN:
+            case PIECE_QUEEN:
                 return "W QUE";
-            case ROOK:
+            case PIECE_ROOK:
                 return "W ROK";
-            case BISHOP:
+            case PIECE_BISHOP:
                 return "W BIS";
-            case KNIGHT:
+            case PIECE_KNIGHT:
                 return "W KNT";
-            case PAWN:
+            case PIECE_PAWN:
                 return "W PAW";
         }
     } else {  // 검은색
         switch (piece->type) {
-            case KING:
+            case PIECE_KING:
                 return "B KNG";
-            case QUEEN:
+            case PIECE_QUEEN:
                 return "B QUE";
-            case ROOK:
+            case PIECE_ROOK:
                 return "B ROK";
-            case BISHOP:
+            case PIECE_BISHOP:
                 return "B BIS";
-            case KNIGHT:
+            case PIECE_KNIGHT:
                 return "B KNT";
-            case PAWN:
+            case PIECE_PAWN:
                 return "B PAW";
         }
     }
     return " ";
-}
-
-// board_state_t를 game_t로 변환하는 함수
-void convert_board_state_to_game(const board_state_t *board_state, game_t *game) {
-    // 기본 초기화
-    memset(game, 0, sizeof(game_t));
-
-    // 보드 상태 복사
-    for (int y = 0; y < 8; y++) {
-        for (int x = 0; x < 8; x++) {
-            game->board[x][y] = board_state->board[y][x];
-        }
-    }
-
-    // 턴 정보 복사
-    game->side_to_move = (board_state->current_turn == TEAM_WHITE) ? WHITE : BLACK;
-
-    // 캐슬링 권리 설정 (TODO: 실제 게임 상태에서 가져와야 함)
-    game->white_can_castle_kingside  = !board_state->white_king_moved && !board_state->white_rook_kingside_moved;
-    game->white_can_castle_queenside = !board_state->white_king_moved && !board_state->white_rook_queenside_moved;
-    game->black_can_castle_kingside  = !board_state->black_king_moved && !board_state->black_rook_kingside_moved;
-    game->black_can_castle_queenside = !board_state->black_king_moved && !board_state->black_rook_queenside_moved;
-
-    // 앙파상 설정
-    game->en_passant_x = board_state->en_passant_target_x;
-    game->en_passant_y = board_state->en_passant_target_y;
-
-    // 기타 정보
-    game->halfmove_clock = board_state->halfmove_clock;
 }
 
 // 선택된 기물의 이동 가능한 위치들을 계산하는 함수
@@ -98,15 +56,14 @@ void calculate_possible_moves(game_state_t *game_state, int selected_x, int sele
         return;
     }
 
-    // board_state를 game_t로 변환
-    game_t game;
-    convert_board_state_to_game(&game_state->board_state, &game);
+    // game_t를 직접 사용
+    game_t *game = &game_state->game;
 
     int sx = selected_x;
     int sy = selected_y;
 
     // 선택된 위치에 기물이 있는지 확인
-    piecestate_t *selected_piece = &game_state->board_state.board[sy][sx];
+    piecestate_t *selected_piece = &game->board[sy][sx];
     if (!selected_piece->piece || selected_piece->is_dead) {
         return;
     }
@@ -119,8 +76,8 @@ void calculate_possible_moves(game_state_t *game_state, int selected_x, int sele
             }
 
             // common/rule.c의 is_move_legal 함수 사용
-            if (is_move_legal(&game, sx, sy, dx, dy)) {
-                piecestate_t *target_piece = &game_state->board_state.board[dy][dx];
+            if (is_move_legal(game, sx, sy, dx, dy)) {
+                piecestate_t *target_piece = &game->board[dy][dx];
 
                 // 목표 위치에 상대 기물이 있으면 캡처 가능 위치로 표시
                 if (target_piece->piece && !target_piece->is_dead &&
@@ -141,24 +98,26 @@ void draw_chess_board(WINDOW *board_win) {
     werase(board_win);
     draw_border(board_win);
 
-    // 블랙 플레이어인지 확인
+    // 플레이어 관점에 따른 라벨 및 좌표 설정
     bool is_black_player = (client->game_state.local_team == TEAM_BLACK);
 
-    // 상단 라벨 (블랙 플레이어일 때 역순)
     if (is_black_player) {
+        // 검은색 플레이어: h-a 순서 (뒤집힌 표시)
         mvwprintw(board_win, 1, BOARD_LABEL_Y, "     h      g      f      e      d      c      b      a");
     } else {
+        // 흰색 플레이어: a-h 순서 (표준 표시)
         mvwprintw(board_win, 1, BOARD_LABEL_Y, "     a      b      c      d      e      f      g      h");
     }
 
-    board_state_t *board = &client->game_state.board_state;
+    game_t *game = &client->game_state.game;
 
     for (int row = 0; row < BOARD_SIZE; row++) {
-        // 실제 보드에서의 행/열 계산 (블랙 플레이어일 때 뒤집기)
-        int actual_row = is_black_player ? (7 - row) : row;
+        // 플레이어 관점에 따른 실제 보드 좌표 계산
+        int actual_row   = is_black_player ? row : (7 - row);
+        int display_rank = is_black_player ? (row + 1) : (8 - row);
 
         // 왼쪽 라벨: 테두리 다음 칸(1)에 표시
-        mvwprintw(board_win, 2 + row * SQUARE_H + 1, 1, "%d ", 8 - actual_row);
+        mvwprintw(board_win, 2 + row * SQUARE_H + 1, 1, "%d ", display_rank);
 
         for (int col = 0; col < BOARD_SIZE; col++) {
             int actual_col = is_black_player ? (7 - col) : col;
@@ -169,10 +128,10 @@ void draw_chess_board(WINDOW *board_win) {
                                 client->selected_x == actual_col &&
                                 client->selected_y == actual_row);
 
-            // 커서 위치 확인 (실제 좌표로 변환)
+            // 커서 위치 확인 (display 좌표와 직접 비교)
             int cursor_x, cursor_y;
             get_cursor_position(&cursor_x, &cursor_y);
-            bool is_cursor = (is_cursor_mode() && cursor_x == actual_col && cursor_y == actual_row);
+            bool is_cursor = (is_cursor_mode() && cursor_x == col && cursor_y == row);
 
             // 이동 가능 위치 확인 (실제 좌표 사용)
             bool is_possible_move = client->game_state.possible_moves[actual_row][actual_col];
@@ -194,12 +153,12 @@ void draw_chess_board(WINDOW *board_win) {
             }
             // 3줄로 한 칸 출력
             mvwprintw(board_win, y, x, "       ");
-            piecestate_t *piece = &board->board[actual_row][actual_col];
+            piecestate_t *piece = &game->board[actual_row][actual_col];
             if (piece->piece && !piece->is_dead) {
                 const char *piece_unicode = get_piece_unicode(piece->piece, piece->color);
 
                 // 기물이 내 기물인지 상대방 기물인지 판단
-                team_t piece_team  = (piece->color == WHITE) ? TEAM_WHITE : TEAM_BLACK;
+                team_t piece_team  = piece->color;
                 bool   is_my_piece = (piece_team == client->game_state.local_team);
 
                 if (is_my_piece) {
@@ -235,14 +194,16 @@ void draw_chess_board(WINDOW *board_win) {
             }
         }
         // 오른쪽 라벨: 테두리 바로 안쪽(BOARD_WIDTH - 2)에 표시
-        mvwprintw(board_win, 2 + row * SQUARE_H + 1, BOARD_WIDTH - 2, "%d", 8 - actual_row);
+        mvwprintw(board_win, 2 + row * SQUARE_H + 1, BOARD_WIDTH - 2, "%d", display_rank);
     }
-    // 하단 라벨 (블랙 플레이어일 때 역순)
+
+    // 하단 라벨 (플레이어 관점에 따라)
     if (is_black_player) {
         mvwprintw(board_win, BOARD_HEIGHT - 2, BOARD_LABEL_X, "   h      g      f      e      d      c      b      a");
     } else {
         mvwprintw(board_win, BOARD_HEIGHT - 2, BOARD_LABEL_X, "   a      b      c      d      e      f      g      h");
     }
+
     wrefresh(board_win);
 }
 
@@ -389,8 +350,8 @@ void draw_game_menu(WINDOW *menu_win) {
     mvwprintw(menu_win, 6, 2, "Q. Quit to Main");
 
     // 현재 턴 표시
-    board_state_t *board     = &client->game_state.board_state;
-    const char    *turn_text = (board->current_turn == TEAM_WHITE) ? "White" : "Black";
+    game_t     *game      = &client->game_state.game;
+    const char *turn_text = (game->side_to_move == TEAM_WHITE) ? "White" : "Black";
     mvwprintw(menu_win, 8, 2, "Turn: %s", turn_text);
 
     wrefresh(menu_win);
@@ -482,10 +443,10 @@ void draw_game_screen() {
     int board_start_y      = 1 + player_info_height;  // 상대방 정보창 + 간격
 
     // 상대방 정보창 (체스판 위)
-    game_state_t *game          = &client->game_state;
-    team_t        opponent_team = (game->local_team == TEAM_WHITE) ? TEAM_BLACK : TEAM_WHITE;
-    bool          opponent_turn = (game->board_state.current_turn == opponent_team);
-    int           opponent_time = (opponent_team == TEAM_WHITE) ? game->white_time_remaining : game->black_time_remaining;
+    game_state_t *game_state    = &client->game_state;
+    team_t        opponent_team = (game_state->local_team == TEAM_WHITE) ? TEAM_BLACK : TEAM_WHITE;
+    bool          opponent_turn = (game_state->game.side_to_move == opponent_team);
+    int           opponent_time = (opponent_team == TEAM_WHITE) ? game_state->white_time_remaining : game_state->black_time_remaining;
 
     WINDOW *opponent_info_win = newwin(player_info_height, BOARD_WIDTH, 1, 2);
     draw_player_info(opponent_info_win, get_opponent_name_client(), false, opponent_team, opponent_turn, opponent_time);
@@ -499,11 +460,11 @@ void draw_game_screen() {
     draw_chess_board(board_win);
 
     // 내 정보창 (체스판 아래)
-    bool my_turn = (game->board_state.current_turn == game->local_team);
-    int  my_time = (game->local_team == TEAM_WHITE) ? game->white_time_remaining : game->black_time_remaining;
+    bool my_turn = (game_state->game.side_to_move == game_state->local_team);
+    int  my_time = (game_state->local_team == TEAM_WHITE) ? game_state->white_time_remaining : game_state->black_time_remaining;
 
     WINDOW *my_info_win = newwin(player_info_height, BOARD_WIDTH, board_start_y + BOARD_HEIGHT, 2);
-    draw_player_info(my_info_win, client->username, true, game->local_team, my_turn, my_time);
+    draw_player_info(my_info_win, client->username, true, game_state->local_team, my_turn, my_time);
 
     // 채팅창 높이를 체스판과 맞춤 (플레이어 정보창 2개 + 체스판 높이)
     int     total_game_height = player_info_height * 2 + BOARD_HEIGHT;

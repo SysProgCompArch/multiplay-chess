@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "../client_state.h"
 #include "../game_state.h"
@@ -54,10 +55,13 @@ int handle_match_game_response(ServerMessage *msg) {
                 }
                 client->game_state.game_in_progress = true;
                 client->current_screen              = SCREEN_GAME;
+                client->game_state.game_start_time  = time(NULL);
 
                 // 게임 시작 시 보드 상태 초기화 (체스는 항상 WHITE가 먼저 시작)
-                init_board_state(&client->game_state.board_state);
-                client->game_state.board_state.current_turn = TEAM_WHITE;
+                init_game(&client->game_state.game);
+                // 플레이어 팀에 따라 보드를 적절히 배치
+                reset_game_for_player(&client->game_state.game, client->game_state.local_team);
+                client->game_state.game.side_to_move = TEAM_WHITE;
 
                 // 네트워크 스레드에서 상태가 변경되었음을 메인 루프에 알림
                 client->screen_update_requested = true;

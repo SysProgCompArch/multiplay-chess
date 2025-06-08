@@ -87,60 +87,29 @@ bool coord_to_board_pos(int screen_x, int screen_y, int *board_x, int *board_y) 
 
 // 보드 클릭 처리
 void handle_board_click(int board_x, int board_y) {
-    // 스레드 안전성을 위해 뮤텍스 잠금 시작
-    pthread_mutex_lock(&screen_mutex);
-
     client_state_t *client = get_client_state();
 
     // NULL 포인터 검사
     if (!client) {
         LOG_ERROR("client is NULL in handle_board_click");
-        pthread_mutex_unlock(&screen_mutex);
         return;
     }
 
-    if (client->current_screen != SCREEN_GAME) {
-        pthread_mutex_unlock(&screen_mutex);
-        return;
-    }
-
-    // 배열 경계 검사 추가
-    if (board_x < 0 || board_x >= 8 || board_y < 0 || board_y >= 8) {
-        LOG_ERROR("Board coordinates out of bounds: (%d, %d)", board_x, board_y);
-        pthread_mutex_unlock(&screen_mutex);
-        add_chat_message_safe("System", "Invalid board position clicked.");
-        return;
-    }
-
-    board_state_t *board = &client->game_state.board_state;
-
-    // board 포인터 검사
-    if (!board) {
-        LOG_ERROR("board is NULL in handle_board_click");
-        pthread_mutex_unlock(&screen_mutex);
-        return;
-    }
-
-    // 내부 로직용 디버그 메시지
-    char debug_msg[256];
-    snprintf(debug_msg, sizeof(debug_msg), "보드 클릭: (%d, %d) - 이미 변환된 좌표", board_x, board_y);
-
-    // 뮤텍스 잠금을 해제한 후 채팅 메시지 추가 (데드락 방지)
-    pthread_mutex_unlock(&screen_mutex);
-    add_chat_message_safe("System", debug_msg);
     pthread_mutex_lock(&screen_mutex);
+
+    game_t *game = &client->game_state.game;
 
     if (!client->piece_selected) {
         // 기물 선택 - 경계 검사 후 배열 접근
-        piecestate_t *piece = &board->board[board_y][board_x];
+        piecestate_t *piece = &game->board[board_y][board_x];
         if (piece->piece && !piece->is_dead) {
             // 현재 플레이어의 기물인지 확인
-            team_t piece_team = (piece->color == 0) ? TEAM_WHITE : TEAM_BLACK;
+            team_t piece_team = piece->color;
 
             // 디버그 메시지 추가
             char debug_msg2[256];
             snprintf(debug_msg2, sizeof(debug_msg2), "DEBUG: piece_color=%d, piece_team=%d, local_team=%d, current_turn=%d, piece_y=%d, piece_x=%d",
-                     piece->color, piece_team, client->game_state.local_team, board->current_turn, board_y, board_x);
+                     piece->color, piece_team, client->game_state.local_team, game->side_to_move, board_y, board_x);
 
             // 뮤텍스 잠금을 해제한 후 채팅 메시지 추가 (데드락 방지)
             pthread_mutex_unlock(&screen_mutex);
@@ -150,10 +119,10 @@ void handle_board_click(int board_x, int board_y) {
             for (int i = 0; i < 8; i++) {
                 char row_debug[256];
                 snprintf(row_debug, sizeof(row_debug), "Board[%d]: %d %d %d %d %d %d %d %d",
-                         i, board->board[i][0].color, board->board[i][1].color,
-                         board->board[i][2].color, board->board[i][3].color,
-                         board->board[i][4].color, board->board[i][5].color,
-                         board->board[i][6].color, board->board[i][7].color);
+                         i, game->board[i][0].color, game->board[i][1].color,
+                         game->board[i][2].color, game->board[i][3].color,
+                         game->board[i][4].color, game->board[i][5].color,
+                         game->board[i][6].color, game->board[i][7].color);
                 add_chat_message_safe("System", row_debug);
             }
 
@@ -165,17 +134,12 @@ void handle_board_click(int board_x, int board_y) {
 
             // 자신의 기물인지 확인 - 원래는 로컬 팀과 기물 색상이 일치해야 함
             // 그러나 실제 보드에서는 color 값이 정확히 일치하지 않을 수 있음
-            if ((is_black_player && piece->color != BLACK) || (!is_black_player && piece->color != WHITE)) {
-                pthread_mutex_unlock(&screen_mutex);
-                add_chat_message_safe("System", "You can only move your own pieces!");
-                return;
-            }
 
             // 현재 턴인지 확인
-            if (board->current_turn != client->game_state.local_team) {
+            if (game->side_to_move != client->game_state.local_team) {
                 char turn_msg[128];
-                snprintf(turn_msg, sizeof(turn_msg), "It's not your turn! current_turn=%d, local_team=%d",
-                         board->current_turn, client->game_state.local_team);
+                snprintf(turn_msg, sizeof(turn_msg), "Not your turn! Current: %d, Local: %d",
+                         game->side_to_move, client->game_state.local_team);
                 pthread_mutex_unlock(&screen_mutex);
                 add_chat_message_safe("System", turn_msg);
                 return;
@@ -213,13 +177,13 @@ void handle_board_click(int board_x, int board_y) {
             char from_coord[3], to_coord[3];
 
             // 보드 좌표를 체스 표기법으로 변환
-            // 배열 인덱스를 체스 표기법으로 변환: y=0->rank8, y=6->rank2, y=7->rank1
+            // board_x, board_y는 이미 실제 보드 배열 인덱스이므로 직접 변환
             from_coord[0] = 'a' + client->selected_x;
-            from_coord[1] = '1' + (7 - client->selected_y);  // 배열 인덱스를 rank로 변환
+            from_coord[1] = '1' + client->selected_y;  // 실제 보드 좌표를 rank로 변환
             from_coord[2] = '\0';
 
             to_coord[0] = 'a' + board_x;
-            to_coord[1] = '1' + (7 - board_y);  // 배열 인덱스를 rank로 변환
+            to_coord[1] = '1' + board_y;  // 실제 보드 좌표를 rank로 변환
             to_coord[2] = '\0';
 
             // 뮤텍스 잠금을 해제한 후 네트워크 함수 호출 (데드락 방지)
@@ -303,24 +267,9 @@ void get_cursor_position(int *x, int *y) {
         return;
     }
 
-    // 블랙 플레이어인 경우 커서 좌표도 변환
-    client_state_t *client = get_client_state();
-    if (!client) {
-        LOG_ERROR("client is NULL in get_cursor_position");
-        *x = cursor_x;
-        *y = cursor_y;
-        return;
-    }
-
-    bool is_black_player = (client->game_state.local_team == TEAM_BLACK);
-
-    if (is_black_player) {
-        *x = 7 - cursor_x;
-        *y = 7 - cursor_y;
-    } else {
-        *x = cursor_x;
-        *y = cursor_y;
-    }
+    // 내부 커서 좌표를 그대로 반환 (방향키 처리에서 이미 플레이어 관점을 고려함)
+    *x = cursor_x;
+    *y = cursor_y;
 
     // 최종 결과가 유효한 범위인지 확인
     if (*x < 0 || *x >= 8 || *y < 0 || *y >= 8) {
@@ -347,21 +296,25 @@ bool handle_keyboard_board_input(int ch) {
     switch (ch) {
         case KEY_UP:
             if (!cursor_mode) enable_cursor_mode();
+            // 화면상 위쪽으로 이동 (row 감소)
             if (cursor_y > 0) cursor_y--;
             return true;
 
         case KEY_DOWN:
             if (!cursor_mode) enable_cursor_mode();
+            // 화면상 아래쪽으로 이동 (row 증가)
             if (cursor_y < BOARD_SIZE - 1) cursor_y++;
             return true;
 
         case KEY_LEFT:
             if (!cursor_mode) enable_cursor_mode();
+            // 화면상 왼쪽으로 이동 (col 감소)
             if (cursor_x > 0) cursor_x--;
             return true;
 
         case KEY_RIGHT:
             if (!cursor_mode) enable_cursor_mode();
+            // 화면상 오른쪽으로 이동 (col 증가)
             if (cursor_x < BOARD_SIZE - 1) cursor_x++;
             return true;
 
@@ -369,9 +322,19 @@ bool handle_keyboard_board_input(int ch) {
         case '\n':  // 엔터
         case '\r':
             if (cursor_mode) {
-                // 커서 위치를 실제 보드 좌표로 변환
+                // 커서 위치를 실제 보드 좌표로 변환해서 처리
+                client_state_t *client          = get_client_state();
+                bool            is_black_player = (client->game_state.local_team == TEAM_BLACK);
+
                 int actual_x, actual_y;
-                get_cursor_position(&actual_x, &actual_y);
+                if (is_black_player) {
+                    actual_x = 7 - cursor_x;  // 블랙 플레이어: 좌우 반전
+                    actual_y = cursor_y;      // 블랙 플레이어: 상하 그대로
+                } else {
+                    actual_x = cursor_x;      // 화이트 플레이어: 좌우 그대로
+                    actual_y = 7 - cursor_y;  // 화이트 플레이어: 상하 반전
+                }
+
                 handle_board_click(actual_x, actual_y);
                 return true;
             }
@@ -398,15 +361,11 @@ bool handle_keyboard_board_input(int ch) {
 
 // 체스 표기법 파싱 및 처리
 bool handle_chess_notation(const char *notation) {
+    client_state_t *client = get_client_state();
+
     // NULL 포인터 검사
     if (!notation) {
         LOG_ERROR("notation is NULL in handle_chess_notation");
-        return false;
-    }
-
-    client_state_t *client = get_client_state();
-    if (!client) {
-        LOG_ERROR("client is NULL in handle_chess_notation");
         return false;
     }
 
@@ -414,59 +373,56 @@ bool handle_chess_notation(const char *notation) {
         return false;
     }
 
-    // 간단한 표기법 파싱 (예: e2e4, a1b2)
     if (strlen(notation) == 4) {
-        // 출발지 파싱 - 체스 표기법을 배열 인덱스로 변환
-        int from_x = notation[0] - 'a';        // a=0, b=1, ..., h=7
-        int from_y = 7 - (notation[1] - '1');  // rank1=7, rank2=6, ..., rank8=0
+        // e2e4 형식
+        if (client->current_screen == SCREEN_GAME) {
+            // 체스 표기법을 좌표로 변환
+            int from_x = notation[0] - 'a';
+            int from_y = notation[1] - '1';
+            int to_x   = notation[2] - 'a';
+            int to_y   = notation[3] - '1';
 
-        // 도착지 파싱 - 체스 표기법을 배열 인덱스로 변환
-        int to_x = notation[2] - 'a';        // a=0, b=1, ..., h=7
-        int to_y = 7 - (notation[3] - '1');  // rank1=7, rank2=6, ..., rank8=0
-
-        // 범위 체크
-        if (from_x >= 0 && from_x < 8 && from_y >= 0 && from_y < 8 &&
-            to_x >= 0 && to_x < 8 && to_y >= 0 && to_y < 8) {
-            board_state_t *board = &client->game_state.board_state;
-
-            // 출발지에 기물이 있는지 확인
-            piecestate_t *piece = &board->board[from_y][from_x];
-            if (piece->piece && !piece->is_dead) {
-                // 현재 플레이어의 기물인지 확인
-                bool is_black_player = (client->game_state.local_team == TEAM_BLACK);
-                if ((is_black_player && piece->color != BLACK) || (!is_black_player && piece->color != WHITE)) {
-                    add_chat_message_safe("System", "You can only move your own pieces!");
-                    return false;
-                }
-
-                // 현재 턴인지 확인
-                if (board->current_turn != client->game_state.local_team) {
-                    add_chat_message_safe("System", "It's not your turn!");
-                    return false;
-                }
-
-                // 서버로 이동 요청 전송
-                char from_coord[3], to_coord[3];
-                from_coord[0] = notation[0];
-                from_coord[1] = notation[1];
-                from_coord[2] = '\0';
-                to_coord[0]   = notation[2];
-                to_coord[1]   = notation[3];
-                to_coord[2]   = '\0';
-
-                if (send_move_request(from_coord, to_coord) == 0) {
-                    char move_msg[64];
-                    snprintf(move_msg, sizeof(move_msg), "Move request sent: %s", notation);
-                    add_chat_message_safe("System", move_msg);
-                    return true;
-                } else {
-                    add_chat_message_safe("System", "Failed to send move request.");
-                }
-            } else {
-                add_chat_message_safe("System", "No piece at starting position.");
+            // 범위 검사
+            if (from_x < 0 || from_x >= 8 || from_y < 0 || from_y >= 8 ||
+                to_x < 0 || to_x >= 8 || to_y < 0 || to_y >= 8) {
+                add_chat_message_safe("System", "Invalid coordinates");
+                return false;
             }
-        } else {
-            add_chat_message_safe("System", "Invalid notation format.");
+
+            game_t *game = &client->game_state.game;
+
+            // 기물 확인
+            piecestate_t *piece = &game->board[from_y][from_x];
+
+            // 기물이 있는지 확인
+            if (!piece->piece || piece->is_dead) {
+                add_chat_message_safe("System", "No piece at source position");
+                return false;
+            }
+
+            // 현재 턴인지 확인
+            if (game->side_to_move != client->game_state.local_team) {
+                add_chat_message_safe("System", "Not your turn!");
+                return false;
+            }
+
+            // 서버로 이동 요청 전송
+            char from_coord[3], to_coord[3];
+            from_coord[0] = notation[0];
+            from_coord[1] = notation[1];
+            from_coord[2] = '\0';
+            to_coord[0]   = notation[2];
+            to_coord[1]   = notation[3];
+            to_coord[2]   = '\0';
+
+            if (send_move_request(from_coord, to_coord) == 0) {
+                char move_msg[64];
+                snprintf(move_msg, sizeof(move_msg), "Move request sent: %s", notation);
+                add_chat_message_safe("System", move_msg);
+                return true;
+            } else {
+                add_chat_message_safe("System", "Failed to send move request.");
+            }
         }
     } else {
         add_chat_message_safe("System", "Use format: e2e4 (from-to)");
