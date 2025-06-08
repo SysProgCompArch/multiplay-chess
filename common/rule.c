@@ -15,7 +15,8 @@ static bool is_square_attacked(const game_t *G, int x, int y, int by_color) {
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             const piecestate_t *ps = &G->board[i][j];
-            if (ps->is_dead || ps->color != by_color)
+            // NULL 포인터 검사 추가 - ps->piece가 NULL일 수 있음
+            if (ps->is_dead || ps->piece == NULL || ps->color != by_color)
                 continue;
 
             switch (ps->piece->type) {
@@ -63,9 +64,10 @@ bool is_move_legal(const game_t *G, int sx, int sy, int dx, int dy) {
         return false;
     const piecestate_t *src = &G->board[sx][sy];
     const piecestate_t *dst = &G->board[dx][dy];
-    if (src->is_dead || src->color != G->side_to_move)
+    // NULL 포인터 검사 추가
+    if (src->is_dead || src->piece == NULL || src->color != G->side_to_move)
         return false;
-    if (!dst->is_dead && dst->color == G->side_to_move)
+    if (!dst->is_dead && dst->piece != NULL && dst->color == G->side_to_move)
         return false;
 
     int  rx = dx - sx, ry = dy - sy;
@@ -162,6 +164,11 @@ void apply_move(game_t *G, int sx, int sy, int dx, int dy) {
     piecestate_t *src = &G->board[sx][sy];
     piecestate_t *dst = &G->board[dx][dy];
 
+    // NULL 포인터 검사 추가
+    if (src->piece == NULL) {
+        return;  // 소스 기물이 NULL이면 이동할 수 없음
+    }
+
     // 50수 규칙 반영
     if (src->piece->type == PAWN || !dst->is_dead)
         G->halfmove_clock = 0;
@@ -183,7 +190,7 @@ void apply_move(game_t *G, int sx, int sy, int dx, int dy) {
     src->piece   = NULL;
 
     // 캐슬링 룩 이동
-    if (dst->piece->type == KING && abs(dx - sx) == 2) {
+    if (dst->piece != NULL && dst->piece->type == KING && abs(dx - sx) == 2) {
         bool         ks                   = dx > sx;
         int          rook_from_x          = ks ? 7 : 0;
         int          rook_to_x            = ks ? dx - 1 : dx + 1;
@@ -195,13 +202,13 @@ void apply_move(game_t *G, int sx, int sy, int dx, int dy) {
     }
 
     // 캐슬링 권리 소멸
-    if (dst->piece->type == KING) {
+    if (dst->piece != NULL && dst->piece->type == KING) {
         if (dst->color == WHITE)
             G->white_can_castle_kingside = G->white_can_castle_queenside = false;
         else
             G->black_can_castle_kingside = G->black_can_castle_queenside = false;
     }
-    if (dst->piece->type == ROOK && dst->is_first_move) {
+    if (dst->piece != NULL && dst->piece->type == ROOK && dst->is_first_move) {
         if (dst->color == WHITE) {
             if (sx == 0 && sy == 0)
                 G->white_can_castle_queenside = false;
@@ -216,7 +223,7 @@ void apply_move(game_t *G, int sx, int sy, int dx, int dy) {
     }
 
     // 앙파상 타겟 갱신
-    if (dst->piece->type == PAWN && abs(dy - sy) == 2) {
+    if (dst->piece != NULL && dst->piece->type == PAWN && abs(dy - sy) == 2) {
         G->en_passant_x = dx;
         G->en_passant_y = (sy + dy) / 2;
     } else {
@@ -224,7 +231,7 @@ void apply_move(game_t *G, int sx, int sy, int dx, int dy) {
     }
 
     // 프로모션 (기본 퀸으로 자동 승격)
-    if (dst->piece->type == PAWN && (dy == 7 || dy == 0)) {
+    if (dst->piece != NULL && dst->piece->type == PAWN && (dy == 7 || dy == 0)) {
         // extern으로 정의된 queen_piecestate를 가리키도록 하거나
         // 별도의 get_promotion_piece(color) 함수를 호출하세요.
         dst->piece       = get_default_queen(dst->color);
@@ -242,7 +249,8 @@ bool is_in_check(const game_t *G, int color) {
     for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
             const piecestate_t *ps = &G->board[x][y];
-            if (!ps->is_dead && ps->color == color && ps->piece->type == KING) {
+            // NULL 포인터 검사 추가 - ps->piece가 NULL일 수 있음
+            if (!ps->is_dead && ps->piece != NULL && ps->color == color && ps->piece->type == KING) {
                 king_x = x;
                 king_y = y;
                 break;
@@ -269,7 +277,7 @@ bool is_checkmate(const game_t *G) {
     for (int sx = 0; sx < 8; sx++) {
         for (int sy = 0; sy < 8; sy++) {
             const piecestate_t *src = &G->board[sx][sy];
-            if (src->is_dead || src->color != color) continue;
+            if (src->is_dead || src->piece == NULL || src->color != color) continue;
 
             for (int dx = 0; dx < 8; dx++) {
                 for (int dy = 0; dy < 8; dy++) {
@@ -297,7 +305,7 @@ bool is_stalemate(const game_t *G) {
     for (int sx = 0; sx < 8; sx++) {
         for (int sy = 0; sy < 8; sy++) {
             const piecestate_t *src = &G->board[sx][sy];
-            if (src->is_dead || src->color != color) continue;
+            if (src->is_dead || src->piece == NULL || src->color != color) continue;
 
             for (int dx = 0; dx < 8; dx++) {
                 for (int dy = 0; dy < 8; dy++) {
