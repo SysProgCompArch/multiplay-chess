@@ -1,3 +1,4 @@
+#include <pthread.h>
 #include <string.h>
 
 #include "../client_network.h"  // send_move_request 함수를 위해 변경
@@ -57,7 +58,7 @@ bool coord_to_board_pos(int screen_x, int screen_y, int *board_x, int *board_y) 
             LOG_ERROR("client is NULL in coord_to_board_pos");
             return false;
         }
-        
+
         bool is_black_player = (client->game_state.local_team == TEAM_BLACK);
 
         if (is_black_player) {
@@ -86,20 +87,27 @@ bool coord_to_board_pos(int screen_x, int screen_y, int *board_x, int *board_y) 
 
 // 보드 클릭 처리
 void handle_board_click(int board_x, int board_y) {
+    // 스레드 안전성을 위해 뮤텍스 잠금 시작
+    pthread_mutex_lock(&screen_mutex);
+
     client_state_t *client = get_client_state();
 
     // NULL 포인터 검사
     if (!client) {
         LOG_ERROR("client is NULL in handle_board_click");
+        pthread_mutex_unlock(&screen_mutex);
         return;
     }
 
-    if (client->current_screen != SCREEN_GAME)
+    if (client->current_screen != SCREEN_GAME) {
+        pthread_mutex_unlock(&screen_mutex);
         return;
+    }
 
     // 배열 경계 검사 추가
     if (board_x < 0 || board_x >= 8 || board_y < 0 || board_y >= 8) {
         LOG_ERROR("Board coordinates out of bounds: (%d, %d)", board_x, board_y);
+        pthread_mutex_unlock(&screen_mutex);
         add_chat_message_safe("System", "Invalid board position clicked.");
         return;
     }
@@ -109,13 +117,18 @@ void handle_board_click(int board_x, int board_y) {
     // board 포인터 검사
     if (!board) {
         LOG_ERROR("board is NULL in handle_board_click");
+        pthread_mutex_unlock(&screen_mutex);
         return;
     }
 
     // 내부 로직용 디버그 메시지
     char debug_msg[256];
     snprintf(debug_msg, sizeof(debug_msg), "보드 클릭: (%d, %d) - 이미 변환된 좌표", board_x, board_y);
+
+    // 뮤텍스 잠금을 해제한 후 채팅 메시지 추가 (데드락 방지)
+    pthread_mutex_unlock(&screen_mutex);
     add_chat_message_safe("System", debug_msg);
+    pthread_mutex_lock(&screen_mutex);
 
     if (!client->piece_selected) {
         // 기물 선택 - 경계 검사 후 배열 접근
@@ -125,10 +138,13 @@ void handle_board_click(int board_x, int board_y) {
             team_t piece_team = (piece->color == 0) ? TEAM_WHITE : TEAM_BLACK;
 
             // 디버그 메시지 추가
-            char debug_msg[256];
-            snprintf(debug_msg, sizeof(debug_msg), "DEBUG: piece_color=%d, piece_team=%d, local_team=%d, current_turn=%d, piece_y=%d, piece_x=%d",
+            char debug_msg2[256];
+            snprintf(debug_msg2, sizeof(debug_msg2), "DEBUG: piece_color=%d, piece_team=%d, local_team=%d, current_turn=%d, piece_y=%d, piece_x=%d",
                      piece->color, piece_team, client->game_state.local_team, board->current_turn, board_y, board_x);
-            add_chat_message_safe("System", debug_msg);
+
+            // 뮤텍스 잠금을 해제한 후 채팅 메시지 추가 (데드락 방지)
+            pthread_mutex_unlock(&screen_mutex);
+            add_chat_message_safe("System", debug_msg2);
 
             // 보드 출력 디버그 - 모든 행 확인
             for (int i = 0; i < 8; i++) {
@@ -141,12 +157,16 @@ void handle_board_click(int board_x, int board_y) {
                 add_chat_message_safe("System", row_debug);
             }
 
+            // 뮤텍스 다시 잠금
+            pthread_mutex_lock(&screen_mutex);
+
             // 블랙 플레이어인 경우 기물 색상 매핑을 다르게 해야 함
             bool is_black_player = (client->game_state.local_team == TEAM_BLACK);
 
             // 자신의 기물인지 확인 - 원래는 로컬 팀과 기물 색상이 일치해야 함
             // 그러나 실제 보드에서는 color 값이 정확히 일치하지 않을 수 있음
             if ((is_black_player && piece->color != BLACK) || (!is_black_player && piece->color != WHITE)) {
+                pthread_mutex_unlock(&screen_mutex);
                 add_chat_message_safe("System", "You can only move your own pieces!");
                 return;
             }
@@ -156,30 +176,35 @@ void handle_board_click(int board_x, int board_y) {
                 char turn_msg[128];
                 snprintf(turn_msg, sizeof(turn_msg), "It's not your turn! current_turn=%d, local_team=%d",
                          board->current_turn, client->game_state.local_team);
+                pthread_mutex_unlock(&screen_mutex);
                 add_chat_message_safe("System", turn_msg);
                 return;
             }
 
             // 턴 확인 완료 - 자신의 기물을 선택함
-
             client->selected_x     = board_x;
             client->selected_y     = board_y;
             client->piece_selected = true;
 
+            pthread_mutex_unlock(&screen_mutex);
             add_chat_message_safe("System", "Piece selected. Click destination.");
+            return;
         }
     } else {
         // 기물 이동
         if (board_x == client->selected_x && board_y == client->selected_y) {
             // 같은 위치 클릭 - 선택 해제
             client->piece_selected = false;
+            pthread_mutex_unlock(&screen_mutex);
             add_chat_message_safe("System", "Selection cancelled.");
+            return;
         } else {
             // 좌표 유효성 재검사
-            if (client->selected_x < 0 || client->selected_x >= 8 || 
+            if (client->selected_x < 0 || client->selected_x >= 8 ||
                 client->selected_y < 0 || client->selected_y >= 8) {
                 LOG_ERROR("Selected coordinates out of bounds: (%d, %d)", client->selected_x, client->selected_y);
                 client->piece_selected = false;
+                pthread_mutex_unlock(&screen_mutex);
                 add_chat_message_safe("System", "Invalid selection, cancelled.");
                 return;
             }
@@ -197,17 +222,28 @@ void handle_board_click(int board_x, int board_y) {
             to_coord[1] = '1' + (7 - board_y);  // 배열 인덱스를 rank로 변환
             to_coord[2] = '\0';
 
+            // 뮤텍스 잠금을 해제한 후 네트워크 함수 호출 (데드락 방지)
+            pthread_mutex_unlock(&screen_mutex);
+
             // 서버로 이동 요청 전송
             if (send_move_request(from_coord, to_coord) == 0) {
                 char move_msg[64];
                 snprintf(move_msg, sizeof(move_msg), "Move request sent: %s -> %s", from_coord, to_coord);
                 add_chat_message_safe("System", move_msg);
+
+                // 뮤텍스 다시 잠금하여 상태 변경
+                pthread_mutex_lock(&screen_mutex);
                 client->piece_selected = false;
+                pthread_mutex_unlock(&screen_mutex);
             } else {
                 add_chat_message_safe("System", "Failed to send move request.");
             }
+            return;
         }
     }
+
+    // 함수 끝에서 뮤텍스 해제
+    pthread_mutex_unlock(&screen_mutex);
 }
 
 // 마우스 입력 처리
@@ -275,7 +311,7 @@ void get_cursor_position(int *x, int *y) {
         *y = cursor_y;
         return;
     }
-    
+
     bool is_black_player = (client->game_state.local_team == TEAM_BLACK);
 
     if (is_black_player) {

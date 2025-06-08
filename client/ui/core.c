@@ -223,18 +223,12 @@ void show_dialog(const char *title, const char *message, const char *button_text
 
     wrefresh(dialog);
 
-    // 키 입력 대기
-    timeout(-1);  // 블로킹 모드로 변경
-    getch();
-    timeout(1000);  // 다시 타임아웃 모드로 복원
+    // 키 입력 처리는 메인 루프에서 처리하도록 변경
+    // 더 이상 여기서 직접 getch()를 호출하지 않음
 
     delwin(dialog);
 
-    pthread_mutex_lock(&screen_mutex);
-    client->dialog_active = false;
-    pthread_mutex_unlock(&screen_mutex);
-
-    // 에러 다이얼로그를 닫은 후 즉시 현재 화면을 다시 그리기
+    // 다이얼로그 표시 후 즉시 현재 화면을 다시 그리기
     pthread_mutex_lock(&screen_mutex);
     draw_current_screen();
     pthread_mutex_unlock(&screen_mutex);
