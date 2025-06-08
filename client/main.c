@@ -379,6 +379,23 @@ int main(int argc, char *argv[]) {
             pthread_mutex_unlock(&screen_mutex);
             refresh();  // 다이얼로그를 즉시 화면에 표시
             continue;   // 다른 처리를 건너뛰고 다시 루프 시작
+        } else if (client->game_end_dialog_pending && !client->dialog_active) {
+            client->dialog_active           = true;
+            client->game_end_dialog_pending = false;
+            LOG_INFO("Showing game end dialog");
+
+            // 게임 종료 다이얼로그 표시 전에 먼저 화면 업데이트
+            draw_current_screen();
+            refresh();  // 화면 먼저 업데이트
+
+            // 짧은 지연으로 사용자가 화면 변화를 볼 수 있도록 함
+            usleep(100000);  // 100ms 지연
+
+            // 게임 종료 다이얼로그 표시 (키 입력 처리 없음)
+            draw_dialog("Game Over", client->game_end_message, "OK");
+            pthread_mutex_unlock(&screen_mutex);
+            refresh();  // 다이얼로그를 즉시 화면에 표시
+            continue;   // 다른 처리를 건너뛰고 다시 루프 시작
         } else {
             pthread_mutex_unlock(&screen_mutex);
         }

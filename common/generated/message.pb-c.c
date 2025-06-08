@@ -1597,7 +1597,7 @@ const ProtobufCMessageDescriptor move_response__descriptor =
   (ProtobufCMessageInit) move_response__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor move_broadcast__field_descriptors[6] =
+static const ProtobufCFieldDescriptor move_broadcast__field_descriptors[11] =
 {
   {
     "game_id",
@@ -1671,19 +1671,84 @@ static const ProtobufCFieldDescriptor move_broadcast__field_descriptors[6] =
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "game_ends",
+    7,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_BOOL,
+    0,   /* quantifier_offset */
+    offsetof(MoveBroadcast, game_ends),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "winner_color",
+    8,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_ENUM,
+    0,   /* quantifier_offset */
+    offsetof(MoveBroadcast, winner_color),
+    &color__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "end_type",
+    9,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_ENUM,
+    0,   /* quantifier_offset */
+    offsetof(MoveBroadcast, end_type),
+    &game_end_type__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "is_check",
+    10,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_BOOL,
+    0,   /* quantifier_offset */
+    offsetof(MoveBroadcast, is_check),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "checked_color",
+    11,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_ENUM,
+    0,   /* quantifier_offset */
+    offsetof(MoveBroadcast, checked_color),
+    &color__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned move_broadcast__field_indices_by_name[] = {
+  10,   /* field[10] = checked_color */
+  8,   /* field[8] = end_type */
   2,   /* field[2] = from */
+  6,   /* field[6] = game_ends */
   0,   /* field[0] = game_id */
+  9,   /* field[9] = is_check */
   1,   /* field[1] = player_id */
   4,   /* field[4] = promotion */
   5,   /* field[5] = timestamp */
   3,   /* field[3] = to */
+  7,   /* field[7] = winner_color */
 };
 static const ProtobufCIntRange move_broadcast__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 6 }
+  { 0, 11 }
 };
 const ProtobufCMessageDescriptor move_broadcast__descriptor =
 {
@@ -1693,7 +1758,7 @@ const ProtobufCMessageDescriptor move_broadcast__descriptor =
   "MoveBroadcast",
   "",
   sizeof(MoveBroadcast),
-  6,
+  11,
   move_broadcast__field_descriptors,
   move_broadcast__field_indices_by_name,
   1,  move_broadcast__number_ranges,

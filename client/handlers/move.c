@@ -4,6 +4,7 @@
 
 #include "../client_state.h"
 #include "../game_state.h"  // apply_move_from_server 함수를 위해 추가
+#include "../ui/ui.h"       // show_dialog 함수를 위해 추가
 #include "handlers.h"
 #include "logger.h"
 
@@ -118,11 +119,26 @@ int handle_move_broadcast(ServerMessage *msg) {
         if (apply_move_from_server(&client->game_state.game, broadcast->from, broadcast->to)) {
             LOG_DEBUG("Board updated successfully: %s -> %s", broadcast->from, broadcast->to);
 
-            // 이동 후 체크 상태 초기화 (새로운 체크 상황은 CheckBroadcast로 별도 전송됨)
             pthread_mutex_lock(&screen_mutex);
-            client->game_state.white_in_check = false;
-            client->game_state.black_in_check = false;
-            client->screen_update_requested   = true;
+
+            // 체크 상태 업데이트
+            if (broadcast->is_check) {
+                if (broadcast->checked_color == COLOR__COLOR_WHITE) {
+                    client->game_state.white_in_check = true;
+                    client->game_state.black_in_check = false;
+                    LOG_INFO("White is in check");
+                } else if (broadcast->checked_color == COLOR__COLOR_BLACK) {
+                    client->game_state.white_in_check = false;
+                    client->game_state.black_in_check = true;
+                    LOG_INFO("Black is in check");
+                }
+            } else {
+                // 체크 상태 해제
+                client->game_state.white_in_check = false;
+                client->game_state.black_in_check = false;
+            }
+
+            client->screen_update_requested = true;
             pthread_mutex_unlock(&screen_mutex);
 
         } else {
@@ -140,6 +156,61 @@ int handle_move_broadcast(ServerMessage *msg) {
     if (broadcast->promotion != PIECE_TYPE__PT_NONE) {
         LOG_INFO("Piece promoted to: %d", broadcast->promotion);
         // TODO: 프로모션 처리
+    }
+
+    // 게임 종료 처리
+    if (broadcast->game_ends) {
+        LOG_INFO("Game ended: type=%d, winner=%d", broadcast->end_type, broadcast->winner_color);
+
+        char        end_msg[256];
+        const char *winner_str   = "";
+        const char *end_type_str = "";
+
+        // 승자 결정
+        if (broadcast->winner_color == COLOR__COLOR_WHITE) {
+            winner_str = "White wins";
+        } else if (broadcast->winner_color == COLOR__COLOR_BLACK) {
+            winner_str = "Black wins";
+        } else {
+            winner_str = "Draw";
+        }
+
+        // 게임 종료 유형 결정
+        switch (broadcast->end_type) {
+            case GAME_END_TYPE__GAME_END_CHECKMATE:
+                end_type_str = "checkmate";
+                break;
+            case GAME_END_TYPE__GAME_END_STALEMATE:
+                end_type_str = "stalemate";
+                break;
+            case GAME_END_TYPE__GAME_END_DRAW:
+                end_type_str = "draw";
+                break;
+            case GAME_END_TYPE__GAME_END_RESIGN:
+                end_type_str = "resignation";
+                break;
+            case GAME_END_TYPE__GAME_END_DISCONNECT:
+                end_type_str = "disconnection";
+                break;
+            case GAME_END_TYPE__GAME_END_TIMEOUT:
+                end_type_str = "timeout";
+                break;
+            default:
+                end_type_str = "unknown reason";
+                break;
+        }
+
+        snprintf(end_msg, sizeof(end_msg), "Game Over: %s by %s", winner_str, end_type_str);
+        add_chat_message_safe("Game", end_msg);
+
+        // 게임 상태를 종료 상태로 설정 및 다이얼로그 플래그 설정
+        client_state_t *client = get_client_state();
+        pthread_mutex_lock(&screen_mutex);
+        client->game_state.game_in_progress = false;
+        client->game_end_dialog_pending     = true;
+        strncpy(client->game_end_message, end_msg, sizeof(client->game_end_message) - 1);
+        client->screen_update_requested = true;
+        pthread_mutex_unlock(&screen_mutex);
     }
 
     // UI는 자동으로 새로고침됩니다

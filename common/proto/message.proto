@@ -155,6 +155,13 @@ message MoveBroadcast {
   PieceType promotion = 5;
 
   google.protobuf.Timestamp timestamp = 6;
+
+  // 게임 종료 관련 정보 (이동으로 인해 게임이 종료되는 경우)
+  bool        game_ends     = 7;   // 이 이동으로 게임이 종료되는지 여부
+  Color       winner_color  = 8;   // 승리자 색 (무승부인 경우 COLOR_UNSPECIFIED)
+  GameEndType end_type      = 9;   // 게임 종료 유형
+  bool        is_check      = 10;  // 이 이동으로 체크 상황이 발생했는지 여부
+  Color       checked_color = 11;  // 체크 당한 색 (is_check가 true일 때만 의미있음)
 }
 
 message CheckBroadcast {

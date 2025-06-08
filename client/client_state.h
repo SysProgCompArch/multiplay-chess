@@ -43,6 +43,10 @@ typedef struct
     // 에러 다이얼로그 상태
     bool dialog_active;
 
+    // 게임 종료 다이얼로그 상태
+    bool game_end_dialog_pending;
+    char game_end_message[256];
+
     // 연결 끊김 감지
     bool connection_lost;
     char disconnect_message[256];

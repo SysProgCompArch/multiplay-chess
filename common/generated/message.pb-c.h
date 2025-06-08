@@ -366,10 +366,33 @@ struct  _MoveBroadcast
   char *to;
   PieceType promotion;
   Google__Protobuf__Timestamp *timestamp;
+  /*
+   * 게임 종료 관련 정보 (이동으로 인해 게임이 종료되는 경우)
+   */
+  /*
+   * 이 이동으로 게임이 종료되는지 여부
+   */
+  protobuf_c_boolean game_ends;
+  /*
+   * 승리자 색 (무승부인 경우 COLOR_UNSPECIFIED)
+   */
+  Color winner_color;
+  /*
+   * 게임 종료 유형
+   */
+  GameEndType end_type;
+  /*
+   * 이 이동으로 체크 상황이 발생했는지 여부
+   */
+  protobuf_c_boolean is_check;
+  /*
+   * 체크 당한 색 (is_check가 true일 때만 의미있음)
+   */
+  Color checked_color;
 };
 #define MOVE_BROADCAST__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&move_broadcast__descriptor) \
-    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, PIECE_TYPE__PT_NONE, NULL }
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, PIECE_TYPE__PT_NONE, NULL, 0, COLOR__COLOR_UNSPECIFIED, GAME_END_TYPE__GAME_END_UNKNOWN, 0, COLOR__COLOR_UNSPECIFIED }
 
 
 struct  _CheckBroadcast
