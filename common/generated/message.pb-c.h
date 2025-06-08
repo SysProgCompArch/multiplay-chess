@@ -29,6 +29,7 @@ typedef struct _EchoResponse EchoResponse;
 typedef struct _MatchGameResponse MatchGameResponse;
 typedef struct _MoveResponse MoveResponse;
 typedef struct _MoveBroadcast MoveBroadcast;
+typedef struct _CheckBroadcast CheckBroadcast;
 typedef struct _ResignBroadcast ResignBroadcast;
 typedef struct _ChatBroadcast ChatBroadcast;
 typedef struct _OpponentDisconnectedBroadcast OpponentDisconnectedBroadcast;
@@ -339,6 +340,25 @@ struct  _MoveBroadcast
 #define MOVE_BROADCAST__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&move_broadcast__descriptor) \
     , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, PIECE_TYPE__PT_NONE, NULL }
+
+
+struct  _CheckBroadcast
+{
+  ProtobufCMessage base;
+  char *game_id;
+  /*
+   * 체크 당한 플레이어
+   */
+  char *player_id;
+  /*
+   * 체크 당한 색
+   */
+  Color by_color;
+  Google__Protobuf__Timestamp *timestamp;
+};
+#define CHECK_BROADCAST__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&check_broadcast__descriptor) \
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, COLOR__COLOR_UNSPECIFIED, NULL }
 
 
 /*
@@ -678,6 +698,25 @@ MoveBroadcast *
 void   move_broadcast__free_unpacked
                      (MoveBroadcast *message,
                       ProtobufCAllocator *allocator);
+/* CheckBroadcast methods */
+void   check_broadcast__init
+                     (CheckBroadcast         *message);
+size_t check_broadcast__get_packed_size
+                     (const CheckBroadcast   *message);
+size_t check_broadcast__pack
+                     (const CheckBroadcast   *message,
+                      uint8_t             *out);
+size_t check_broadcast__pack_to_buffer
+                     (const CheckBroadcast   *message,
+                      ProtobufCBuffer     *buffer);
+CheckBroadcast *
+       check_broadcast__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   check_broadcast__free_unpacked
+                     (CheckBroadcast *message,
+                      ProtobufCAllocator *allocator);
 /* ResignBroadcast methods */
 void   resign_broadcast__init
                      (ResignBroadcast         *message);
@@ -795,6 +834,9 @@ typedef void (*MoveResponse_Closure)
 typedef void (*MoveBroadcast_Closure)
                  (const MoveBroadcast *message,
                   void *closure_data);
+typedef void (*CheckBroadcast_Closure)
+                 (const CheckBroadcast *message,
+                  void *closure_data);
 typedef void (*ResignBroadcast_Closure)
                  (const ResignBroadcast *message,
                   void *closure_data);
@@ -829,6 +871,7 @@ extern const ProtobufCMessageDescriptor echo_response__descriptor;
 extern const ProtobufCMessageDescriptor match_game_response__descriptor;
 extern const ProtobufCMessageDescriptor move_response__descriptor;
 extern const ProtobufCMessageDescriptor move_broadcast__descriptor;
+extern const ProtobufCMessageDescriptor check_broadcast__descriptor;
 extern const ProtobufCMessageDescriptor resign_broadcast__descriptor;
 extern const ProtobufCMessageDescriptor chat_broadcast__descriptor;
 extern const ProtobufCMessageDescriptor opponent_disconnected_broadcast__descriptor;

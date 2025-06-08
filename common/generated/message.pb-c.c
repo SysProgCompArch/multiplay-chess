@@ -592,6 +592,51 @@ void   move_broadcast__free_unpacked
   assert(message->base.descriptor == &move_broadcast__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   check_broadcast__init
+                     (CheckBroadcast         *message)
+{
+  static const CheckBroadcast init_value = CHECK_BROADCAST__INIT;
+  *message = init_value;
+}
+size_t check_broadcast__get_packed_size
+                     (const CheckBroadcast *message)
+{
+  assert(message->base.descriptor == &check_broadcast__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t check_broadcast__pack
+                     (const CheckBroadcast *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &check_broadcast__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t check_broadcast__pack_to_buffer
+                     (const CheckBroadcast *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &check_broadcast__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+CheckBroadcast *
+       check_broadcast__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (CheckBroadcast *)
+     protobuf_c_message_unpack (&check_broadcast__descriptor,
+                                allocator, len, data);
+}
+void   check_broadcast__free_unpacked
+                     (CheckBroadcast *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &check_broadcast__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 void   resign_broadcast__init
                      (ResignBroadcast         *message)
 {
@@ -1698,6 +1743,83 @@ const ProtobufCMessageDescriptor move_broadcast__descriptor =
   move_broadcast__field_indices_by_name,
   1,  move_broadcast__number_ranges,
   (ProtobufCMessageInit) move_broadcast__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor check_broadcast__field_descriptors[4] =
+{
+  {
+    "game_id",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(CheckBroadcast, game_id),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "player_id",
+    2,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(CheckBroadcast, player_id),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "by_color",
+    3,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_ENUM,
+    0,   /* quantifier_offset */
+    offsetof(CheckBroadcast, by_color),
+    &color__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "timestamp",
+    4,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(CheckBroadcast, timestamp),
+    &google__protobuf__timestamp__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned check_broadcast__field_indices_by_name[] = {
+  2,   /* field[2] = by_color */
+  0,   /* field[0] = game_id */
+  1,   /* field[1] = player_id */
+  3,   /* field[3] = timestamp */
+};
+static const ProtobufCIntRange check_broadcast__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 4 }
+};
+const ProtobufCMessageDescriptor check_broadcast__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "CheckBroadcast",
+  "CheckBroadcast",
+  "CheckBroadcast",
+  "",
+  sizeof(CheckBroadcast),
+  4,
+  check_broadcast__field_descriptors,
+  check_broadcast__field_indices_by_name,
+  1,  check_broadcast__number_ranges,
+  (ProtobufCMessageInit) check_broadcast__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
 static const ProtobufCFieldDescriptor resign_broadcast__field_descriptors[4] =

@@ -8,3 +8,9 @@ AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
 AlignConsecutiveMacros: true 
 AlignArrayOfStructures: Left
+
+---
+Language: Proto
+IndentWidth: 2
+ContinuationIndentWidth: 2
+UseTab: Never
