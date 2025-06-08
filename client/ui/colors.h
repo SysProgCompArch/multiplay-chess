@@ -98,7 +98,7 @@
 #define UI_ACCENT         RGB_COLOR(0, 3, 5)  // 파란색
 #define UI_SUCCESS        RGB_COLOR(0, 4, 0)  // 초록색
 #define UI_WARNING        RGB_COLOR(5, 3, 0)  // 주황색
-#define UI_ERROR          RGB_COLOR(5, 0, 0)  // 빨간색
+#define UI_ERROR          88
 
 // 색상 매크로 함수들
 #define IS_EXTENDED_COLOR(c) ((c) >= 16 && (c) <= 255)
