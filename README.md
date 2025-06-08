@@ -96,6 +96,11 @@ multiplay-chess/
 
 ### 1. 의존성 설치
 
+- Cmake 설치 필요
+  ```sh
+  sudo apt install cmake
+  ```
+
 - 라이브러리 설치 필요
   ```sh
   sudo apt install pkg-config protobuf-compiler protobuf-c-compiler libprotobuf-dev libprotobuf-c-dev libncurses-dev
