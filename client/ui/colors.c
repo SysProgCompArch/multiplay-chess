@@ -35,6 +35,7 @@ void init_colors() {
         init_pair(COLOR_PAIR_CHECK_WHITE, UI_ERROR, EXT_COLOR_BRIGHT_WHITE);   // 흰 배경에서 체크 표시
         init_pair(COLOR_PAIR_CHECK_BLACK, UI_ERROR, COLOR_BLACK);              // 검은 배경에서 체크 표시
         init_pair(COLOR_PAIR_CHECK_PLAYER, EXT_COLOR_BRIGHT_WHITE, UI_ERROR);  // 체크 상태 플레이어 정보창
+        init_pair(COLOR_PAIR_CHECK_KING, EXT_COLOR_BRIGHT_WHITE, 88);          // 체크 상태 킹 하이라이트 (확장 컬러 88 배경)
     } else {
         init_pair(COLOR_PAIR_BORDER, COLOR_CYAN, COLOR_BLACK);
         init_pair(COLOR_PAIR_DIALOG_BORDER, COLOR_CYAN, COLOR_BLACK);
@@ -60,5 +61,6 @@ void init_colors() {
         init_pair(COLOR_PAIR_CHECK_WHITE, COLOR_RED, COLOR_WHITE);   // 흰 배경에서 체크 표시
         init_pair(COLOR_PAIR_CHECK_BLACK, COLOR_RED, COLOR_BLACK);   // 검은 배경에서 체크 표시
         init_pair(COLOR_PAIR_CHECK_PLAYER, COLOR_WHITE, COLOR_RED);  // 체크 상태 플레이어 정보창
+        init_pair(COLOR_PAIR_CHECK_KING, COLOR_WHITE, 88);           // 체크 상태 킹 하이라이트 (확장 컬러 88 배경)
     }
 }

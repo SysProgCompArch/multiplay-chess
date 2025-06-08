@@ -132,5 +132,6 @@
 #define COLOR_PAIR_CHECK_WHITE     16  // 흰색 플레이어 배경에서의 체크 표시
 #define COLOR_PAIR_CHECK_BLACK     17  // 검은색 플레이어 배경에서의 체크 표시
 #define COLOR_PAIR_CHECK_PLAYER    18  // 체크 상태 플레이어 정보창 (흰 글자 + 빨간 배경)
+#define COLOR_PAIR_CHECK_KING      19  // 체크 상태 킹 하이라이트 (확장 컬러 88 배경)
 
 #endif  // EXTENDED_COLORS_H

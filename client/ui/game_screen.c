@@ -137,9 +137,21 @@ void draw_chess_board(WINDOW *board_win) {
             bool is_possible_move = client->game_state.possible_moves[actual_row][actual_col];
             bool is_capture_move  = client->game_state.capture_moves[actual_row][actual_col];
 
-            // 색상 (우선순위: 선택됨 > 커서 > 캡처 > 이동가능 > 기본)
+            // 체크 상태 킹 확인 (실제 좌표 사용)
+            bool          is_check_king = false;
+            piecestate_t *piece         = &game->board[actual_row][actual_col];
+            if (piece->piece && !piece->is_dead && piece->piece->type == PIECE_KING) {
+                if ((piece->color == TEAM_WHITE && client->game_state.white_in_check) ||
+                    (piece->color == TEAM_BLACK && client->game_state.black_in_check)) {
+                    is_check_king = true;
+                }
+            }
+
+            // 색상 (우선순위: 선택됨 > 체크킹 > 커서 > 캡처 > 이동가능 > 기본)
             if (is_selected) {
                 wattron(board_win, COLOR_PAIR(COLOR_PAIR_SELECTED_SQUARE));
+            } else if (is_check_king) {
+                wattron(board_win, COLOR_PAIR(COLOR_PAIR_CHECK_KING));
             } else if (is_cursor) {
                 wattron(board_win, COLOR_PAIR(COLOR_PAIR_CURSOR_SQUARE));
             } else if (is_capture_move) {
@@ -153,7 +165,6 @@ void draw_chess_board(WINDOW *board_win) {
             }
             // 3줄로 한 칸 출력
             mvwprintw(board_win, y, x, "       ");
-            piecestate_t *piece = &game->board[actual_row][actual_col];
             if (piece->piece && !piece->is_dead) {
                 const char *piece_unicode = get_piece_unicode(piece->piece, piece->color);
 
@@ -181,6 +192,8 @@ void draw_chess_board(WINDOW *board_win) {
             // 색상 해제
             if (is_selected) {
                 wattroff(board_win, COLOR_PAIR(COLOR_PAIR_SELECTED_SQUARE));
+            } else if (is_check_king) {
+                wattroff(board_win, COLOR_PAIR(COLOR_PAIR_CHECK_KING));
             } else if (is_cursor) {
                 wattroff(board_win, COLOR_PAIR(COLOR_PAIR_CURSOR_SQUARE));
             } else if (is_capture_move) {
