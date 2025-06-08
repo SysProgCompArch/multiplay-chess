@@ -1,23 +1,23 @@
 #include "protocol_utils.h"
 
 // 색상 변환: 내부 -> 프로토콜
-Color color_to_proto(color_t color) {
-    switch (color) {
+Team team_to_proto(team_t team) {
+    switch (team) {
         case TEAM_WHITE:
-            return COLOR__COLOR_WHITE;
+            return TEAM__TEAM_WHITE;
         case TEAM_BLACK:
-            return COLOR__COLOR_BLACK;
+            return TEAM__TEAM_BLACK;
         default:
-            return COLOR__COLOR_WHITE;  // 기본값
+            return TEAM__TEAM_WHITE;  // 기본값
     }
 }
 
 // 색상 변환: 프로토콜 -> 내부
-color_t proto_to_color(Color proto_color) {
-    switch (proto_color) {
-        case COLOR__COLOR_WHITE:
+team_t proto_to_team(Team proto_team) {
+    switch (proto_team) {
+        case TEAM__TEAM_WHITE:
             return TEAM_WHITE;
-        case COLOR__COLOR_BLACK:
+        case TEAM__TEAM_BLACK:
             return TEAM_BLACK;
         default:
             return TEAM_WHITE;  // 기본값

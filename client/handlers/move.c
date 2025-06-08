@@ -123,11 +123,11 @@ int handle_move_broadcast(ServerMessage *msg) {
 
             // 체크 상태 업데이트
             if (broadcast->is_check) {
-                if (broadcast->checked_color == COLOR__COLOR_WHITE) {
+                if (broadcast->checked_team == TEAM__TEAM_WHITE) {
                     client->game_state.white_in_check = true;
                     client->game_state.black_in_check = false;
                     LOG_INFO("White is in check");
-                } else if (broadcast->checked_color == COLOR__COLOR_BLACK) {
+                } else if (broadcast->checked_team == TEAM__TEAM_BLACK) {
                     client->game_state.white_in_check = false;
                     client->game_state.black_in_check = true;
                     LOG_INFO("Black is in check");
@@ -160,16 +160,16 @@ int handle_move_broadcast(ServerMessage *msg) {
 
     // 게임 종료 처리
     if (broadcast->game_ends) {
-        LOG_INFO("Game ended: type=%d, winner=%d", broadcast->end_type, broadcast->winner_color);
+        LOG_INFO("Game ended: type=%d, winner=%d", broadcast->end_type, broadcast->winner_team);
 
         char        end_msg[256];
         const char *winner_str   = "";
         const char *end_type_str = "";
 
         // 승자 결정
-        if (broadcast->winner_color == COLOR__COLOR_WHITE) {
+        if (broadcast->winner_team == TEAM__TEAM_WHITE) {
             winner_str = "White wins";
-        } else if (broadcast->winner_color == COLOR__COLOR_BLACK) {
+        } else if (broadcast->winner_team == TEAM__TEAM_BLACK) {
             winner_str = "Black wins";
         } else {
             winner_str = "Draw";

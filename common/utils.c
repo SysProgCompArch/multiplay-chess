@@ -15,7 +15,7 @@ void clear_board(game_t* G) {
     for (int y = 0; y < 8; y++)
         for (int x = 0; x < 8; x++) {
             G->board[y][x].piece     = NULL;
-            G->board[y][x].color     = TEAM_WHITE;
+            G->board[y][x].team      = TEAM_WHITE;
             G->board[y][x].is_dead   = 1;
             G->board[y][x].has_moved = false;
         }
@@ -47,8 +47,8 @@ bool fen_parse(game_t* G, const char* fen) {
                     } else if (isdigit(*p)) {
                         x += (*p - '0');
                     } else {
-                        color_t      color = isupper(*p) ? TEAM_WHITE : TEAM_BLACK;
-                        char         lc    = tolower(*p);
+                        team_t       team = isupper(*p) ? TEAM_WHITE : TEAM_BLACK;
+                        char         lc   = tolower(*p);
                         piece_type_t type;
                         switch (lc) {
                             case 'k':
@@ -73,9 +73,9 @@ bool fen_parse(game_t* G, const char* fen) {
                                 free(s);
                                 return false;
                         }
-                        piece_t* piece           = piece_table[color][type];
+                        piece_t* piece           = piece_table[team][type];
                         G->board[y][x].piece     = piece;
-                        G->board[y][x].color     = color;
+                        G->board[y][x].team      = team;
                         G->board[y][x].is_dead   = 0;
                         G->board[y][x].has_moved = false;
                         x++;

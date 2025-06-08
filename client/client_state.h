@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <time.h>
 
-#include "common.h"
+// #include "common.h"  // common.h 제거
 #include "game_state.h"
 
 // 상수 정의

@@ -7,6 +7,7 @@
 
 #include "logger.h"  // LOG_DEBUG 함수를 위해 추가
 #include "piece.h"
+#include "types.h"
 #include "utils.h"  // clear_board, fen_parse 함수를 위해 추가
 
 // piece_table 외부 선언 (common/piece.c에 정의됨)
@@ -71,7 +72,7 @@ void reset_game_to_starting_position(game_t *game) {
 }
 
 // 플레이어 팀에 따라 보드를 적절히 초기화
-void reset_game_for_player(game_t *game, color_t player_team) {
+void reset_game_for_player(game_t *game, team_t player_team) {
     // 플레이어 팀에 관계없이 항상 표준 FEN으로 초기화
     // UI에서 플레이어 관점에 따라 표시를 뒤집어서 보여줌
     const char *starting_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";

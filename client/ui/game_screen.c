@@ -4,15 +4,16 @@
 #include "../client_state.h"
 #include "piece.h"
 #include "rule.h"
+#include "types.h"
 #include "ui.h"
 
 // 체스 말 유니코드 문자 반환
-const char *get_piece_unicode(piece_t *piece, color_t color) {
+const char *get_piece_unicode(piece_t *piece, team_t team) {
     if (!piece)
         return " ";
 
     // 흰색 팀 (0) - 흰색 유니코드, 검은색 팀 (1) - 검은색 유니코드
-    if (color == TEAM_WHITE) {  // 흰색
+    if (team == TEAM_WHITE) {  // 흰색
         switch (piece->type) {
             case PIECE_KING:
                 return "W KNG";
@@ -81,7 +82,7 @@ void calculate_possible_moves(game_state_t *game_state, int selected_x, int sele
 
                 // 목표 위치에 상대 기물이 있으면 캡처 가능 위치로 표시
                 if (target_piece->piece && !target_piece->is_dead &&
-                    target_piece->color != selected_piece->color) {
+                    target_piece->team != selected_piece->team) {
                     game_state->capture_moves[dy][dx] = true;
                 } else {
                     game_state->possible_moves[dy][dx] = true;
@@ -141,8 +142,8 @@ void draw_chess_board(WINDOW *board_win) {
             bool          is_check_king = false;
             piecestate_t *piece         = &game->board[actual_row][actual_col];
             if (piece->piece && !piece->is_dead && piece->piece->type == PIECE_KING) {
-                if ((piece->color == TEAM_WHITE && client->game_state.white_in_check) ||
-                    (piece->color == TEAM_BLACK && client->game_state.black_in_check)) {
+                if ((piece->team == TEAM_WHITE && client->game_state.white_in_check) ||
+                    (piece->team == TEAM_BLACK && client->game_state.black_in_check)) {
                     is_check_king = true;
                 }
             }
@@ -166,10 +167,10 @@ void draw_chess_board(WINDOW *board_win) {
             // 3줄로 한 칸 출력
             mvwprintw(board_win, y, x, "       ");
             if (piece->piece && !piece->is_dead) {
-                const char *piece_unicode = get_piece_unicode(piece->piece, piece->color);
+                const char *piece_unicode = get_piece_unicode(piece->piece, piece->team);
 
                 // 기물이 내 기물인지 상대방 기물인지 판단
-                team_t piece_team  = piece->color;
+                team_t piece_team  = piece->team;
                 bool   is_my_piece = (piece_team == client->game_state.local_team);
 
                 if (is_my_piece) {

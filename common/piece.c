@@ -91,6 +91,6 @@ piece_t *piece_table[2][6] = {
     {&black_pawn, &black_knight, &black_bishop, &black_rook, &black_queen, &black_king}
 };
 
-piece_t *get_default_queen(color_t color) {
-    return piece_table[color][PIECE_QUEEN];
+piece_t *get_default_queen(team_t team) {
+    return piece_table[team][PIECE_QUEEN];
 }

@@ -14,15 +14,15 @@ int handle_game_end_broadcast(ServerMessage *msg) {
     }
 
     GameEndBroadcast *game_end_msg = msg->game_end;
-    LOG_INFO("Game ended: player_id=%s, game_id=%s, winner_color=%d, end_type=%d",
+    LOG_INFO("Game ended: player_id=%s, game_id=%s, winner_team=%d, end_type=%d",
              game_end_msg->player_id ? game_end_msg->player_id : "unknown",
              game_end_msg->game_id ? game_end_msg->game_id : "unknown",
-             game_end_msg->winner_color, game_end_msg->end_type);
+             game_end_msg->winner_team, game_end_msg->end_type);
 
     // 종료 유형에 따른 메시지 생성
     char        notification[256];
     char        dialog_message[512];
-    const char *winner_text = (game_end_msg->winner_color == COLOR__COLOR_WHITE) ? "White" : "Black";
+    const char *winner_text = (game_end_msg->winner_team == TEAM__TEAM_WHITE) ? "White" : "Black";
     const char *end_reason;
 
     switch (game_end_msg->end_type) {

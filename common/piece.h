@@ -1,7 +1,6 @@
 #ifndef PIECE_H
 #define PIECE_H
 
-#include "common.h"
 #include "types.h"
 
 #define MAX_OFFSETS 8
@@ -17,7 +16,7 @@ typedef struct piece {
 // 체스 기물 상태 구조체
 typedef struct {
     piece_t *piece;      // 기물 포인터 (NULL이면 빈 칸)
-    color_t  color;      // TEAM_WHITE(0) or TEAM_BLACK(1)
+    team_t   team;       // TEAM_WHITE(0) or TEAM_BLACK(1)
     bool     is_dead;    // 기물이 죽었는지 여부
     bool     has_moved;  // 기물이 이동했는지 여부 (캐슬링, 앙파상 등에 사용)
 } piecestate_t;
@@ -26,6 +25,6 @@ typedef struct {
 extern piece_t *piece_table[2][6];
 
 // 프로모션 시 기본 퀸 반환 (piece.c 에 정의)
-piece_t *get_default_queen(color_t color);
+piece_t *get_default_queen(team_t team);
 
 #endif  // PIECE_H

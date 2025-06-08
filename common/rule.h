@@ -11,8 +11,8 @@
 typedef struct {
     piecestate_t board[BOARD_SIZE][BOARD_SIZE];
 
-    color_t side_to_move;    // TEAM_WHITE 또는 TEAM_BLACK
-    int     halfmove_clock;  // 50수 규칙 카운트(폰 이동·캡처 후 0으로)
+    team_t side_to_move;    // TEAM_WHITE 또는 TEAM_BLACK
+    int    halfmove_clock;  // 50수 규칙 카운트(폰 이동·캡처 후 0으로)
 
     // 캐슬링 권리
     bool white_can_castle_kingside;
@@ -35,7 +35,7 @@ bool is_move_legal(const game_t* G, int sx, int sy, int dx, int dy);
 void apply_move(game_t* G, int sx, int sy, int dx, int dy);
 
 // 체크, 종료 조건
-bool is_in_check(const game_t* G, color_t color);
+bool is_in_check(const game_t* G, team_t team);
 bool is_checkmate(const game_t* G);
 bool is_stalemate(const game_t* G);
 bool is_fifty_move_rule(const game_t* G);

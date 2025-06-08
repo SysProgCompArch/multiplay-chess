@@ -80,7 +80,7 @@
 #define CHESS_LIGHT_SQUARE    EXT_COLOR_WHITE
 #define CHESS_DARK_SQUARE     EXT_COLOR_BLACK
 #define CHESS_SELECTED_SQUARE RGB_COLOR(5, 3, 0)  // 짙은 오렌지색
-#define CHESS_POSSIBLE_MOVE   RGB_COLOR(0, 3, 0)  // 연한 초록색
+#define CHESS_POSSIBLE_MOVE   RGB_COLOR(0, 5, 0)  // 연한 초록색
 #define CHESS_CAPTURE_MOVE    RGB_COLOR(3, 0, 0)  // 연한 빨간색
 #define CHESS_CHECK_HIGHLIGHT RGB_COLOR(5, 1, 1)  // 밝은 빨간색
 #define CHESS_BORDER          EXT_COLOR_GRAY_16

@@ -7,8 +7,8 @@
 // 내부 타입 <-> 프로토콜 타입 변환 함수들
 
 // 색상 변환
-Color   color_to_proto(color_t color);
-color_t proto_to_color(Color proto_color);
+Team   team_to_proto(team_t team);
+team_t proto_to_team(Team proto_team);
 
 // 기물 타입 변환
 PieceType    piece_type_to_proto(piece_type_t type);

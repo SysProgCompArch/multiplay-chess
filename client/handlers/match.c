@@ -16,16 +16,16 @@ int handle_match_game_response(ServerMessage *msg) {
 
     if (msg->match_game_res) {
         if (msg->match_game_res->success) {
-            if (msg->match_game_res->assigned_color == COLOR__COLOR_UNSPECIFIED) {
+            if (msg->match_game_res->assigned_team == TEAM__TEAM_UNSPECIFIED) {
                 // 아직 매칭 대기 중
                 LOG_INFO("Added to matchmaking queue. Game ID: %s",
                          msg->match_game_res->game_id ? msg->match_game_res->game_id : "unknown");
                 add_chat_message_safe("System", "Waiting for opponent...");
             } else {
                 // 매칭 성공! 게임 시작
-                LOG_INFO("Match found! Game ID: %s, Assigned color: %s",
+                LOG_INFO("Match found! Game ID: %s, Assigned team: %s",
                          msg->match_game_res->game_id ? msg->match_game_res->game_id : "unknown",
-                         msg->match_game_res->assigned_color == COLOR__COLOR_WHITE ? "WHITE" : "BLACK");
+                         msg->match_game_res->assigned_team == TEAM__TEAM_WHITE ? "WHITE" : "BLACK");
 
                 // 상대방 이름 확인
                 const char *opponent_name = msg->match_game_res->opponent_name ? msg->match_game_res->opponent_name : "Opponent";
@@ -44,13 +44,13 @@ int handle_match_game_response(ServerMessage *msg) {
                 strncpy(client->game_state.local_player, client->username, sizeof(client->game_state.local_player) - 1);
                 client->game_state.local_player[sizeof(client->game_state.local_player) - 1] = '\0';
 
-                // 프로토콜 Color를 team_t로 변환 (COLOR_WHITE=1 -> TEAM_WHITE=0, COLOR_BLACK=2 -> TEAM_BLACK=1)
-                if (msg->match_game_res->assigned_color == COLOR__COLOR_WHITE) {
+                // 프로토콜 team를 team_t로 변환 (team_WHITE=1 -> TEAM_WHITE=0, team_BLACK=2 -> TEAM_BLACK=1)
+                if (msg->match_game_res->assigned_team == TEAM__TEAM_WHITE) {
                     client->game_state.local_team = TEAM_WHITE;
-                } else if (msg->match_game_res->assigned_color == COLOR__COLOR_BLACK) {
+                } else if (msg->match_game_res->assigned_team == TEAM__TEAM_BLACK) {
                     client->game_state.local_team = TEAM_BLACK;
                 } else {
-                    LOG_ERROR("Invalid assigned color: %d", msg->match_game_res->assigned_color);
+                    LOG_ERROR("Invalid assigned team: %d", msg->match_game_res->assigned_team);
                     client->game_state.local_team = TEAM_WHITE;  // 기본값
                 }
                 client->game_state.game_in_progress = true;
@@ -68,8 +68,8 @@ int handle_match_game_response(ServerMessage *msg) {
 
                 pthread_mutex_unlock(&screen_mutex);
 
-                LOG_INFO("Game state updated: screen=%d, local_team=%d, assigned_color=%d, opponent=%s",
-                         client->current_screen, client->game_state.local_team, msg->match_game_res->assigned_color, opponent_name);
+                LOG_INFO("Game state updated: screen=%d, local_team=%d, assigned_team=%d, opponent=%s",
+                         client->current_screen, client->game_state.local_team, msg->match_game_res->assigned_team, opponent_name);
             }
         } else {
             LOG_WARN("Matchmaking failed: %s",

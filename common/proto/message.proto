@@ -24,10 +24,10 @@ enum PieceType {
 }
 
 // 상대편 색 정의
-enum Color {
-  COLOR_UNSPECIFIED = 0;
-  COLOR_WHITE       = 1;
-  COLOR_BLACK       = 2;
+enum Team {
+  TEAM_UNSPECIFIED = 0;
+  TEAM_WHITE       = 1;
+  TEAM_BLACK       = 2;
 }
 
 // 게임 종료 유형
@@ -131,8 +131,8 @@ message MatchGameResponse {
   string message = 3;  // 실패 시 이유 등
   // 게임에 이미 상대가 있어서 바로 시작되는 경우,
   // 상대 ID나 색(WHITE/BLACK)도 함께 알려줄 수 있음
-  Color  assigned_color = 4;
-  string opponent_name  = 5;  // 상대방 이름 (게임 시작 시)
+  Team   assigned_team = 4;
+  string opponent_name = 5;  // 상대방 이름 (게임 시작 시)
 }
 
 // 단일 클라이언트에게 보내는 "내가 보낸 MoveRequest에 대한 결과"
@@ -157,27 +157,27 @@ message MoveBroadcast {
   google.protobuf.Timestamp timestamp = 6;
 
   // 게임 종료 관련 정보 (이동으로 인해 게임이 종료되는 경우)
-  bool        game_ends     = 7;   // 이 이동으로 게임이 종료되는지 여부
-  Color       winner_color  = 8;   // 승리자 색 (무승부인 경우 COLOR_UNSPECIFIED)
-  GameEndType end_type      = 9;   // 게임 종료 유형
-  bool        is_check      = 10;  // 이 이동으로 체크 상황이 발생했는지 여부
-  Color       checked_color = 11;  // 체크 당한 색 (is_check가 true일 때만 의미있음)
+  bool        game_ends    = 7;   // 이 이동으로 게임이 종료되는지 여부
+  Team        winner_team  = 8;   // 승리자 색 (무승부인 경우 TEAM_UNSPECIFIED)
+  GameEndType end_type     = 9;   // 게임 종료 유형
+  bool        is_check     = 10;  // 이 이동으로 체크 상황이 발생했는지 여부
+  Team        checked_team = 11;  // 체크 당한 색 (is_check가 true일 때만 의미있음)
 }
 
 message CheckBroadcast {
   string                    game_id   = 1;
   string                    player_id = 2;  // 체크 당한 플레이어
-  Color                     by_color  = 3;  // 체크 당한 색
+  Team                      by_team   = 3;  // 체크 당한 색
   google.protobuf.Timestamp timestamp = 4;
 }
 
 // 게임 종료 브로드캐스트 (모든 관련 클라이언트에게 알림)
 message GameEndBroadcast {
-  string                    game_id      = 1;  // 게임 ID
-  string                    player_id    = 2;  // 게임 종료를 발생시킨 플레이어 ID (기권한 플레이어, 연결 끊긴 플레이어 등)
-  Color                     winner_color = 3;  // 승리자 색 (무승부인 경우 COLOR_UNSPECIFIED)
-  GameEndType               end_type     = 4;  // 게임 종료 유형
-  google.protobuf.Timestamp timestamp    = 5;
+  string                    game_id     = 1;  // 게임 ID
+  string                    player_id   = 2;  // 게임 종료를 발생시킨 플레이어 ID (기권한 플레이어, 연결 끊긴 플레이어 등)
+  Team                      winner_team = 3;  // 승리자 색 (무승부인 경우 TEAM_UNSPECIFIED)
+  GameEndType               end_type    = 4;  // 게임 종료 유형
+  google.protobuf.Timestamp timestamp   = 5;
 }
 
 // 채팅 메시지 브로드캐스트

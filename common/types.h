@@ -21,7 +21,7 @@ typedef enum {
 typedef enum {
     TEAM_WHITE = 0,
     TEAM_BLACK = 1
-} color_t;
+} team_t;
 
 // 이전 버전과의 호환성을 위한 매크로 (새 코드에서는 TEAM_WHITE/TEAM_BLACK 사용)
 #define WHITE TEAM_WHITE

@@ -61,7 +61,7 @@ char *generate_game_id(void) {
 
 // 플레이어를 매칭에 추가
 MatchResult add_player_to_matching(int fd, const char *player_id) {
-    MatchResult result = {MATCH_STATUS_ERROR, NULL, COLOR__COLOR_UNSPECIFIED, -1, NULL, "Unknown error"};
+    MatchResult result = {MATCH_STATUS_ERROR, NULL, TEAM__TEAM_UNSPECIFIED, -1, NULL, "Unknown error"};
 
     if (!player_id) {
         result.error_message = "Player ID is null";
@@ -99,15 +99,15 @@ MatchResult add_player_to_matching(int fd, const char *player_id) {
                         game->black_player_fd = waiting_player->fd;
                         strcpy(game->white_player_id, player_id);
                         strcpy(game->black_player_id, waiting_player->player_id);
-                        result.assigned_color = COLOR__COLOR_WHITE;
-                        result.opponent_name  = waiting_player->player_id;
+                        result.assigned_team = TEAM__TEAM_WHITE;
+                        result.opponent_name = waiting_player->player_id;
                     } else {
                         game->white_player_fd = waiting_player->fd;
                         game->black_player_fd = fd;
                         strcpy(game->white_player_id, waiting_player->player_id);
                         strcpy(game->black_player_id, player_id);
-                        result.assigned_color = COLOR__COLOR_BLACK;
-                        result.opponent_name  = game->white_player_id;
+                        result.assigned_team = TEAM__TEAM_BLACK;
+                        result.opponent_name = game->white_player_id;
                     }
 
                     g_match_manager.active_game_count++;
@@ -119,7 +119,7 @@ MatchResult add_player_to_matching(int fd, const char *player_id) {
                     // 결과 설정
                     result.status        = MATCH_STATUS_GAME_STARTED;
                     result.game_id       = game->game_id;
-                    result.opponent_fd   = (result.assigned_color == COLOR__COLOR_WHITE) ? game->black_player_fd : game->white_player_fd;
+                    result.opponent_fd   = (result.assigned_team == TEAM__TEAM_WHITE) ? game->black_player_fd : game->white_player_fd;
                     result.error_message = NULL;
 
                     LOG_INFO("Match found! Game %s: %s(fd=%d) vs %s(fd=%d)",
@@ -150,11 +150,11 @@ MatchResult add_player_to_matching(int fd, const char *player_id) {
             player->is_active       = true;
             g_match_manager.waiting_count++;
 
-            result.status         = MATCH_STATUS_WAITING;
-            result.game_id        = "";
-            result.assigned_color = COLOR__COLOR_UNSPECIFIED;
-            result.opponent_name  = NULL;
-            result.error_message  = NULL;
+            result.status        = MATCH_STATUS_WAITING;
+            result.game_id       = "";
+            result.assigned_team = TEAM__TEAM_UNSPECIFIED;
+            result.opponent_name = NULL;
+            result.error_message = NULL;
 
             LOG_INFO("Player %s(fd=%d) added to waiting queue", player_id, fd);
 
@@ -299,18 +299,18 @@ int handle_player_disconnect(int fd) {
         if (game->is_active &&
             (game->white_player_fd == fd || game->black_player_fd == fd)) {
             // 상대방 fd 찾기
-            int   opponent_fd;
-            char  disconnected_player_id[64];
-            Color winner_color;
+            int  opponent_fd;
+            char disconnected_player_id[64];
+            Team winner_team;
 
             if (game->white_player_fd == fd) {
                 opponent_fd = game->black_player_fd;
                 strcpy(disconnected_player_id, game->white_player_id);
-                winner_color = COLOR__COLOR_BLACK;
+                winner_team = TEAM__TEAM_BLACK;
             } else {
                 opponent_fd = game->white_player_fd;
                 strcpy(disconnected_player_id, game->black_player_id);
-                winner_color = COLOR__COLOR_WHITE;
+                winner_team = TEAM__TEAM_WHITE;
             }
 
             LOG_INFO("Player %s (fd=%d) disconnected from game %s, opponent is fd=%d",
@@ -320,10 +320,10 @@ int handle_player_disconnect(int fd) {
             ServerMessage    disconnect_msg     = SERVER_MESSAGE__INIT;
             GameEndBroadcast game_end_broadcast = GAME_END_BROADCAST__INIT;
 
-            game_end_broadcast.game_id      = game->game_id;
-            game_end_broadcast.player_id    = disconnected_player_id;
-            game_end_broadcast.winner_color = winner_color;
-            game_end_broadcast.end_type     = GAME_END_TYPE__GAME_END_DISCONNECT;
+            game_end_broadcast.game_id     = game->game_id;
+            game_end_broadcast.player_id   = disconnected_player_id;
+            game_end_broadcast.winner_team = winner_team;
+            game_end_broadcast.end_type    = GAME_END_TYPE__GAME_END_DISCONNECT;
             // timestamp는 NULL로 두면 protobuf에서 자동으로 처리
 
             disconnect_msg.msg_case = SERVER_MESSAGE__MSG_GAME_END;

@@ -70,21 +70,21 @@ int send_move_success(int fd, const char *game_id, const char *player_id, const 
 // 헬퍼 함수: 이동 브로드캐스트 (게임 상태 정보 포함)
 int broadcast_move_with_state(int fd, const char *game_id, const char *player_id,
                               const char *from, const char *to,
-                              bool game_ends, Color winner_color, GameEndType end_type,
-                              bool is_check, Color checked_color) {
+                              bool game_ends, Team winner_team, GameEndType end_type,
+                              bool is_check, Team checked_team) {
     ServerMessage broadcast      = SERVER_MESSAGE__INIT;
     MoveBroadcast move_broadcast = MOVE_BROADCAST__INIT;
 
-    move_broadcast.game_id       = (char *)game_id;
-    move_broadcast.player_id     = (char *)player_id;
-    move_broadcast.from          = (char *)from;
-    move_broadcast.to            = (char *)to;
-    move_broadcast.promotion     = PIECE_TYPE__PT_NONE;  // TODO: 프로모션 처리
-    move_broadcast.game_ends     = game_ends;
-    move_broadcast.winner_color  = winner_color;
-    move_broadcast.end_type      = end_type;
-    move_broadcast.is_check      = is_check;
-    move_broadcast.checked_color = checked_color;
+    move_broadcast.game_id      = (char *)game_id;
+    move_broadcast.player_id    = (char *)player_id;
+    move_broadcast.from         = (char *)from;
+    move_broadcast.to           = (char *)to;
+    move_broadcast.promotion    = PIECE_TYPE__PT_NONE;  // TODO: 프로모션 처리
+    move_broadcast.game_ends    = game_ends;
+    move_broadcast.winner_team  = winner_team;
+    move_broadcast.end_type     = end_type;
+    move_broadcast.is_check     = is_check;
+    move_broadcast.checked_team = checked_team;
 
     broadcast.msg_case       = SERVER_MESSAGE__MSG_MOVE_BROADCAST;
     broadcast.move_broadcast = &move_broadcast;
@@ -96,19 +96,19 @@ int broadcast_move_with_state(int fd, const char *game_id, const char *player_id
 int broadcast_move(int fd, const char *game_id, const char *player_id,
                    const char *from, const char *to) {
     return broadcast_move_with_state(fd, game_id, player_id, from, to,
-                                     false, COLOR__COLOR_UNSPECIFIED, GAME_END_TYPE__GAME_END_UNKNOWN,
-                                     false, COLOR__COLOR_UNSPECIFIED);
+                                     false, TEAM__TEAM_UNSPECIFIED, GAME_END_TYPE__GAME_END_UNKNOWN,
+                                     false, TEAM__TEAM_UNSPECIFIED);
 }
 
 // 헬퍼 함수: 게임 종료 브로드캐스트
-int send_game_end_broadcast(ActiveGame *game, const char *player_id, Color winner_color, GameEndType end_type) {
+int send_game_end_broadcast(ActiveGame *game, const char *player_id, Team winner_team, GameEndType end_type) {
     ServerMessage    game_end_msg       = SERVER_MESSAGE__INIT;
     GameEndBroadcast game_end_broadcast = GAME_END_BROADCAST__INIT;
 
-    game_end_broadcast.game_id      = game->game_id;
-    game_end_broadcast.player_id    = (char *)player_id;
-    game_end_broadcast.winner_color = winner_color;
-    game_end_broadcast.end_type     = end_type;
+    game_end_broadcast.game_id     = game->game_id;
+    game_end_broadcast.player_id   = (char *)player_id;
+    game_end_broadcast.winner_team = winner_team;
+    game_end_broadcast.end_type    = end_type;
     // timestamp는 NULL로 두면 protobuf에서 자동으로 처리
 
     game_end_msg.msg_case = SERVER_MESSAGE__MSG_GAME_END;
@@ -125,8 +125,8 @@ int send_game_end_broadcast(ActiveGame *game, const char *player_id, Color winne
         result = -1;
     }
 
-    LOG_INFO("Sent game end broadcast for game %s (end_type=%d, winner_color=%d)",
-             game->game_id, end_type, winner_color);
+    LOG_INFO("Sent game end broadcast for game %s (end_type=%d, winner_team=%d)",
+             game->game_id, end_type, winner_team);
 
     return result;
 }
@@ -154,25 +154,25 @@ int handle_move_message(int fd, ClientMessage *req) {
     }
 
     // 플레이어 ID 확인
-    char *player_id    = NULL;
-    int   opponent_fd  = -1;
-    int   player_color = -1;
+    char *player_id   = NULL;
+    int   opponent_fd = -1;
+    int   player_team = -1;
 
     if (game->white_player_fd == fd) {
-        player_id    = game->white_player_id;
-        opponent_fd  = game->black_player_fd;
-        player_color = WHITE;
+        player_id   = game->white_player_id;
+        opponent_fd = game->black_player_fd;
+        player_team = WHITE;
     } else if (game->black_player_fd == fd) {
-        player_id    = game->black_player_id;
-        opponent_fd  = game->white_player_fd;
-        player_color = BLACK;
+        player_id   = game->black_player_id;
+        opponent_fd = game->white_player_fd;
+        player_team = BLACK;
     } else {
         LOG_ERROR("Player fd=%d found in game but not as white or black player", fd);
         return send_move_error(fd, game->game_id, "", "Internal error: player not found in game");
     }
 
     // 턴 확인
-    if (game->game_state.side_to_move != player_color) {
+    if (game->game_state.side_to_move != player_team) {
         LOG_WARN("Player fd=%d tried to move but it's not their turn", fd);
         return send_move_error(fd, game->game_id, player_id, "It's not your turn");
     }
@@ -215,15 +215,15 @@ int handle_move_message(int fd, ClientMessage *req) {
     }
 
     // 게임 상태 확인 (체크, 체크메이트, 스테일메이트 등)
-    color_t     current_side       = game->game_state.side_to_move;  // 이동 후 현재 턴 (상대방)
+    team_t      current_side       = game->game_state.side_to_move;  // 이동 후 현재 턴 (상대방)
     bool        is_check_situation = is_in_check(&game->game_state, current_side);
     bool        game_ends          = false;
-    Color       winner_color       = COLOR__COLOR_UNSPECIFIED;
+    Team        winner_team        = TEAM__TEAM_UNSPECIFIED;
     GameEndType end_type           = GAME_END_TYPE__GAME_END_UNKNOWN;
-    Color       checked_color      = COLOR__COLOR_UNSPECIFIED;
+    Team        checked_team       = TEAM__TEAM_UNSPECIFIED;
 
     if (is_check_situation) {
-        checked_color = (current_side == TEAM_WHITE) ? COLOR__COLOR_WHITE : COLOR__COLOR_BLACK;
+        checked_team = (current_side == TEAM_WHITE) ? TEAM__TEAM_WHITE : TEAM__TEAM_BLACK;
         LOG_INFO("Check detected for %s in game %s",
                  (current_side == TEAM_WHITE) ? "WHITE" : "BLACK", game->game_id);
     }
@@ -231,26 +231,26 @@ int handle_move_message(int fd, ClientMessage *req) {
     // 게임 종료 조건 확인
     if (is_checkmate(&game->game_state)) {
         LOG_INFO("Game %s ended by checkmate", game->game_id);
-        game_ends    = true;
-        winner_color = (current_side == TEAM_WHITE) ? COLOR__COLOR_BLACK : COLOR__COLOR_WHITE;
-        end_type     = GAME_END_TYPE__GAME_END_CHECKMATE;
+        game_ends   = true;
+        winner_team = (current_side == TEAM_WHITE) ? TEAM__TEAM_BLACK : TEAM__TEAM_WHITE;
+        end_type    = GAME_END_TYPE__GAME_END_CHECKMATE;
     } else if (is_stalemate(&game->game_state)) {
         LOG_INFO("Game %s ended by stalemate", game->game_id);
-        game_ends    = true;
-        winner_color = COLOR__COLOR_UNSPECIFIED;
-        end_type     = GAME_END_TYPE__GAME_END_STALEMATE;
+        game_ends   = true;
+        winner_team = TEAM__TEAM_UNSPECIFIED;
+        end_type    = GAME_END_TYPE__GAME_END_STALEMATE;
     } else if (is_fifty_move_rule(&game->game_state)) {
         LOG_INFO("Game %s ended by fifty-move rule", game->game_id);
-        game_ends    = true;
-        winner_color = COLOR__COLOR_UNSPECIFIED;
-        end_type     = GAME_END_TYPE__GAME_END_DRAW;
+        game_ends   = true;
+        winner_team = TEAM__TEAM_UNSPECIFIED;
+        end_type    = GAME_END_TYPE__GAME_END_DRAW;
     }
 
     // 상대방에게 이동 브로드캐스트 (게임 상태 정보 포함)
     if (broadcast_move_with_state(opponent_fd, game->game_id, player_id,
                                   move_req->from, move_req->to,
-                                  game_ends, winner_color, end_type,
-                                  is_check_situation, checked_color) < 0) {
+                                  game_ends, winner_team, end_type,
+                                  is_check_situation, checked_team) < 0) {
         LOG_ERROR("Failed to broadcast move to opponent fd=%d", opponent_fd);
         // 이미 이동은 적용되었으므로, 브로드캐스트 실패만 로그하고 계속 진행
     }
@@ -258,8 +258,8 @@ int handle_move_message(int fd, ClientMessage *req) {
     // 요청자에게도 이동 브로드캐스트 (게임 상태 정보 포함)
     if (broadcast_move_with_state(fd, game->game_id, player_id,
                                   move_req->from, move_req->to,
-                                  game_ends, winner_color, end_type,
-                                  is_check_situation, checked_color) < 0) {
+                                  game_ends, winner_team, end_type,
+                                  is_check_situation, checked_team) < 0) {
         LOG_ERROR("Failed to broadcast move to requester fd=%d", fd);
         // 이미 이동은 적용되었으므로, 브로드캐스트 실패만 로그하고 계속 진행
     }

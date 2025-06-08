@@ -51,6 +51,15 @@ void cleanup_ncurses() {
 void handle_terminal_resize() {
     // ncurses 화면 크기 업데이트
     endwin();
+
+    // ncurses 재초기화
+    initscr();
+    cbreak();
+    noecho();
+    keypad(stdscr, TRUE);
+    mousemask(ALL_MOUSE_EVENTS, NULL);
+    curs_set(0);
+
     // refresh();  // refresh 호출 제거 - endwin() 후에는 불필요
 
     // 터미널 크기 확인

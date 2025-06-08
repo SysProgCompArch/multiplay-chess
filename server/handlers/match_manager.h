@@ -44,12 +44,12 @@ typedef struct
 // 매칭 결과 구조체
 typedef struct
 {
-    MatchStatus status;          // 매칭 상태
-    char       *game_id;         // 게임 ID (성공 시)
-    Color       assigned_color;  // 할당된 색상
-    int         opponent_fd;     // 상대방 소켓 (게임 시작 시)
-    char       *opponent_name;   // 상대방 이름 (게임 시작 시)
-    char       *error_message;   // 오류 메시지 (실패 시)
+    MatchStatus status;         // 매칭 상태
+    char       *game_id;        // 게임 ID (성공 시)
+    Team        assigned_team;  // 할당된 색상
+    int         opponent_fd;    // 상대방 소켓 (게임 시작 시)
+    char       *opponent_name;  // 상대방 이름 (게임 시작 시)
+    char       *error_message;  // 오류 메시지 (실패 시)
 } MatchResult;
 
 // 매칭 매니저 구조체

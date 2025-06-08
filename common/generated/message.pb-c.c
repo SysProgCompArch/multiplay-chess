@@ -1443,13 +1443,13 @@ static const ProtobufCFieldDescriptor match_game_response__field_descriptors[5] 
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "assigned_color",
+    "assigned_team",
     4,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_ENUM,
     0,   /* quantifier_offset */
-    offsetof(MatchGameResponse, assigned_color),
-    &color__descriptor,
+    offsetof(MatchGameResponse, assigned_team),
+    &team__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
@@ -1468,7 +1468,7 @@ static const ProtobufCFieldDescriptor match_game_response__field_descriptors[5] 
   },
 };
 static const unsigned match_game_response__field_indices_by_name[] = {
-  3,   /* field[3] = assigned_color */
+  3,   /* field[3] = assigned_team */
   0,   /* field[0] = game_id */
   2,   /* field[2] = message */
   4,   /* field[4] = opponent_name */
@@ -1684,13 +1684,13 @@ static const ProtobufCFieldDescriptor move_broadcast__field_descriptors[11] =
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "winner_color",
+    "winner_team",
     8,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_ENUM,
     0,   /* quantifier_offset */
-    offsetof(MoveBroadcast, winner_color),
-    &color__descriptor,
+    offsetof(MoveBroadcast, winner_team),
+    &team__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
@@ -1720,20 +1720,20 @@ static const ProtobufCFieldDescriptor move_broadcast__field_descriptors[11] =
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "checked_color",
+    "checked_team",
     11,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_ENUM,
     0,   /* quantifier_offset */
-    offsetof(MoveBroadcast, checked_color),
-    &color__descriptor,
+    offsetof(MoveBroadcast, checked_team),
+    &team__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
 };
 static const unsigned move_broadcast__field_indices_by_name[] = {
-  10,   /* field[10] = checked_color */
+  10,   /* field[10] = checked_team */
   8,   /* field[8] = end_type */
   2,   /* field[2] = from */
   6,   /* field[6] = game_ends */
@@ -1743,7 +1743,7 @@ static const unsigned move_broadcast__field_indices_by_name[] = {
   4,   /* field[4] = promotion */
   5,   /* field[5] = timestamp */
   3,   /* field[3] = to */
-  7,   /* field[7] = winner_color */
+  7,   /* field[7] = winner_team */
 };
 static const ProtobufCIntRange move_broadcast__number_ranges[1 + 1] =
 {
@@ -1792,13 +1792,13 @@ static const ProtobufCFieldDescriptor check_broadcast__field_descriptors[4] =
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "by_color",
+    "by_team",
     3,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_ENUM,
     0,   /* quantifier_offset */
-    offsetof(CheckBroadcast, by_color),
-    &color__descriptor,
+    offsetof(CheckBroadcast, by_team),
+    &team__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
@@ -1817,7 +1817,7 @@ static const ProtobufCFieldDescriptor check_broadcast__field_descriptors[4] =
   },
 };
 static const unsigned check_broadcast__field_indices_by_name[] = {
-  2,   /* field[2] = by_color */
+  2,   /* field[2] = by_team */
   0,   /* field[0] = game_id */
   1,   /* field[1] = player_id */
   3,   /* field[3] = timestamp */
@@ -1869,13 +1869,13 @@ static const ProtobufCFieldDescriptor game_end_broadcast__field_descriptors[5] =
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "winner_color",
+    "winner_team",
     3,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_ENUM,
     0,   /* quantifier_offset */
-    offsetof(GameEndBroadcast, winner_color),
-    &color__descriptor,
+    offsetof(GameEndBroadcast, winner_team),
+    &team__descriptor,
     NULL,
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
@@ -1910,7 +1910,7 @@ static const unsigned game_end_broadcast__field_indices_by_name[] = {
   0,   /* field[0] = game_id */
   1,   /* field[1] = player_id */
   4,   /* field[4] = timestamp */
-  2,   /* field[2] = winner_color */
+  2,   /* field[2] = winner_team */
 };
 static const ProtobufCIntRange game_end_broadcast__number_ranges[1 + 1] =
 {
@@ -2139,34 +2139,34 @@ const ProtobufCEnumDescriptor piece_type__descriptor =
   piece_type__value_ranges,
   NULL,NULL,NULL,NULL   /* reserved[1234] */
 };
-static const ProtobufCEnumValue color__enum_values_by_number[3] =
+static const ProtobufCEnumValue team__enum_values_by_number[3] =
 {
-  { "COLOR_UNSPECIFIED", "COLOR__COLOR_UNSPECIFIED", 0 },
-  { "COLOR_WHITE", "COLOR__COLOR_WHITE", 1 },
-  { "COLOR_BLACK", "COLOR__COLOR_BLACK", 2 },
+  { "TEAM_UNSPECIFIED", "TEAM__TEAM_UNSPECIFIED", 0 },
+  { "TEAM_WHITE", "TEAM__TEAM_WHITE", 1 },
+  { "TEAM_BLACK", "TEAM__TEAM_BLACK", 2 },
 };
-static const ProtobufCIntRange color__value_ranges[] = {
+static const ProtobufCIntRange team__value_ranges[] = {
 {0, 0},{0, 3}
 };
-static const ProtobufCEnumValueIndex color__enum_values_by_name[3] =
+static const ProtobufCEnumValueIndex team__enum_values_by_name[3] =
 {
-  { "COLOR_BLACK", 2 },
-  { "COLOR_UNSPECIFIED", 0 },
-  { "COLOR_WHITE", 1 },
+  { "TEAM_BLACK", 2 },
+  { "TEAM_UNSPECIFIED", 0 },
+  { "TEAM_WHITE", 1 },
 };
-const ProtobufCEnumDescriptor color__descriptor =
+const ProtobufCEnumDescriptor team__descriptor =
 {
   PROTOBUF_C__ENUM_DESCRIPTOR_MAGIC,
-  "Color",
-  "Color",
-  "Color",
+  "Team",
+  "Team",
+  "Team",
   "",
   3,
-  color__enum_values_by_number,
+  team__enum_values_by_number,
   3,
-  color__enum_values_by_name,
+  team__enum_values_by_name,
   1,
-  color__value_ranges,
+  team__value_ranges,
   NULL,NULL,NULL,NULL   /* reserved[1234] */
 };
 static const ProtobufCEnumValue game_end_type__enum_values_by_number[7] =

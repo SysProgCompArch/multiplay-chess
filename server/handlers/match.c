@@ -53,10 +53,10 @@ int handle_match_game_message(int fd, ClientMessage *req) {
             // 매칭 대기 중
             LOG_INFO("Player %s added to matchmaking queue (fd=%d)", match_req->player_id, fd);
 
-            match_resp.success        = true;
-            match_resp.message        = "Waiting for opponent...";
-            match_resp.game_id        = result.game_id ? result.game_id : "";
-            match_resp.assigned_color = COLOR__COLOR_UNSPECIFIED;
+            match_resp.success       = true;
+            match_resp.message       = "Waiting for opponent...";
+            match_resp.game_id       = result.game_id ? result.game_id : "";
+            match_resp.assigned_team = TEAM__TEAM_UNSPECIFIED;
 
             response.msg_case       = SERVER_MESSAGE__MSG_MATCH_GAME_RES;
             response.match_game_res = &match_resp;
@@ -68,11 +68,11 @@ int handle_match_game_message(int fd, ClientMessage *req) {
             LOG_INFO("Match found! Game %s started for fd=%d", result.game_id, fd);
 
             // 현재 플레이어에게 응답
-            match_resp.success        = true;
-            match_resp.message        = "Match found! Game starting...";
-            match_resp.game_id        = result.game_id;
-            match_resp.assigned_color = result.assigned_color;
-            match_resp.opponent_name  = result.opponent_name ? result.opponent_name : "";
+            match_resp.success       = true;
+            match_resp.message       = "Match found! Game starting...";
+            match_resp.game_id       = result.game_id;
+            match_resp.assigned_team = result.assigned_team;
+            match_resp.opponent_name = result.opponent_name ? result.opponent_name : "";
 
             response.msg_case       = SERVER_MESSAGE__MSG_MATCH_GAME_RES;
             response.match_game_res = &match_resp;
@@ -92,7 +92,7 @@ int handle_match_game_message(int fd, ClientMessage *req) {
                 opponent_resp.success           = true;
                 opponent_resp.message           = "Match found! Game starting...";
                 opponent_resp.game_id           = result.game_id;
-                opponent_resp.assigned_color    = (result.assigned_color == COLOR__COLOR_WHITE) ? COLOR__COLOR_BLACK : COLOR__COLOR_WHITE;
+                opponent_resp.assigned_team     = (result.assigned_team == TEAM__TEAM_WHITE) ? TEAM__TEAM_BLACK : TEAM__TEAM_WHITE;
                 opponent_resp.opponent_name     = current_player_name ? current_player_name : "";
 
                 ServerMessage opponent_msg  = SERVER_MESSAGE__INIT;

@@ -64,12 +64,12 @@ typedef enum _PieceType {
 /*
  * 상대편 색 정의
  */
-typedef enum _Color {
-  COLOR__COLOR_UNSPECIFIED = 0,
-  COLOR__COLOR_WHITE = 1,
-  COLOR__COLOR_BLACK = 2
-    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(COLOR)
-} Color;
+typedef enum _Team {
+  TEAM__TEAM_UNSPECIFIED = 0,
+  TEAM__TEAM_WHITE = 1,
+  TEAM__TEAM_BLACK = 2
+    PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(TEAM)
+} Team;
 /*
  * 게임 종료 유형
  */
@@ -313,7 +313,7 @@ struct  _MatchGameResponse
    * 게임에 이미 상대가 있어서 바로 시작되는 경우,
    * 상대 ID나 색(WHITE/BLACK)도 함께 알려줄 수 있음
    */
-  Color assigned_color;
+  Team assigned_team;
   /*
    * 상대방 이름 (게임 시작 시)
    */
@@ -321,7 +321,7 @@ struct  _MatchGameResponse
 };
 #define MATCH_GAME_RESPONSE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&match_game_response__descriptor) \
-    , (char *)protobuf_c_empty_string, 0, (char *)protobuf_c_empty_string, COLOR__COLOR_UNSPECIFIED, (char *)protobuf_c_empty_string }
+    , (char *)protobuf_c_empty_string, 0, (char *)protobuf_c_empty_string, TEAM__TEAM_UNSPECIFIED, (char *)protobuf_c_empty_string }
 
 
 /*
@@ -374,9 +374,9 @@ struct  _MoveBroadcast
    */
   protobuf_c_boolean game_ends;
   /*
-   * 승리자 색 (무승부인 경우 COLOR_UNSPECIFIED)
+   * 승리자 색 (무승부인 경우 TEAM_UNSPECIFIED)
    */
-  Color winner_color;
+  Team winner_team;
   /*
    * 게임 종료 유형
    */
@@ -388,11 +388,11 @@ struct  _MoveBroadcast
   /*
    * 체크 당한 색 (is_check가 true일 때만 의미있음)
    */
-  Color checked_color;
+  Team checked_team;
 };
 #define MOVE_BROADCAST__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&move_broadcast__descriptor) \
-    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, PIECE_TYPE__PT_NONE, NULL, 0, COLOR__COLOR_UNSPECIFIED, GAME_END_TYPE__GAME_END_UNKNOWN, 0, COLOR__COLOR_UNSPECIFIED }
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, PIECE_TYPE__PT_NONE, NULL, 0, TEAM__TEAM_UNSPECIFIED, GAME_END_TYPE__GAME_END_UNKNOWN, 0, TEAM__TEAM_UNSPECIFIED }
 
 
 struct  _CheckBroadcast
@@ -406,12 +406,12 @@ struct  _CheckBroadcast
   /*
    * 체크 당한 색
    */
-  Color by_color;
+  Team by_team;
   Google__Protobuf__Timestamp *timestamp;
 };
 #define CHECK_BROADCAST__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&check_broadcast__descriptor) \
-    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, COLOR__COLOR_UNSPECIFIED, NULL }
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, TEAM__TEAM_UNSPECIFIED, NULL }
 
 
 /*
@@ -429,9 +429,9 @@ struct  _GameEndBroadcast
    */
   char *player_id;
   /*
-   * 승리자 색 (무승부인 경우 COLOR_UNSPECIFIED)
+   * 승리자 색 (무승부인 경우 TEAM_UNSPECIFIED)
    */
-  Color winner_color;
+  Team winner_team;
   /*
    * 게임 종료 유형
    */
@@ -440,7 +440,7 @@ struct  _GameEndBroadcast
 };
 #define GAME_END_BROADCAST__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&game_end_broadcast__descriptor) \
-    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, COLOR__COLOR_UNSPECIFIED, GAME_END_TYPE__GAME_END_UNKNOWN, NULL }
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, TEAM__TEAM_UNSPECIFIED, GAME_END_TYPE__GAME_END_UNKNOWN, NULL }
 
 
 /*
@@ -870,7 +870,7 @@ typedef void (*ErrorResponse_Closure)
 
 extern const ProtobufCEnumDescriptor    protocol_version__descriptor;
 extern const ProtobufCEnumDescriptor    piece_type__descriptor;
-extern const ProtobufCEnumDescriptor    color__descriptor;
+extern const ProtobufCEnumDescriptor    team__descriptor;
 extern const ProtobufCEnumDescriptor    game_end_type__descriptor;
 extern const ProtobufCMessageDescriptor client_message__descriptor;
 extern const ProtobufCMessageDescriptor ping_request__descriptor;

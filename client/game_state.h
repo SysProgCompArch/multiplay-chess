@@ -12,9 +12,6 @@
 #define MAX_CHAT_MESSAGES  50
 #define MAX_MESSAGE_LENGTH 256
 
-// team_t는 color_t의 별칭으로 사용 (이전 버전 호환성)
-typedef color_t team_t;
-
 // 채팅 메시지 구조체
 typedef struct
 {
@@ -31,7 +28,7 @@ typedef struct
     int            chat_count;
     char           local_player[MAX_PLAYER_NAME_LENGTH];
     char           opponent_player[MAX_PLAYER_NAME_LENGTH];
-    color_t        local_team;
+    team_t         local_team;
     bool           game_in_progress;
     time_t         game_start_time;
     int            white_time_remaining;  // 초 단위
@@ -52,8 +49,8 @@ typedef struct
 
 // 함수 선언
 void init_game_state(game_state_t *state);
-void init_game(game_t *game);                                   // board_state_t 대신 game_t 초기화
-void reset_game_for_player(game_t *game, color_t player_team);  // 플레이어 팀에 따른 보드 초기화
+void init_game(game_t *game);                                  // board_state_t 대신 game_t 초기화
+void reset_game_for_player(game_t *game, team_t player_team);  // 플레이어 팀에 따른 보드 초기화
 void reset_game_to_starting_position(game_t *game);
 void add_chat_message(game_state_t *state, const char *sender, const char *message);
 

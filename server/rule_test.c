@@ -69,27 +69,27 @@ static void test_pawn_move_f2_f4() {
     // f2 = file f(5), rank 2(1) → board[1][5]
     printf("f2 position: board[1][5]\n");
     piecestate_t *piece_f2 = &G.board[1][5];
-    printf("  piece at f2: dead=%d, type=%d, color=%d, has_moved=%d\n",
+    printf("  piece at f2: dead=%d, type=%d, team=%d, has_moved=%d\n",
            piece_f2->is_dead,
            piece_f2->piece ? piece_f2->piece->type : -1,
-           piece_f2->color,
+           piece_f2->team,
            piece_f2->has_moved);
 
     // f4 = file f(5), rank 4(3) → board[3][5]
     printf("f4 position: board[3][5]\n");
     piecestate_t *piece_f4 = &G.board[3][5];
-    printf("  piece at f4: dead=%d, type=%d, color=%d\n",
+    printf("  piece at f4: dead=%d, type=%d, team=%d\n",
            piece_f4->is_dead,
            piece_f4->piece ? piece_f4->piece->type : -1,
-           piece_f4->color);
+           piece_f4->team);
 
     // f3 중간 칸 확인 = file f(5), rank 3(2) → board[2][5]
     printf("f3 position (middle): board[2][5]\n");
     piecestate_t *piece_f3 = &G.board[2][5];
-    printf("  piece at f3: dead=%d, type=%d, color=%d\n",
+    printf("  piece at f3: dead=%d, type=%d, team=%d\n",
            piece_f3->is_dead,
            piece_f3->piece ? piece_f3->piece->type : -1,
-           piece_f3->color);
+           piece_f3->team);
 
     // 게임 상태 확인
     printf("\nGame state:\n");
@@ -104,10 +104,10 @@ static void test_pawn_move_f2_f4() {
     piecestate_t *src = &G.board[sy][sx];
     piecestate_t *dst = &G.board[dy][dx];
 
-    printf("  src->color = %d, G.side_to_move = %d\n", src->color, G.side_to_move);
-    printf("  src->color == G.side_to_move: %s\n", (src->color == G.side_to_move) ? "true" : "false");
+    printf("  src->team = %d, G.side_to_move = %d\n", src->team, G.side_to_move);
+    printf("  src->team == G.side_to_move: %s\n", (src->team == G.side_to_move) ? "true" : "false");
 
-    int dir = (src->color == TEAM_WHITE ? +1 : -1);
+    int dir = (src->team == TEAM_WHITE ? +1 : -1);
     printf("  dir = %d (WHITE=+1, BLACK=-1)\n", dir);
     printf("  2 * dir = %d\n", 2 * dir);
 
@@ -123,7 +123,7 @@ static void test_pawn_move_f2_f4() {
     printf("\nSelf-check prevention test:\n");
     game_t tmp = G;
     apply_move(&tmp, sx, sy, dx, dy);
-    bool in_check_after = is_in_check(&tmp, src->color);
+    bool in_check_after = is_in_check(&tmp, src->team);
     printf("  After f2->f4, white king in check: %s\n", in_check_after ? "true" : "false");
 
     if (in_check_after) {

@@ -10,18 +10,18 @@ static inline bool in_board(int x, int y) {
     return x >= 0 && x < 8 && y >= 0 && y < 8;
 }
 
-// (x,y) 칸이 by_color 편에게 공격당하는지
-static bool is_square_attacked(const game_t *G, int x, int y, color_t by_color) {
+// (x,y) 칸이 by_team 편에게 공격당하는지
+static bool is_square_attacked(const game_t *G, int x, int y, team_t by_team) {
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
             const piecestate_t *ps = &G->board[j][i];
             // NULL 포인터 검사 추가 - ps->piece가 NULL일 수 있음
-            if (ps->is_dead || ps->piece == NULL || ps->color != by_color)
+            if (ps->is_dead || ps->piece == NULL || ps->team != by_team)
                 continue;
 
             switch (ps->piece->type) {
                 case PIECE_PAWN: {
-                    int dir = (by_color == TEAM_WHITE ? +1 : -1);
+                    int dir = (by_team == TEAM_WHITE ? +1 : -1);
                     if (j + dir == y && (i - 1 == x || i + 1 == x))
                         return true;
                     break;
@@ -65,9 +65,9 @@ bool is_move_legal(const game_t *G, int sx, int sy, int dx, int dy) {
     const piecestate_t *src = &G->board[sy][sx];
     const piecestate_t *dst = &G->board[dy][dx];
     // NULL 포인터 검사 추가
-    if (src->is_dead || src->piece == NULL || src->color != G->side_to_move)
+    if (src->is_dead || src->piece == NULL || src->team != G->side_to_move)
         return false;
-    if (!dst->is_dead && dst->piece != NULL && dst->color == G->side_to_move)
+    if (!dst->is_dead && dst->piece != NULL && dst->team == G->side_to_move)
         return false;
 
     int  rx = dx - sx, ry = dy - sy;
@@ -75,7 +75,7 @@ bool is_move_legal(const game_t *G, int sx, int sy, int dx, int dy) {
 
     switch (src->piece->type) {
         case PIECE_PAWN: {
-            int dir = (src->color == TEAM_WHITE ? +1 : -1);
+            int dir = (src->team == TEAM_WHITE ? +1 : -1);
             // 한 칸 전진
             if (rx == 0 && ry == dir && dst->is_dead)
                 ok = true;
@@ -83,7 +83,7 @@ bool is_move_legal(const game_t *G, int sx, int sy, int dx, int dy) {
             if (rx == 0 && ry == 2 * dir && !src->has_moved && dst->is_dead && G->board[sy + dir][sx].is_dead)
                 ok = true;
             // 대각선 캡처
-            if (abs(rx) == 1 && ry == dir && (!dst->is_dead && dst->color != src->color || (dst->is_dead && G->en_passant_x == dx && G->en_passant_y == dy)))
+            if (abs(rx) == 1 && ry == dir && (!dst->is_dead && dst->team != src->team || (dst->is_dead && G->en_passant_x == dx && G->en_passant_y == dy)))
                 ok = true;
             break;
         }
@@ -95,7 +95,7 @@ bool is_move_legal(const game_t *G, int sx, int sy, int dx, int dy) {
                     // 캐슬링 처리
                     if (src->piece->type == PIECE_KING && abs(rx) == 2 && ry == 0) {
                         bool ks  = rx > 0;
-                        bool can = (src->color == TEAM_WHITE)
+                        bool can = (src->team == TEAM_WHITE)
                                        ? (ks ? G->white_can_castle_kingside : G->white_can_castle_queenside)
                                        : (ks ? G->black_can_castle_kingside : G->black_can_castle_queenside);
                         if (!can)
@@ -108,7 +108,7 @@ bool is_move_legal(const game_t *G, int sx, int sy, int dx, int dy) {
                                 return false;
                         // 2) 지나가는 칸(출발칸, 중간칸, 도착칸) 모두 공격받지 않는지
                         for (int x = sx; x != dx + step; x += step)
-                            if (is_square_attacked(G, x, sy, 1 - src->color))
+                            if (is_square_attacked(G, x, sy, 1 - src->team))
                                 return false;
                     }
                     ok = true;
@@ -153,7 +153,7 @@ bool is_move_legal(const game_t *G, int sx, int sy, int dx, int dy) {
     // 자기 장군 방지
     game_t tmp = *G;
     apply_move(&tmp, sx, sy, dx, dy);
-    if (is_in_check(&tmp, src->color))
+    if (is_in_check(&tmp, src->team))
         return false;
 
     return true;
@@ -200,13 +200,13 @@ void apply_move(game_t *G, int sx, int sy, int dx, int dy) {
 
     // 캐슬링 권리 소멸
     if (dst->piece != NULL && dst->piece->type == PIECE_KING) {
-        if (dst->color == TEAM_WHITE)
+        if (dst->team == TEAM_WHITE)
             G->white_can_castle_kingside = G->white_can_castle_queenside = false;
         else
             G->black_can_castle_kingside = G->black_can_castle_queenside = false;
     }
     if (dst->piece != NULL && dst->piece->type == PIECE_ROOK && !dst->has_moved) {
-        if (dst->color == TEAM_WHITE) {
+        if (dst->team == TEAM_WHITE) {
             if (sx == 0 && sy == 0)
                 G->white_can_castle_queenside = false;
             if (sx == 7 && sy == 0)
@@ -230,8 +230,8 @@ void apply_move(game_t *G, int sx, int sy, int dx, int dy) {
     // 프로모션 (기본 퀸으로 자동 승격)
     if (dst->piece != NULL && dst->piece->type == PIECE_PAWN && (dy == 7 || dy == 0)) {
         // extern으로 정의된 queen_piecestate를 가리키도록 하거나
-        // 별도의 get_promotion_piece(color) 함수를 호출하세요.
-        dst->piece = get_default_queen(dst->color);
+        // 별도의 get_promotion_piece(team) 함수를 호출하세요.
+        dst->piece = get_default_queen(dst->team);
     }
 
     dst->has_moved  = true;
@@ -239,14 +239,14 @@ void apply_move(game_t *G, int sx, int sy, int dx, int dy) {
 }
 
 // 체크 상태 확인
-bool is_in_check(const game_t *G, color_t color) {
+bool is_in_check(const game_t *G, team_t team) {
     // 킹의 위치 찾기
     int king_x = -1, king_y = -1;
     for (int x = 0; x < 8; x++) {
         for (int y = 0; y < 8; y++) {
             const piecestate_t *ps = &G->board[y][x];
             // NULL 포인터 검사 추가 - ps->piece가 NULL일 수 있음
-            if (!ps->is_dead && ps->piece != NULL && ps->color == color && ps->piece->type == PIECE_KING) {
+            if (!ps->is_dead && ps->piece != NULL && ps->team == team && ps->piece->type == PIECE_KING) {
                 king_x = x;
                 king_y = y;
                 break;
@@ -257,15 +257,15 @@ bool is_in_check(const game_t *G, color_t color) {
 
     if (king_x == -1) return false;  // 킹이 없으면 체크가 아님
 
-    return is_square_attacked(G, king_x, king_y, (color == TEAM_WHITE) ? TEAM_BLACK : TEAM_WHITE);
+    return is_square_attacked(G, king_x, king_y, (team == TEAM_WHITE) ? TEAM_BLACK : TEAM_WHITE);
 }
 
 // 체크메이트 확인
 bool is_checkmate(const game_t *G) {
-    color_t color = G->side_to_move;
+    team_t team = G->side_to_move;
 
     // 체크 상태가 아니면 체크메이트가 아님
-    if (!is_in_check(G, color)) {
+    if (!is_in_check(G, team)) {
         return false;
     }
 
@@ -273,7 +273,7 @@ bool is_checkmate(const game_t *G) {
     for (int sx = 0; sx < 8; sx++) {
         for (int sy = 0; sy < 8; sy++) {
             const piecestate_t *src = &G->board[sy][sx];
-            if (src->is_dead || src->piece == NULL || src->color != color) continue;
+            if (src->is_dead || src->piece == NULL || src->team != team) continue;
 
             for (int dx = 0; dx < 8; dx++) {
                 for (int dy = 0; dy < 8; dy++) {
@@ -290,10 +290,10 @@ bool is_checkmate(const game_t *G) {
 
 // 스테일메이트 확인
 bool is_stalemate(const game_t *G) {
-    color_t color = G->side_to_move;
+    team_t team = G->side_to_move;
 
     // 체크 상태이면 스테일메이트가 아님
-    if (is_in_check(G, color)) {
+    if (is_in_check(G, team)) {
         return false;
     }
 
@@ -301,7 +301,7 @@ bool is_stalemate(const game_t *G) {
     for (int sx = 0; sx < 8; sx++) {
         for (int sy = 0; sy < 8; sy++) {
             const piecestate_t *src = &G->board[sy][sx];
-            if (src->is_dead || src->piece == NULL || src->color != color) continue;
+            if (src->is_dead || src->piece == NULL || src->team != team) continue;
 
             for (int dx = 0; dx < 8; dx++) {
                 for (int dy = 0; dy < 8; dy++) {

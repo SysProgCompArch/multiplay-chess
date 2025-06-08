@@ -41,9 +41,7 @@ void cleanup_and_exit(int exit_code) {
 void handle_sigint(int sig) {
     shutdown_requested = 1;
     LOG_INFO("SIGINT received, requesting graceful shutdown");
-    // 메인 스레드가 getch()에서 블로킹된 경우를 위해 강제로 깨우기
-    // ncurses 환경에서 안전하게 처리하기 위해 ungetch 사용
-    ungetch(KEY_RESIZE);  // 임의의 키 이벤트를 발생시켜 getch() 블로킹 해제
+    // ungetch(KEY_RESIZE) 제거 - SA_RESTART가 제거되었으므로 getch()가 자동으로 중단됨
 }
 
 void handle_sigtstp(int sig) {
@@ -75,11 +73,12 @@ void handle_sigwinch(int sig) {
 void setup_signal_handlers() {
     struct sigaction sa;
 
-    // SIGINT 핸들러 설정 (더 안전한 sigaction 사용)
+    // SIGINT 핸들러 설정 (SA_RESTART 플래그 제거)
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = handle_sigint;
     sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;  // 시스템 콜 재시작
+    // sa.sa_flags = SA_RESTART;  // SA_RESTART 플래그 제거
+    sa.sa_flags = 0;  // 시그널 발생 시 시스템 콜 중단
     if (sigaction(SIGINT, &sa, NULL) == -1) {
         LOG_ERROR("Failed to set SIGINT handler");
         exit(1);
@@ -89,7 +88,7 @@ void setup_signal_handlers() {
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = handle_sigtstp;
     sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
+    sa.sa_flags = 0;  // SA_RESTART 제거
     if (sigaction(SIGTSTP, &sa, NULL) == -1) {
         LOG_ERROR("Failed to set SIGTSTP handler");
         exit(1);
@@ -99,7 +98,7 @@ void setup_signal_handlers() {
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = handle_sigcont;
     sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
+    sa.sa_flags = 0;  // SA_RESTART 제거
     if (sigaction(SIGCONT, &sa, NULL) == -1) {
         LOG_ERROR("Failed to set SIGCONT handler");
         exit(1);
@@ -109,13 +108,13 @@ void setup_signal_handlers() {
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = handle_sigwinch;
     sigemptyset(&sa.sa_mask);
-    sa.sa_flags = SA_RESTART;
+    sa.sa_flags = 0;  // SA_RESTART 제거
     if (sigaction(SIGWINCH, &sa, NULL) == -1) {
         LOG_ERROR("Failed to set SIGWINCH handler");
         exit(1);
     }
 
-    LOG_DEBUG("Signal handlers registered (SIGINT, SIGTSTP, SIGCONT, SIGWINCH)");
+    LOG_DEBUG("Signal handlers registered (SIGINT, SIGTSTP, SIGCONT, SIGWINCH) without SA_RESTART");
 }
 
 // 사용법 출력
@@ -281,6 +280,12 @@ int main(int argc, char *argv[]) {
         // getch() 이후 즉시 시그널 상태 재확인
         if (shutdown_requested) {
             LOG_INFO("Shutdown requested detected after getch()");
+            cleanup_and_exit(0);
+        }
+
+        // getch()가 시그널에 의해 중단된 경우 (ERR 반환)도 시그널 상태 확인
+        if (ch == ERR && shutdown_requested) {
+            LOG_INFO("getch() interrupted by signal, shutting down");
             cleanup_and_exit(0);
         }
 

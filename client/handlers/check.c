@@ -18,9 +18,9 @@ int handle_check_broadcast(ServerMessage *msg) {
         return -1;
     }
 
-    LOG_INFO("Received check broadcast: player_id=%s, by_color=%d, game_id=%s",
+    LOG_INFO("Received check broadcast: player_id=%s, by_team=%d, game_id=%s",
              check_broadcast->player_id ? check_broadcast->player_id : "unknown",
-             check_broadcast->by_color,
+             check_broadcast->by_team,
              check_broadcast->game_id ? check_broadcast->game_id : "unknown");
 
     // 체크 상태를 게임 상태에 반영
@@ -29,9 +29,9 @@ int handle_check_broadcast(ServerMessage *msg) {
     pthread_mutex_lock(&screen_mutex);
 
     // 게임 상태에 체크 정보 저장
-    if (check_broadcast->by_color == COLOR__COLOR_WHITE) {
+    if (check_broadcast->by_team == TEAM__TEAM_WHITE) {
         client->game_state.white_in_check = true;
-    } else if (check_broadcast->by_color == COLOR__COLOR_BLACK) {
+    } else if (check_broadcast->by_team == TEAM__TEAM_BLACK) {
         client->game_state.black_in_check = true;
     }
 
@@ -42,7 +42,7 @@ int handle_check_broadcast(ServerMessage *msg) {
 
     // 채팅 메시지로 체크 알림
     char        check_msg[256];
-    const char *checked_player = (check_broadcast->by_color == COLOR__COLOR_WHITE) ? "White" : "Black";
+    const char *checked_player = (check_broadcast->by_team == TEAM__TEAM_WHITE) ? "White" : "Black";
     snprintf(check_msg, sizeof(check_msg), "%s is in check!", checked_player);
     add_chat_message_safe("Game", check_msg);
 

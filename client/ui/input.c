@@ -106,7 +106,7 @@ void handle_board_click(int board_x, int board_y) {
         piecestate_t *piece = &game->board[board_y][board_x];
         if (piece->piece && !piece->is_dead) {
             // 현재 플레이어의 기물인지 확인
-            team_t piece_team = piece->color;
+            team_t piece_team = piece->team;
 
             // 좌표 확인 메시지 (간단하게)
             char coord_msg[64];
