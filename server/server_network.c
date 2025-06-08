@@ -42,7 +42,7 @@ int set_nonblocking(int fd) {
 int parse_port_from_args(int argc, char *argv[]) {
     int port = DEFAULT_PORT;
     for (int i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "--port") == 0 && i + 1 < argc) {
+        if (strcmp(argv[i], "-p") == 0 && i + 1 < argc) {
             port = atoi(argv[i + 1]);
             if (port <= 0 || port > 65535) {
                 LOG_FATAL("Invalid port number: %d", port);
