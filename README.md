@@ -77,12 +77,9 @@ multiplay-chess/
 │   ├── CMakeLists.txt
 │   └── ... (client source/headers)
 │
-├── server/                  # 서버 전용 코드
-│   ├── CMakeLists.txt
-│   └── ... (server source/headers)
-│
-└── external/                # 외부 라이브러리
-    └── cJSON/               # cJSON 라이브러리 소스
+└── server/                  # 서버 전용 코드
+    ├── CMakeLists.txt
+    └── ... (server source/headers)
 ```
 
 ### 추가 팁
