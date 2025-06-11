@@ -3,9 +3,9 @@
 #include <string.h>
 #include <time.h>
 
+#include "../match_manager.h"
 #include "handlers.h"
 #include "logger.h"
-#include "match_manager.h"
 
 // 매칭 요청 처리 핸들러
 int handle_match_game_message(int fd, ClientMessage *req) {

@@ -1,11 +1,11 @@
 add_executable(server
     main.c
     server_network.c
+    match_manager.c
     handlers/dispatcher.c
     handlers/ping.c
     handlers/echo.c
     handlers/match.c
-    handlers/match_manager.c
     handlers/chat.c
     handlers/move.c
 )

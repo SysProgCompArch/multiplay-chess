@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../match_manager.h"
 #include "handlers.h"
 #include "logger.h"
-#include "match_manager.h"
 #include "network.h"
 
 int handle_chat_message(int fd, ClientMessage *req) {
