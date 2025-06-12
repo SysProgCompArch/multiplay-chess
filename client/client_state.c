@@ -1,9 +1,11 @@
 #include "client_state.h"
 
 #include <string.h>
+#include <limits.h> 
 
 #include "client_network.h"
 #include "logger.h"
+#include "pgn.h" 
 
 // 전역 클라이언트 상태
 static client_state_t g_client = {0};
@@ -54,6 +56,15 @@ void init_client_state() {
     g_client.screen_update_requested = false;
 
     init_game_state(&g_client.game_state);
+    
+    // 4) PGN 기록용 구조체 초기화
+    pgn_init(&g_client.pgn);
+    
+    // replay용 PGN 파일 경로 초기화
+    g_client.pgn_filepath[0] = '\0';
+    g_client.replay_index    = 0;
+    g_client.replay_mode   = false;
+    pgn_init(&g_client.replay_pgn);
 }
 
 // 채팅 메시지 추가 (게임 상태에 추가)

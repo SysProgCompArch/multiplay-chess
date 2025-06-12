@@ -62,6 +62,7 @@ static bool is_square_attacked(const game_t *G, int x, int y, team_t by_team) {
 bool is_move_legal(const game_t *G, int sx, int sy, int dx, int dy) {
     if (!in_board(sx, sy) || !in_board(dx, dy))
         return false;
+
     const piecestate_t *src = &G->board[sy][sx];
     const piecestate_t *dst = &G->board[dy][dx];
     // NULL 포인터 검사 추가
@@ -88,34 +89,53 @@ bool is_move_legal(const game_t *G, int sx, int sy, int dx, int dy) {
             break;
         }
         case PIECE_KNIGHT:
-        case PIECE_KING: {
-            for (int k = 0; k < src->piece->offset_len; k++) {
-                offset_t o = src->piece->offsets[k];
-                if (o.x == rx && o.y == ry) {
-                    // 캐슬링 처리
-                    if (src->piece->type == PIECE_KING && abs(rx) == 2 && ry == 0) {
-                        bool ks  = rx > 0;
-                        bool can = (src->team == TEAM_WHITE)
-                                       ? (ks ? G->white_can_castle_kingside : G->white_can_castle_queenside)
-                                       : (ks ? G->black_can_castle_kingside : G->black_can_castle_queenside);
-                        if (!can)
-                            return false;
-
-                        int step = ks ? +1 : -1;
-                        // 1) 중간 칸 비어있는지
-                        for (int x = sx + step; x != dx; x += step)
-                            if (!G->board[sy][x].is_dead)
-                                return false;
-                        // 2) 지나가는 칸(출발칸, 중간칸, 도착칸) 모두 공격받지 않는지
-                        for (int x = sx; x != dx + step; x += step)
-                            if (is_square_attacked(G, x, sy, 1 - src->team))
-                                return false;
-                    }
-                    ok = true;
-                    break;
-                }
+            if ((abs(rx) == 1 && abs(ry) == 2) ||
+                (abs(rx) == 2 && abs(ry) == 1)) {
+                ok = true;
             }
             break;
+        case PIECE_KING: {
+            // 1) 일반 킹 한 칸 이동
+            if (abs(rx) <= 1 && abs(ry) <= 1) {
+                // 이동 후 자기 장군 방지
+                game_t tmp = *G;
+                apply_move(&tmp, sx, sy, dx, dy);
+                return !is_in_check(&tmp, src->team);
+            }
+
+            // 2) 캐슬링 처리: 같은 랭크에서 두 칸 이동
+            if (ry == 0 && abs(rx) == 2) {
+                bool kingside = (rx > 0);  // 우측(castle-kingside)인지
+                // 2-1) 캐슬링 권한 체크
+                if (src->team == TEAM_WHITE) {
+                    if (kingside && !G->white_can_castle_kingside)   return false;
+                    if (!kingside && !G->white_can_castle_queenside) return false;
+                } else {
+                    if (kingside && !G->black_can_castle_kingside)   return false;
+                    if (!kingside && !G->black_can_castle_queenside) return false;
+                }
+                // 2-2) 킹·룩이 한 번도 이동한 적 없어야 함
+                if (src->has_moved) return false;
+                int rook_x = kingside ? 7 : 0;
+                piecestate_t *rook_sq = &((game_t *)G)->board[sy][rook_x];
+                if (!rook_sq->piece
+                    || rook_sq->piece->type != PIECE_ROOK
+                    || rook_sq->has_moved)
+                    return false;
+                // 2-3) 두 기물 사이 칸이 모두 비어 있어야 함
+                int dir = kingside ? +1 : -1;
+                for (int x = sx + dir; x != rook_x; x += dir) {
+                    if (G->board[sy][x].piece) return false;
+                }
+                // 2-4) 이동 경로(출발, 중간, 도착)가 체크 대상이면 안 됨
+                team_t enemy = (src->team == TEAM_WHITE ? TEAM_BLACK : TEAM_WHITE);
+                for (int x = sx; x != dx + dir; x += dir) {
+                    if (is_square_attacked(G, x, sy, enemy))
+                        return false;
+                }
+                return true;
+            }
+            return false;
         }
         case PIECE_BISHOP:
         case PIECE_ROOK:

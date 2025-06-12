@@ -9,6 +9,8 @@
 #include "piece.h"
 #include "types.h"
 #include "utils.h"  // clear_board, fen_parse 함수를 위해 추가
+#include "rule.h" 
+
 
 // piece_table 외부 선언 (common/piece.c에 정의됨)
 extern piece_t *piece_table[2][6];

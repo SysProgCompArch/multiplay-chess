@@ -7,6 +7,7 @@
 #include "piece.h"
 #include "rule.h"  // game_t 사용을 위해 추가
 #include "types.h"
+#include "pgn.h"
 
 #define BOARD_SIZE         8
 #define MAX_CHAT_MESSAGES  50
@@ -52,7 +53,7 @@ void init_game_state(game_state_t *state);
 void init_game(game_t *game);                                  // board_state_t 대신 game_t 초기화
 void reset_game_for_player(game_t *game, team_t player_team);  // 플레이어 팀에 따른 보드 초기화
 void reset_game_to_starting_position(game_t *game);
-void add_chat_message(game_state_t *state, const char *sender, const char *message);
+void add_chat_message(game_state_t *state, const char *sender, const char *message);\
 
 // 이동 관련 (game_t 직접 사용)
 bool is_valid_move(game_t *game, int from_x, int from_y, int to_x, int to_y);

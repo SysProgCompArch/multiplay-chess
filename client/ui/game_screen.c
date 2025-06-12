@@ -7,6 +7,7 @@
 #include "types.h"
 #include "ui.h"
 
+
 // 체스 말 유니코드 문자 반환
 const char *get_piece_unicode(piece_t *piece, team_t team) {
     if (!piece)
@@ -494,6 +495,66 @@ void calculate_chat_dimensions(int terminal_cols, int *chat_width, int *input_wi
     *input_width = *chat_width;  // 입력창도 같은 크기
 }
 
+void draw_replay_chat(WINDOW *chat_win, client_state_t *cli) {
+    int rows, cols;
+    getmaxyx(chat_win, rows, cols);
+
+    werase(chat_win);
+    draw_border(chat_win);
+
+    // 1) 제목
+    mvwprintw(chat_win, 1, 2, "Current Move:");
+
+    // 2) 현재 수 강조 (replay_index-1 이 실제 적용된 마지막 Half-move)
+    size_t idx = (cli->replay_index > 0 ? cli->replay_index - 1 : 0);
+    size_t full_move_no = idx/2 + 1;
+    char *san = cli->replay_pgn.moves[idx].san;
+    wattron(chat_win, A_REVERSE);
+    mvwprintw(chat_win, 2, 2, "%zu. %s", full_move_no, san);
+    wattroff(chat_win, A_REVERSE);
+
+    // 3) 전체 PGN Moves 스크롤 출력
+    //    한 줄에 Full Move(백·흑)를 표시: "n. e2e4 e7e5"
+    int start_line = 4;                // 3줄째(인덱스 3)부터 출력
+    int max_full = (rows - start_line) - 1; // 남은 줄 수
+    int total_full = (cli->replay_pgn.move_count + 1) / 2;
+
+    // 현재 Full Move 가 화면 중간에 오도록 offset 계산
+    int current_full = idx/2;
+    int top_full = current_full - max_full/2;
+    if (top_full < 0) top_full = 0;
+    if (top_full + max_full > total_full) {
+        top_full = total_full - max_full;
+        if (top_full < 0) top_full = 0;
+    }
+
+    char buf[64];
+    for (int fm = 0; fm < max_full; fm++) {
+        int i = (top_full + fm) * 2;  // Half-move 인덱스
+        if (i >= (int)cli->replay_pgn.move_count) break;
+
+        const char *wSan = cli->replay_pgn.moves[i].san;
+        const char *bSan = (i+1 < (int)cli->replay_pgn.move_count)
+                             ? cli->replay_pgn.moves[i+1].san
+                             : "";
+
+        int line = start_line + fm;
+        snprintf(buf, sizeof(buf), "%d. %-6s %-6s",
+                 top_full + fm + 1, wSan, bSan);
+
+        // 현재 Full Move 라인이면 강조
+        if (top_full + fm == current_full) {
+            wattron(chat_win, A_REVERSE);
+            mvwprintw(chat_win, line, 2, "%s", buf);
+            wattroff(chat_win, A_REVERSE);
+        } else {
+            mvwprintw(chat_win, line, 2, "%s", buf);
+        }
+    }
+
+    wrefresh(chat_win);
+}
+
 // 게임 화면 그리기
 void draw_game_screen() {
     client_state_t *client = get_client_state();
@@ -539,8 +600,13 @@ void draw_game_screen() {
     int     total_game_height = player_info_height * 2 + BOARD_HEIGHT;
     int     chat_start_x      = 2 + BOARD_WIDTH + 1;                                         // 왼쪽여백 + 체스판 + 중간여백(1)
     WINDOW *chat_win          = newwin(total_game_height - 2, chat_width, 2, chat_start_x);  // 위아래 한칸씩 줄임
-    draw_chat_area(chat_win);
-
+    if (client->replay_mode) {
+        // ── 리플레이 모드: 현재 수만 강조 출력 ──
+        draw_replay_chat(chat_win, client);
+    } else {
+        // ── 일반 채팅 모드 ──
+        draw_chat_area(chat_win);
+    }
     // 입력창은 채팅창 아래에 위치
     WINDOW *input_win = newwin(INPUT_HEIGHT, input_width, 2 + (total_game_height - 2), chat_start_x);
     draw_chat_input(input_win);
@@ -553,7 +619,13 @@ void draw_game_screen() {
 
     // 조작법 안내 (화면 하단)
     int help_y = rows - 2;
-    mvprintw(help_y, 2, "Controls: Arrow keys + Space/Enter | ESC: cancel | Q: quit | Enter: chat | move:e2e4");
+    if (client->replay_mode){
+        mvprintw(help_y + 3, 2, "Controls: Arrow keys + Space/Enter | ESC: cancel | Q: quit | <- : before | -> : next");
+    }
+    else {
+        mvprintw(help_y, 2, "Controls: Arrow keys + Space/Enter | ESC: cancel | Q: quit | Enter: chat | move:e2e4");            
+    }
+    
 
     // 연결 상태 표시
     draw_connection_status();

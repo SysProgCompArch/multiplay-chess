@@ -3,6 +3,8 @@ add_executable(client
     game_state.c
     client_state.c
     client_network.c
+    pgn.c
+    replay.c
     ui/core.c
     ui/screens.c
     ui/main_screen.c

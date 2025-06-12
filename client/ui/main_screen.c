@@ -40,7 +40,7 @@ void draw_main_screen() {
     // 메뉴 항목들
     wattron(main_win, A_BOLD);
     mvwprintw(main_win, 14, (main_width - 18) / 2, "1. Start New Game");
-    mvwprintw(main_win, 16, (main_width - 18) / 2, "2. Options       ");
+    mvwprintw(main_win, 16, (main_width - 18) / 2, "2. replay       ");
     mvwprintw(main_win, 18, (main_width - 18) / 2, "3. Exit          ");
     wattroff(main_win, A_BOLD);
 

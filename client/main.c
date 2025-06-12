@@ -11,6 +11,7 @@
 #include "client_state.h"
 #include "logger.h"
 #include "ui/ui.h"
+#include "replay.h"
 
 // 터미널 크기 변경 플래그
 volatile sig_atomic_t terminal_resized = 0;
@@ -348,9 +349,17 @@ int main(int argc, char *argv[]) {
                                 }
                                 break;
                             case '2':
-                                // TODO: 옵션 화면
-                                LOG_INFO("User selected options (not implemented)");
-                                add_chat_message_safe("System", "Options feature coming soon.");
+                                LOG_INFO("User selected replay");
+                                // ① 여기서 다이얼로그 띄우기
+                                if (get_pgn_filepath_dialog()) {
+                                    // ② 파일을 골랐다면 리플레이 시작
+                                    start_replay();
+                                } else {
+                                    // ③ 취소 혹은 파일 없음
+                                    add_chat_message_safe("System", "Replay canceled or no .txt files found.");
+                                    draw_current_screen();
+                                    refresh();
+                                }
                                 break;
                             case '3':
                             case 'q':

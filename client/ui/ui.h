@@ -42,6 +42,7 @@ void draw_main_screen();
 void draw_matching_screen();
 void draw_game_screen();
 void draw_connection_status();
+void draw_replay_chat();
 
 // 화면 전환 공통 함수
 void draw_current_screen();

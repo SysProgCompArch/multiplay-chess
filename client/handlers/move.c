@@ -1,12 +1,15 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <stdlib.h> 
 
 #include "../client_state.h"
 #include "../game_state.h"  // apply_move_from_server 함수를 위해 추가
 #include "../ui/ui.h"       // show_dialog 함수를 위해 추가
 #include "handlers.h"
 #include "logger.h"
+#include "pgn.h"
 
 // 체스 좌표를 배열 인덱스로 변환 (예: "a1" -> (0, 0))
 bool parse_chess_coordinate_client(const char *coord, int *x, int *y) {
@@ -97,66 +100,102 @@ int handle_move_broadcast(ServerMessage *msg) {
         return -1;
     }
 
-    LOG_INFO("Received move broadcast: %s moved %s -> %s",
-             broadcast->player_id ? broadcast->player_id : "Player",
-             broadcast->from ? broadcast->from : "?",
-             broadcast->to ? broadcast->to : "?");
+    client_state_t *cli = get_client_state();
+    game_t         *game = &cli->game_state.game;
+    PGNGame        *pgn  = &cli->pgn;
+    char            pchar = '\0';
 
-    // 채팅에 이동 알림 추가
-    char chat_msg[256];
-    snprintf(chat_msg, sizeof(chat_msg), "%s moved %s -> %s",
+    // 1) 좌표 변환 (예: "e2" -> fx=4, fy=1)
+    int fx = broadcast->from[0] - 'a';
+    int fy = broadcast->from[1] - '1';
+    int tx = broadcast->to  [0] - 'a';
+    int ty = broadcast->to  [1] - '1';
+
+    // 2) 캐슬링 여부 미리 체크 (킹이 같은 랭크에서 두 칸 이동했는지)
+    bool is_castle = false;
+    int  rook_fx, rook_tx;
+    piecestate_t *orig = &game->board[fy][fx];
+    if (orig->piece && orig->piece->type == PIECE_KING
+        && fy == ty && abs(tx - fx) == 2) {
+        is_castle = true;
+        if (tx > fx) {
+            // 킹사이드 캐슬링 O-O
+            rook_fx = 7;        // h-file
+            rook_tx = tx - 1;   // g-file
+        } else {
+            // 퀸사이드 캐슬링 O-O-O
+            rook_fx = 0;        // a-file
+            rook_tx = tx + 1;   // d-file
+        }
+    }
+
+    // 3) 킹(또는 정상 이동) 적용
+    apply_move_from_server(game, broadcast->from, broadcast->to);
+
+    // 4) 캐슬링인 경우 룩 이동
+    if (is_castle) {
+        char rf[3] = { (char)('a' + rook_fx), (char)('1' + fy), '\0' };
+        char rt[3] = { (char)('a' + rook_tx), (char)('1' + ty), '\0' };
+        apply_move_from_server(game, rf, rt);
+
+        // 채팅 알림
+        add_chat_message_safe("Game", (tx > fx) ? "O-O" : "O-O-O");
+    }
+
+    // 5) 이동 메시지
+    char chat_msg[128];
+    snprintf(chat_msg, sizeof(chat_msg),
+             "%s moved %s -> %s",
              broadcast->player_id ? broadcast->player_id : "Opponent",
-             broadcast->from ? broadcast->from : "?",
-             broadcast->to ? broadcast->to : "?");
+             broadcast->from, broadcast->to);
     add_chat_message_safe("Game", chat_msg);
 
-    // 게임 보드 상태 업데이트
-    if (broadcast->from && broadcast->to) {
-        client_state_t *client = get_client_state();
+    // 6) 프로모션 기호 결정
+    if (broadcast->promotion != PIECE_TYPE__PT_NONE) {
+        switch (broadcast->promotion) {
+            case PIECE_TYPE__PT_QUEEN:  pchar = 'Q'; break;
+            case PIECE_TYPE__PT_ROOK:   pchar = 'R'; break;
+            case PIECE_TYPE__PT_BISHOP: pchar = 'B'; break;
+            case PIECE_TYPE__PT_KNIGHT: pchar = 'N'; break;
+            default:                    pchar = '?'; break;
+        }
+    }
 
-        LOG_DEBUG("Applying move from server: %s -> %s", broadcast->from, broadcast->to);
+    // 7) SAN 생성 및 PGN 기록
+    char san_buf[8];
+    if (pchar) {
+        snprintf(san_buf, sizeof(san_buf), "%s=%c", broadcast->to, pchar);
+    } else {
+        snprintf(san_buf, sizeof(san_buf), "%s%s", broadcast->from, broadcast->to);
+    }
+    // moves 배열 확장
+    if (pgn->move_capacity == 0) {
+        pgn->move_capacity = 16;
+        pgn->moves         = malloc(sizeof(PGNMove) * pgn->move_capacity);
+    }
+    if (pgn->move_count >= pgn->move_capacity) {
+        size_t new_cap = pgn->move_capacity * 2;
+        pgn->moves = realloc(pgn->moves, sizeof(PGNMove) * new_cap);
+        pgn->move_capacity = new_cap;
+    }
+    pgn->moves[pgn->move_count++].san = strdup(san_buf);
 
-        if (apply_move_from_server(&client->game_state.game, broadcast->from, broadcast->to)) {
-            LOG_DEBUG("Board updated successfully: %s -> %s", broadcast->from, broadcast->to);
-
-            pthread_mutex_lock(&screen_mutex);
-
-            // 체크 상태 업데이트
-            if (broadcast->is_check) {
-                if (broadcast->checked_team == TEAM__TEAM_WHITE) {
-                    client->game_state.white_in_check = true;
-                    client->game_state.black_in_check = false;
-                    LOG_INFO("White is in check");
-                } else if (broadcast->checked_team == TEAM__TEAM_BLACK) {
-                    client->game_state.white_in_check = false;
-                    client->game_state.black_in_check = true;
-                    LOG_INFO("Black is in check");
-                }
-            } else {
-                // 체크 상태 해제
-                client->game_state.white_in_check = false;
-                client->game_state.black_in_check = false;
-            }
-
-            client->screen_update_requested = true;
-            pthread_mutex_unlock(&screen_mutex);
-
+    // 8) 체크 상태 업데이트
+    pthread_mutex_lock(&screen_mutex);
+    if (broadcast->is_check) {
+        if (broadcast->checked_team == TEAM__TEAM_WHITE) {
+            cli->game_state.white_in_check = true;
+            cli->game_state.black_in_check = false;
         } else {
-            LOG_ERROR("Failed to update board: %s -> %s (coordinates may be invalid)", broadcast->from, broadcast->to);
-            add_chat_message_safe("System", "Failed to update board state - invalid move coordinates");
+            cli->game_state.white_in_check = false;
+            cli->game_state.black_in_check = true;
         }
     } else {
-        LOG_WARN("Move broadcast missing coordinates: from=%s, to=%s",
-                 broadcast->from ? broadcast->from : "NULL",
-                 broadcast->to ? broadcast->to : "NULL");
-        add_chat_message_safe("System", "Invalid move data received from server");
+        cli->game_state.white_in_check = false;
+        cli->game_state.black_in_check = false;
     }
-
-    // 프로모션 처리
-    if (broadcast->promotion != PIECE_TYPE__PT_NONE) {
-        LOG_INFO("Piece promoted to: %d", broadcast->promotion);
-        // TODO: 프로모션 처리
-    }
+    cli->screen_update_requested = true;
+    pthread_mutex_unlock(&screen_mutex);
 
     // 게임 종료 처리
     if (broadcast->game_ends) {
@@ -211,6 +250,18 @@ int handle_move_broadcast(ServerMessage *msg) {
         strncpy(client->game_end_message, end_msg, sizeof(client->game_end_message) - 1);
         client->screen_update_requested = true;
         pthread_mutex_unlock(&screen_mutex);
+
+        // PGN 저장
+        char filename[128];
+        sprintf(filename, "replay/game_%s_vs_%s.pgn", client->username, get_opponent_name_client());
+        if (save_pgn_file(filename, &client->pgn) == 0) {
+            LOG_INFO("PGN saved to %s", filename);
+        } else {
+            LOG_ERROR("Failed to save PGN");
+        }
+
+        // 3) pgn_free으로 메모리 해제
+        pgn_free(&client->pgn);
     }
 
     // UI는 자동으로 새로고침됩니다

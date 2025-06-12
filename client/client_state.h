@@ -4,9 +4,11 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <time.h>
+#include <limits.h> 
 
 // #include "common.h"  // common.h 제거
 #include "game_state.h"
+#include "pgn.h"
 
 // 상수 정의
 #define MAX_CHAT_NAME   32
@@ -16,7 +18,8 @@
 typedef enum {
     SCREEN_MAIN,
     SCREEN_MATCHING,
-    SCREEN_GAME
+    SCREEN_GAME,
+    SCREEN_REPLAY,
 } screen_state_t;
 
 // 클라이언트 상태 정보
@@ -26,10 +29,15 @@ typedef struct
     int            socket_fd;
     bool           connected;
     screen_state_t current_screen;
+    char           pgn_filepath[PATH_MAX];
+    PGNGame    replay_pgn;     // 파싱된 PGN 전체
+    size_t     replay_index;   // 현재 적용된 Half-move 개수
+    bool       replay_mode;    // 인터랙티브 리플레이 중인지 여부
     time_t         match_start_time;
     game_state_t   game_state;
     int            selected_x, selected_y;  // 선택된 기물 위치
     bool           piece_selected;          // 기물이 선택되었는지 여부
+    PGNGame   pgn;                          //pgn 저장 상태태
 
     // 채팅 입력 모드
     bool chat_input_mode;         // 채팅 입력 모드 활성화 여부

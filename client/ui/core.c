@@ -123,6 +123,9 @@ void draw_current_screen() {
         case SCREEN_GAME:
             draw_game_screen();
             break;
+        case SCREEN_REPLAY :
+            draw_replay_chat();
+            break;        
         default:
             draw_main_screen();
             break;

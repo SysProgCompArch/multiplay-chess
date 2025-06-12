@@ -1,12 +1,14 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <time.h>
 
 #include "../client_state.h"
 #include "../game_state.h"
 #include "handlers.h"
 #include "logger.h"
+#include "pgn.h"
 
 int handle_match_game_response(ServerMessage *msg) {
     if (msg->msg_case != SERVER_MESSAGE__MSG_MATCH_GAME_RES) {
@@ -56,6 +58,39 @@ int handle_match_game_response(ServerMessage *msg) {
                 client->game_state.game_in_progress = true;
                 client->current_screen              = SCREEN_GAME;
                 client->game_state.game_start_time  = time(NULL);
+
+                 // ─── PGN 헤더 태그 설정 ─────────────────────────────
+                {
+                    PGNGame *pgn = &client->pgn;
+
+                    // 날짜 태그
+                    char date_str[16];
+                    time_t now = time(NULL);
+                    struct tm *tm = localtime(&now);
+                    strftime(date_str, sizeof(date_str), "%Y.%m.%d", tm);
+                    free(pgn->date);
+                    pgn->date = strdup(date_str);
+
+                    // 라운드 태그: 서버에서 받은 값이 없으므로 "1" 고정
+                    free(pgn->round);
+                    pgn->round = strdup("1");
+
+                    // White/Black 태그
+                    free(pgn->white);
+                    free(pgn->black);
+                    const char *opp = msg->match_game_res->opponent_name
+                                    ? msg->match_game_res->opponent_name
+                                    : "Opponent";
+                    if (client->game_state.local_team == TEAM_WHITE) {
+                        pgn->white = strdup(client->username);
+                        pgn->black = strdup(opp);
+                    } else {
+                        pgn->white = strdup(opp);
+                        pgn->black = strdup(client->username);
+                    }
+                }
+                // ────────────────────────────────────────────────────
+
 
                 // 게임 시작 시 보드 상태 초기화 (체스는 항상 WHITE가 먼저 시작)
                 init_game(&client->game_state.game);
