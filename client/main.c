@@ -11,6 +11,8 @@
 #include "client_state.h"
 #include "logger.h"
 #include "ui/ui.h"
+#include "replay_menu.h"
+#include "game_save.h"
 
 // 터미널 크기 변경 플래그
 volatile sig_atomic_t terminal_resized = 0;
@@ -348,9 +350,8 @@ int main(int argc, char *argv[]) {
                                 }
                                 break;
                             case '2':
-                                // TODO: 옵션 화면
-                                LOG_INFO("User selected options (not implemented)");
-                                add_chat_message_safe("System", "Options feature coming soon.");
+                                LOG_INFO("User selected replay menu");
+                                replay_menu();
                                 break;
                             case '3':
                             case 'q':
@@ -395,8 +396,9 @@ int main(int argc, char *argv[]) {
                                 break;
                             case '3':
                                 // 게임 저장
-                                LOG_INFO("User requested game save (not implemented)");
-                                add_chat_message_safe("System", "Game save feature coming soon.");
+                                // ▶ 자동 PGN 저장
+                                LOG_INFO("Game — saving PGN...");
+                                save_current_game(&client->game_state);
                                 break;
                             case '4':
                             case 'q':

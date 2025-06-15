@@ -1,5 +1,4 @@
 #include "game_state.h"
-
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
@@ -9,6 +8,9 @@
 #include "piece.h"
 #include "types.h"
 #include "utils.h"  // clear_board, fen_parse 함수를 위해 추가
+
+game_state_t *g_game_state = NULL;
+#define CURRENT_STATE  (g_game_state)
 
 // piece_table 외부 선언 (common/piece.c에 정의됨)
 extern piece_t *piece_table[2][6];
@@ -38,6 +40,12 @@ void init_game_state(game_state_t *state) {
     // 이동 가능 위치 배열 초기화
     memset(state->possible_moves, false, sizeof(state->possible_moves));
     memset(state->capture_moves, false, sizeof(state->capture_moves));
+
+    // PGN 관련 초기화
+    state->pgn_move_count = 0;
+    state->pgn_result[0]  = '\0';
+
+    g_game_state = state;
 }
 
 void init_game(game_t *game) {
@@ -195,5 +203,14 @@ bool apply_move_from_server(game_t *game, const char *from, const char *to) {
               to_x, to_y, (void *)dst_xy->piece, dst_xy->is_dead);
     LOG_DEBUG("=== MOVE DEBUG END ===");
 
+    // PGN move 기록
+    if (CURRENT_STATE && CURRENT_STATE->pgn_move_count < MAX_PGN_MOVES) {
+        char *buf = CURRENT_STATE->pgn_moves[ CURRENT_STATE->pgn_move_count++ ];
+        buf[0] = from[0];
+        buf[1] = from[1];
+        buf[2] = to[0];
+        buf[3] = to[1];
+        buf[4] = '\0';
+    }
     return true;
 }

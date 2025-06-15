@@ -1,9 +1,15 @@
 {
-    "editor.formatOnSave": true,
-    "files.associations": {
-        "system_error": "c",
-        "ui.h": "c",
-        "string.h": "c",
-        "handlers.h": "c"
-    }
+  "editor.formatOnSave": true,
+  "files.associations": {
+    "*.dbclient-js": "javascript",
+    "system_error": "c",
+    "ui.h": "c",
+    "string.h": "c",
+    "handlers.h": "c",
+    "replay_menu.h": "c",
+    "game_save.h": "c",
+    "piece.h": "c",
+    "logger.h": "c",
+    "game_state.h": "c"
+  }
 }

@@ -1,5 +1,13 @@
 add_executable(client
     main.c
+    game_save.c
+    game_save.h
+    replay.c
+    replay.h
+    replay_menu.c
+    replay_menu.h
+    pgn_save.c
+    pgn_save.h
     game_state.c
     client_state.c
     client_network.c

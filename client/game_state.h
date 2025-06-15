@@ -12,6 +12,10 @@
 #define MAX_CHAT_MESSAGES  50
 #define MAX_MESSAGE_LENGTH 256
 
+#define MAX_PGN_MOVES   512
+#define MAX_COORD_STR     6
+#define MAX_RESULT_STR    8
+
 // 채팅 메시지 구조체
 typedef struct
 {
@@ -45,7 +49,13 @@ typedef struct
     // 체크 상태 정보
     bool white_in_check;
     bool black_in_check;
+
+    char           pgn_moves[MAX_PGN_MOVES][MAX_COORD_STR];
+    int            pgn_move_count;
+    char           pgn_result[MAX_RESULT_STR];
 } game_state_t;
+
+extern game_state_t *g_game_state;
 
 // 함수 선언
 void init_game_state(game_state_t *state);
