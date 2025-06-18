@@ -278,7 +278,7 @@ Protocol Buffers(protobuf)는 Google에서 개발한 데이터 직렬화 형식�
 
 ### 메시지 스펙 정의
 
-[메시지 스펙 정의 보기](common/protocol.md)
+[메시지 스펙 정의 보기](common/PROTOCOL.md)
 
 ### 디렉토리 구조
 
