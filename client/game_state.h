@@ -34,6 +34,7 @@ typedef struct
     time_t         game_start_time;
     int            white_time_remaining;  // 초 단위
     int            black_time_remaining;  // 초 단위
+    
 
     // 이동 가능 위치 표시 (UI용)
     bool possible_moves[BOARD_SIZE][BOARD_SIZE];  // 이동 가능한 위치 표시

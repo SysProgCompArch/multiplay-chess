@@ -21,6 +21,8 @@ int handle_chat_message(int fd, ClientMessage *req);
 
 // 나중에 추가될 핸들러들
 int handle_move_message(int fd, ClientMessage *req);
+int handle_timeout_message(int fd, ClientMessage *msg);
+
 // int handle_resign_message(int fd, ClientMessage *req);
 
 #endif  // HANDLERS_H

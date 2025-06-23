@@ -14,6 +14,7 @@
 #include "handlers/handlers.h"
 #include "handlers/match_manager.h"
 #include "logger.h"
+#include "../../common/generated/message.pb-c.h"
 #include "network.h"
 
 // 에러 응답을 보내는 헬퍼 함수
@@ -214,4 +215,50 @@ void handle_client_message(int fd, int epfd) {
     }
 
     client_message__free_unpacked(msg, NULL);
+}
+
+// 게임 종료 메시지를 양 플레이어에게 전송
+
+void broadcast_game_end(ActiveGame *game,
+                        GameEndType     type,
+                        const char     *message_text) {
+    ServerMessage      srv_msg   = SERVER_MESSAGE__INIT;
+    GameEndBroadcast   end_bcast = GAME_END_BROADCAST__INIT;
+
+    // 1) 게임 ID 설정
+    end_bcast.game_id = game->game_id;
+
+    // 2) 종료를 발생시킨 플레이어 설정
+    const char *player = (type == GAME_END_TYPE__GAME_END_TIMEOUT
+                          ? ((game->white_player_fd == -1)
+                              ? game->black_player_id
+                              : game->white_player_id)
+                          : /* 기타 로직에 따라 */ game->black_player_id);
+    end_bcast.player_id = (char *)player;
+
+    // 3) 승리 팀 설정 (무승부일 땐 TEAM_UNSPECIFIED)
+    end_bcast.winner_team = /* ActiveGame에서 계산한 승리 팀 */
+    
+    // 4) 종료 유형
+    end_bcast.end_type = type;
+
+    // 5) 타임스탬프 (원한다면 생성; 기본 NULL이면 생략됨)
+    end_bcast.timestamp = NULL;
+
+    // 메시지 조립
+    srv_msg.msg_case = SERVER_MESSAGE__MSG_GAME_END;
+    srv_msg.game_end = &end_bcast;
+
+    // 각 플레이어에게 전송
+    if (send_server_message(game->white_player_fd, &srv_msg) < 0) {
+        LOG_ERROR("Failed to send GAME_END to fd=%d", game->white_player_fd);
+    }
+    if (send_server_message(game->black_player_fd, &srv_msg) < 0) {
+        LOG_ERROR("Failed to send GAME_END to fd=%d", game->black_player_fd);
+    }
+
+    LOG_INFO("Broadcasted GAME_END (‘%s’) to %s and %s",
+             message_text,
+             game->white_player_id,
+             game->black_player_id);
 }

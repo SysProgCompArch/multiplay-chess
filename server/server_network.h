@@ -2,11 +2,16 @@
 #define NETWORK_H
 
 #include <sys/epoll.h>
+#include "../../common/generated/message.pb-c.h"  // GameEndType 정의
+#include "handlers/match_manager.h"               // ActiveGame 정의
 
 #define DEFAULT_PORT 8080
 #define MAX_EVENTS   1024
 #define BACKLOG      10
-
+// 게임 종료 브로드캐스트
+void broadcast_game_end(ActiveGame *game,
+                        GameEndType      type,
+                        const char     *message);
 // 네트워크 관련 함수들
 int  set_nonblocking(int fd);
 int  parse_port_from_args(int argc, char *argv[]);

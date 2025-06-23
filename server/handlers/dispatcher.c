@@ -22,6 +22,10 @@ int dispatch_client_message(int fd, ClientMessage *msg) {
             LOG_DEBUG("Handling ECHO message from fd=%d", fd);
             return handle_echo_message(fd, msg);
 
+        case CLIENT_MESSAGE__MSG_TIMEOUT:
+            LOG_DEBUG("Handling TIMEOUT message from fd=%d", fd);
+            return handle_timeout_message(fd, msg);   
+
         case CLIENT_MESSAGE__MSG_MATCH_GAME:
             LOG_DEBUG("Handling MATCH_GAME message from fd=%d", fd);
             return handle_match_game_message(fd, msg);

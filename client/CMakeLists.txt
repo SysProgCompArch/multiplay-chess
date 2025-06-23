@@ -5,6 +5,7 @@ add_executable(client
     client_network.c
     pgn.c
     replay.c
+    timer.c
     ui/core.c
     ui/screens.c
     ui/main_screen.c

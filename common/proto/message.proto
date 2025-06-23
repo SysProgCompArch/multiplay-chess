@@ -41,6 +41,11 @@ enum GameEndType {
   GAME_END_TIMEOUT    = 6;  // 시간 초과로 인한 종료
 }
 
+// 클라이언트→서버: 시간초과 알림 (빈 메시지)
+message TimeoutRequest {
+  // 필드 없음
+}
+
 // ===================================================================
 // 클라이언트 → 서버 요청 메시지 (ClientMessage)
 // ===================================================================
@@ -56,6 +61,7 @@ message ClientMessage {
     MoveRequest      move       = 21;
     ResignRequest    resign     = 22;
     ChatRequest      chat       = 23;
+    TimeoutRequest   timeout    = 24;
   }
 }
 
@@ -183,7 +189,7 @@ message GameEndBroadcast {
 // 채팅 메시지 브로드캐스트
 message ChatBroadcast {
   string                    player_id = 1;
-  string                    message   = 2;
+  string                    message   = 2; 	
   google.protobuf.Timestamp timestamp = 3;
 }
 

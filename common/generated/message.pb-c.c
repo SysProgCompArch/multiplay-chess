@@ -7,6 +7,51 @@
 #endif
 
 #include "message.pb-c.h"
+void   timeout_request__init
+                     (TimeoutRequest         *message)
+{
+  static const TimeoutRequest init_value = TIMEOUT_REQUEST__INIT;
+  *message = init_value;
+}
+size_t timeout_request__get_packed_size
+                     (const TimeoutRequest *message)
+{
+  assert(message->base.descriptor == &timeout_request__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t timeout_request__pack
+                     (const TimeoutRequest *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &timeout_request__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t timeout_request__pack_to_buffer
+                     (const TimeoutRequest *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &timeout_request__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+TimeoutRequest *
+       timeout_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (TimeoutRequest *)
+     protobuf_c_message_unpack (&timeout_request__descriptor,
+                                allocator, len, data);
+}
+void   timeout_request__free_unpacked
+                     (TimeoutRequest *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &timeout_request__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 void   client_message__init
                      (ClientMessage         *message)
 {
@@ -772,7 +817,25 @@ void   error_response__free_unpacked
   assert(message->base.descriptor == &error_response__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-static const ProtobufCFieldDescriptor client_message__field_descriptors[7] =
+#define timeout_request__field_descriptors NULL
+#define timeout_request__field_indices_by_name NULL
+#define timeout_request__number_ranges NULL
+const ProtobufCMessageDescriptor timeout_request__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "TimeoutRequest",
+  "TimeoutRequest",
+  "TimeoutRequest",
+  "",
+  sizeof(TimeoutRequest),
+  0,
+  timeout_request__field_descriptors,
+  timeout_request__field_indices_by_name,
+  0,  timeout_request__number_ranges,
+  (ProtobufCMessageInit) timeout_request__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor client_message__field_descriptors[8] =
 {
   {
     "version",
@@ -858,6 +921,18 @@ static const ProtobufCFieldDescriptor client_message__field_descriptors[7] =
     0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "timeout",
+    24,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(ClientMessage, msg_case),
+    offsetof(ClientMessage, timeout),
+    &timeout_request__descriptor,
+    NULL,
+    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned client_message__field_indices_by_name[] = {
   6,   /* field[6] = chat */
@@ -866,6 +941,7 @@ static const unsigned client_message__field_indices_by_name[] = {
   4,   /* field[4] = move */
   1,   /* field[1] = ping */
   5,   /* field[5] = resign */
+  7,   /* field[7] = timeout */
   0,   /* field[0] = version */
 };
 static const ProtobufCIntRange client_message__number_ranges[3 + 1] =
@@ -873,7 +949,7 @@ static const ProtobufCIntRange client_message__number_ranges[3 + 1] =
   { 1, 0 },
   { 10, 1 },
   { 20, 3 },
-  { 0, 7 }
+  { 0, 8 }
 };
 const ProtobufCMessageDescriptor client_message__descriptor =
 {
@@ -883,7 +959,7 @@ const ProtobufCMessageDescriptor client_message__descriptor =
   "ClientMessage",
   "",
   sizeof(ClientMessage),
-  7,
+  8,
   client_message__field_descriptors,
   client_message__field_indices_by_name,
   3,  client_message__number_ranges,

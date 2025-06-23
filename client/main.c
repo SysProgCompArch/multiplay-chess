@@ -12,6 +12,7 @@
 #include "logger.h"
 #include "ui/ui.h"
 #include "replay.h"
+#include "timer.h"
 
 // 터미널 크기 변경 플래그
 volatile sig_atomic_t terminal_resized = 0;
@@ -508,7 +509,9 @@ int main(int argc, char *argv[]) {
             refresh();
 
             if (periodic_update_needed) {
+                update_player_timers();
                 last_update_time = current_time;
+                draw_current_screen();
             }
         }
 
