@@ -109,8 +109,11 @@ void draw_current_screen() {
     // 이전 화면 상태와 비교를 위한 정적 변수
     static screen_state_t last_drawn_screen = SCREEN_MAIN;
 
+    // 화면 상태가 변경되었는지 확인
+    bool screen_changed = (current_screen != last_drawn_screen);
+
     // 화면 상태가 변경되었을 때만 전체 화면 지우기
-    if (current_screen != last_drawn_screen) {
+    if (screen_changed) {
         clear();  // 화면 전환 시에만 전체 화면 지우기
         last_drawn_screen = current_screen;
         LOG_DEBUG("Screen transition detected, clearing display");

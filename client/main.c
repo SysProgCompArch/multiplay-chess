@@ -324,12 +324,10 @@ int main(int argc, char *argv[]) {
                     LOG_INFO("User acknowledged dialog, returned to main screen");
                 }
 
-                // 화면을 초기화하고 즉시 메인 화면 그리기
-                clear();
                 draw_current_screen();
                 pthread_mutex_unlock(&screen_mutex);
-                refresh();                   // 화면 즉시 갱신
-                need_screen_update = false;  // 이미 화면을 업데이트했으므로 플래그 끄기
+
+                refresh();  // 화면 즉시 갱신
             }
         } else if (ch != ERR && !dialog_active) {
             // LOG_DEBUG("Input received: %d", ch);
