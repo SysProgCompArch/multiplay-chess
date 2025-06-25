@@ -16,8 +16,9 @@ bool coord_to_board_pos(int screen_x, int screen_y, int *board_x, int *board_y) 
     }
 
     // 보드 윈도우 시작 위치 (draw_game_screen에서 newwin 위치)
+    // draw_game_screen()에서: board_start_y = 1 + player_info_height (1) = 2
     int board_win_start_x = 2;
-    int board_win_start_y = 1;
+    int board_win_start_y = 2;  // 상대방 정보창(y=1) 다음에 체스판이 위치
 
     // 윈도우 내에서의 상대 좌표 계산
     int rel_x = screen_x - board_win_start_x;
