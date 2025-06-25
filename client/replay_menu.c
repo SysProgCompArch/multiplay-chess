@@ -13,7 +13,8 @@
 
 void replay_menu(void) {
     LOG_INFO("replay_menu(): entered");
-
+    clear();
+    refresh();
     // replays 디렉터리 없으면 생성 (존재하면 EEXIST 무시)
     if (mkdir("replays", 0755) && errno != EEXIST) {
         LOG_ERROR("replay_menu(): mkdir replays failed: %s", strerror(errno));
