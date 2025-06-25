@@ -5,19 +5,19 @@
     <img src="images/tux-playing-chess.png" alt="Logo" width="80" height="80">
   </a>
 
-  <h3 align="center">Multiplayer Chess</h3>
+  <h3 align="center">TUI 기반 멀티플레이 체스 게임</h3>
 
   <p align="center">
-    2025-1 시스템프로그래밍 001분반 1팀 팀프로젝트
+    Multiplayer Chess Game - 2025-1 시스템프로그래밍 001분반 1팀 팀프로젝트
   </p>
 </div>
 
 ## 📌 프로젝트 개요
 
-Linux에서 C로 구현된 터미널 기반 멀티플레이어 체스 게임입니다. 컴파일하는 동안 가벼운 체스 게임을 즐기고 싶은 개발자를 위해 설계되었습니다 — GUI 오버헤드 없이 순수한 CLI의 매력을 경험하세요.
+Linux에서 C로 구현된 터미널 기반 멀티플레이어 체스 게임입니다. 컴파일하는 동안 (합법적으로) 가벼운 체스 게임을 즐기고 싶은 개발자를 위해 설계되었습니다 — GUI 오버헤드 없이 순수한 CLI의 매력을 경험하세요!
 
-- **프로젝트명**: TUI 기반 멀티플레이 체스 게임
-- **사용 기술**: C, pthread, socket, ncurses, JSON, CMake, Docker
+- 전체 코드 라인 수(C언어): 6,108라인
+- 클라이언트 3,345라인, 서버 1,300라인, 공통 코드 773라인
 
 ## 🎮 주요 기능
 
