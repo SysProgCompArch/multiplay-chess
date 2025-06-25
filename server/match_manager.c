@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "config.h"
 #include "logger.h"
 #include "network.h"
 #include "utils.h"  // 체스판 초기화를 위해 추가
@@ -94,10 +95,10 @@ MatchResult add_player_to_matching(int fd, const char *player_id) {
                     // 체스판 초기화 (표준 시작 위치)
                     init_startpos(&game->game_state);
 
-                    // 타이머 설정 (기본 10분 = 600초)
-                    game->time_limit_per_player = 600;  // 10분
-                    game->white_time_remaining  = 600;
-                    game->black_time_remaining  = 600;
+                    // 타이머 설정
+                    game->time_limit_per_player = DEFAULT_GAME_TIME_LIMIT;
+                    game->white_time_remaining  = DEFAULT_GAME_TIME_LIMIT;
+                    game->black_time_remaining  = DEFAULT_GAME_TIME_LIMIT;
                     game->last_move_time        = game->game_start_time;
 
                     if (current_is_white) {

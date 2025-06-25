@@ -109,18 +109,6 @@ void handle_board_click(int board_x, int board_y) {
             // 현재 플레이어의 기물인지 확인
             team_t piece_team = piece->team;
 
-            // 좌표 확인 메시지 (간단하게)
-            char coord_msg[64];
-            snprintf(coord_msg, sizeof(coord_msg), "Selected: %c%d (board[%d][%d])",
-                     'a' + board_x, board_y + 1, board_y, board_x);
-
-            // 뮤텍스 잠금을 해제한 후 채팅 메시지 추가 (데드락 방지)
-            pthread_mutex_unlock(&screen_mutex);
-            add_chat_message_safe("System", coord_msg);
-
-            // 뮤텍스 다시 잠금
-            pthread_mutex_lock(&screen_mutex);
-
             // 현재 턴인지 확인
             if (game->side_to_move != client->game_state.local_team) {
                 char turn_msg[128];
@@ -184,10 +172,6 @@ void handle_board_click(int board_x, int board_y) {
 
             // 서버로 이동 요청 전송
             if (send_move_request(from_coord, to_coord) == 0) {
-                char move_msg[64];
-                snprintf(move_msg, sizeof(move_msg), "Move request sent: %s -> %s", from_coord, to_coord);
-                add_chat_message_safe("System", move_msg);
-
                 // 뮤텍스 다시 잠금하여 상태 변경
                 pthread_mutex_lock(&screen_mutex);
                 client->piece_selected = false;
@@ -221,12 +205,6 @@ void handle_mouse_input(MEVENT *event) {
         if (client->current_screen == SCREEN_GAME) {
             int board_x, board_y;
             if (coord_to_board_pos(event->x, event->y, &board_x, &board_y)) {
-                // 마우스 좌표 변환 디버그
-                char mouse_debug[256];
-                snprintf(mouse_debug, sizeof(mouse_debug), "마우스 클릭: 화면(%d,%d) -> 보드(%d,%d)",
-                         event->x, event->y, board_x, board_y);
-                add_chat_message_safe("System", mouse_debug);
-
                 handle_board_click(board_x, board_y);
             }
         }
@@ -409,9 +387,6 @@ bool handle_chess_notation(const char *notation) {
             to_coord[2]   = '\0';
 
             if (send_move_request(from_coord, to_coord) == 0) {
-                char move_msg[64];
-                snprintf(move_msg, sizeof(move_msg), "Move request sent: %s", notation);
-                add_chat_message_safe("System", move_msg);
                 return true;
             } else {
                 add_chat_message_safe("System", "Failed to send move request.");

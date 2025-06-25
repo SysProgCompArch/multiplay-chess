@@ -53,24 +53,11 @@ int handle_move_response(ServerMessage *msg) {
              result->message ? result->message : "");
 
     if (result->success) {
-        // 성공적인 이동
-        char chat_msg[256];
-        snprintf(chat_msg, sizeof(chat_msg), "Move successful: %s",
-                 result->message ? result->message : "");
-        add_chat_message_safe("System", chat_msg);
-
-        // TODO: 게임 상태 업데이트 (FEN 파싱 등)
-        if (result->updated_fen) {
-            LOG_DEBUG("Updated FEN: %s", result->updated_fen);
-        }
-
         // 화면 업데이트 요청
         client_state_t *client = get_client_state();
         pthread_mutex_lock(&screen_mutex);
         client->screen_update_requested = true;
         pthread_mutex_unlock(&screen_mutex);
-
-        // UI는 자동으로 새로고침됩니다
 
     } else {
         // 실패한 이동

@@ -4,6 +4,7 @@
 #include <time.h>
 
 #include "../client_state.h"
+#include "../config.h"
 #include "../game_state.h"
 #include "handlers.h"
 #include "logger.h"
@@ -20,7 +21,6 @@ int handle_match_game_response(ServerMessage *msg) {
                 // 아직 매칭 대기 중
                 LOG_INFO("Added to matchmaking queue. Game ID: %s",
                          msg->match_game_res->game_id ? msg->match_game_res->game_id : "unknown");
-                add_chat_message_safe("System", "Waiting for opponent...");
             } else {
                 // 매칭 성공! 게임 시작
                 LOG_INFO("Match found! Game ID: %s, Assigned team: %s",
@@ -72,9 +72,9 @@ int handle_match_game_response(ServerMessage *msg) {
                              client->game_state.black_time_remaining);
                 } else {
                     // 기본값 (10분)
-                    client->game_state.white_time_remaining = 600;
-                    client->game_state.black_time_remaining = 600;
-                    LOG_INFO("Timer initialized with default values: 600 seconds each");
+                    client->game_state.white_time_remaining = DEFAULT_GAME_TIME_LIMIT;
+                    client->game_state.black_time_remaining = DEFAULT_GAME_TIME_LIMIT;
+                    LOG_INFO("Timer initialized with default values: %d seconds each", DEFAULT_GAME_TIME_LIMIT);
                 }
 
                 // 게임 시작 시간 설정 (서버에서 받은 시간이 있으면 사용)

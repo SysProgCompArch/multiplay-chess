@@ -6,6 +6,7 @@
 #include <string.h>
 #include <time.h>
 
+#include "config.h"
 #include "logger.h"  // LOG_DEBUG 함수를 위해 추가
 #include "piece.h"
 #include "types.h"
@@ -31,14 +32,14 @@ void init_game_state(game_state_t *state) {
     state->local_team            = TEAM_WHITE;
     state->game_in_progress      = false;
     state->game_start_time       = 0;
-    state->white_time_remaining  = 600;  // 10분
-    state->black_time_remaining  = 600;  // 10분
+    state->white_time_remaining  = DEFAULT_GAME_TIME_LIMIT;  // 10분
+    state->black_time_remaining  = DEFAULT_GAME_TIME_LIMIT;  // 10분
     state->opponent_disconnected = false;
 
     // 실시간 타이머 필드 초기화
     state->last_timer_update       = 0;
-    state->white_time_at_last_sync = 600;
-    state->black_time_at_last_sync = 600;
+    state->white_time_at_last_sync = DEFAULT_GAME_TIME_LIMIT;
+    state->black_time_at_last_sync = DEFAULT_GAME_TIME_LIMIT;
 
     // 체크 상태 초기화
     state->white_in_check = false;
