@@ -138,19 +138,38 @@ void draw_chess_board(WINDOW *board_win) {
             bool is_possible_move = client->game_state.possible_moves[actual_row][actual_col];
             bool is_capture_move  = client->game_state.capture_moves[actual_row][actual_col];
 
-            // 체크 상태 킹 확인 (실제 좌표 사용)
-            bool          is_check_king = false;
-            piecestate_t *piece         = &game->board[actual_row][actual_col];
+            // 체크메이트/체크 상태 킹 확인 (실제 좌표 사용)
+            bool          is_check_king     = false;
+            bool          is_checkmate_king = false;
+            piecestate_t *piece             = &game->board[actual_row][actual_col];
             if (piece->piece && !piece->is_dead && piece->piece->type == PIECE_KING) {
-                if ((piece->team == TEAM_WHITE && client->game_state.white_in_check) ||
-                    (piece->team == TEAM_BLACK && client->game_state.black_in_check)) {
-                    is_check_king = true;
+                // rule.h의 함수들을 직접 사용해서 체크/체크메이트 상태 확인
+                bool white_in_check    = is_in_check(game, TEAM_WHITE);
+                bool black_in_check    = is_in_check(game, TEAM_BLACK);
+                bool is_game_checkmate = is_checkmate(game);
+
+                // 체크메이트 상황에서 체크메이트당한 킹 확인
+                if (is_game_checkmate) {
+                    // 체크메이트는 현재 차례인 팀이 당한 것이므로
+                    if ((piece->team == game->side_to_move && white_in_check && piece->team == TEAM_WHITE) ||
+                        (piece->team == game->side_to_move && black_in_check && piece->team == TEAM_BLACK)) {
+                        is_checkmate_king = true;
+                    }
+                } else {
+                    // 일반 체크 상황
+                    if ((piece->team == TEAM_WHITE && white_in_check) ||
+                        (piece->team == TEAM_BLACK && black_in_check)) {
+                        is_check_king = true;
+                    }
                 }
             }
 
-            // 색상 (우선순위: 선택됨 > 체크킹 > 커서 > 캡처 > 이동가능 > 기본)
+            // 색상 (우선순위: 선택됨 > 체크메이트킹 > 체크킹 > 커서 > 캡처 > 이동가능 > 기본)
             if (is_selected) {
                 wattron(board_win, COLOR_PAIR(COLOR_PAIR_SELECTED_SQUARE));
+            } else if (is_checkmate_king) {
+                wattron(board_win, COLOR_PAIR(COLOR_PAIR_CHECK_KING));
+                wattron(board_win, A_BLINK);  // 체크메이트 킹은 깜빡이게 표시
             } else if (is_check_king) {
                 wattron(board_win, COLOR_PAIR(COLOR_PAIR_CHECK_KING));
             } else if (is_cursor) {
@@ -193,6 +212,9 @@ void draw_chess_board(WINDOW *board_win) {
             // 색상 해제
             if (is_selected) {
                 wattroff(board_win, COLOR_PAIR(COLOR_PAIR_SELECTED_SQUARE));
+            } else if (is_checkmate_king) {
+                wattroff(board_win, A_BLINK);  // 깜빡임 해제
+                wattroff(board_win, COLOR_PAIR(COLOR_PAIR_CHECK_KING));
             } else if (is_check_king) {
                 wattroff(board_win, COLOR_PAIR(COLOR_PAIR_CHECK_KING));
             } else if (is_cursor) {
