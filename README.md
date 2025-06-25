@@ -19,6 +19,14 @@ Linux에서 C로 구현된 터미널 기반 멀티플레이어 체스 게임입�
 - 전체 코드 라인 수(C언어): 6,108라인
 - 클라이언트 3,345라인, 서버 1,300라인, 공통 코드 773라인
 
+## 팀원 정보
+
+| [<img src="https://github.com/LAPLACE4A.png" width="150">](https://github.com/LAPLACE4A) | [<img src="https://github.com/moongi05.png" width="150">](https://github.com/moongi05) | [<img src="https://github.com/ArpaAP.png" width="150">](https://github.com/ArpaAP) |
+| :--------------: | :--------------: | :--------------: |
+| **[권영준](https://github.com/LAPLACE4A)** | **[김문기](https://github.com/moongi05)** |  **[황부연](https://github.com/ArpaAP)** |
+|    체스 룰, 기물 정의, PGN 파서 등 구현    |   UI 구현, 리플레이 구현   |   PM, 프로젝트 세팅, UI/서버/통신 구현     |
+
+
 ## 🎮 주요 기능
 
 ### 🧑 사용자 및 매치메이킹
