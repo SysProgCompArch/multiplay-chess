@@ -50,12 +50,13 @@ message ClientMessage {
   ProtocolVersion version = 1;  // (optional) 프로토콜 버전
 
   oneof msg {
-    PingRequest      ping       = 10;
-    EchoRequest      echo       = 11;
-    MatchGameRequest match_game = 20;
-    MoveRequest      move       = 21;
-    ResignRequest    resign     = 22;
-    ChatRequest      chat       = 23;
+    PingRequest        ping         = 10;
+    EchoRequest        echo         = 11;
+    MatchGameRequest   match_game   = 20;
+    CancelMatchRequest cancel_match = 21;
+    MoveRequest        move         = 22;
+    ResignRequest      resign       = 23;
+    ChatRequest        chat         = 24;
   }
 }
 
@@ -73,6 +74,11 @@ message MatchGameRequest {
   string desired_game_id = 2;
   // 만약 신규 게임을 원하면 빈 문자열("")을 보낼 수도 있고,
   // 이미 생성된 특정 게임에 참가할 때는 game_id를 지정합니다.
+}
+
+// 매칭 취소 요청
+message CancelMatchRequest {
+  string player_id = 1;  // 매칭을 취소하려는 플레이어 ID
 }
 
 // 기물 이동 요청
@@ -103,17 +109,18 @@ message ServerMessage {
   ProtocolVersion version = 1;  // 프로토콜 버전
 
   oneof msg {
-    PingResponse      ping_res         = 10;
-    EchoResponse      echo_res         = 11;
-    MatchGameResponse match_game_res   = 20;
-    MoveResponse      move_res         = 21;
-    MoveBroadcast     move_broadcast   = 22;
-    CheckBroadcast    check_broadcast  = 23;
-    GameEndBroadcast  game_end         = 24;
-    ChatBroadcast     chat_broadcast   = 25;
-    ResignResponse    resign_res       = 26;
-    ResignBroadcast   resign_broadcast = 27;
-    ErrorResponse     error            = 99;
+    PingResponse        ping_res         = 10;
+    EchoResponse        echo_res         = 11;
+    MatchGameResponse   match_game_res   = 20;
+    CancelMatchResponse cancel_match_res = 21;
+    MoveResponse        move_res         = 22;
+    MoveBroadcast       move_broadcast   = 23;
+    CheckBroadcast      check_broadcast  = 24;
+    GameEndBroadcast    game_end         = 25;
+    ChatBroadcast       chat_broadcast   = 26;
+    ResignResponse      resign_res       = 27;
+    ResignBroadcast     resign_broadcast = 28;
+    ErrorResponse       error            = 99;
     // 그 외 새 기능 추가 시 확장 가능
   }
 }
@@ -141,6 +148,13 @@ message MatchGameResponse {
   google.protobuf.Timestamp game_start_time       = 7;  // 게임 시작 시간
   int32                     white_time_remaining  = 8;  // 백 팀 남은 시간 (초)
   int32                     black_time_remaining  = 9;  // 흑 팀 남은 시간 (초)
+}
+
+// 매칭 취소 요청에 대한 응답
+message CancelMatchResponse {
+  string player_id = 1;  // 취소 요청한 플레이어 ID
+  bool   success   = 2;  // 취소 성공 여부
+  string message   = 3;  // 실패 시 이유 등
 }
 
 // 기권 요청에 대한 응답

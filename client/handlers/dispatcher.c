@@ -23,6 +23,9 @@ int dispatch_server_message(ServerMessage *msg) {
         case SERVER_MESSAGE__MSG_MATCH_GAME_RES:
             return handle_match_game_response(msg);
 
+        case SERVER_MESSAGE__MSG_CANCEL_MATCH_RES:
+            return handle_cancel_match_response(msg);
+
         case SERVER_MESSAGE__MSG_CHAT_BROADCAST:
             return handle_chat_broadcast(msg);
 

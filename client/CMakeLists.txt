@@ -22,6 +22,7 @@ add_executable(client
     handlers/ping.c
     handlers/echo.c
     handlers/match.c
+    handlers/cancel_match.c
     handlers/chat.c
     handlers/error.c
     handlers/disconnect.c

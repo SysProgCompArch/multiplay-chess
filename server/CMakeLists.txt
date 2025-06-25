@@ -6,6 +6,7 @@ add_executable(server
     handlers/ping.c
     handlers/echo.c
     handlers/match.c
+    handlers/cancel_match.c
     handlers/chat.c
     handlers/move.c
     handlers/resign.c

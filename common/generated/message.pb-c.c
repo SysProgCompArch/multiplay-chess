@@ -187,6 +187,51 @@ void   match_game_request__free_unpacked
   assert(message->base.descriptor == &match_game_request__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
+void   cancel_match_request__init
+                     (CancelMatchRequest         *message)
+{
+  static const CancelMatchRequest init_value = CANCEL_MATCH_REQUEST__INIT;
+  *message = init_value;
+}
+size_t cancel_match_request__get_packed_size
+                     (const CancelMatchRequest *message)
+{
+  assert(message->base.descriptor == &cancel_match_request__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t cancel_match_request__pack
+                     (const CancelMatchRequest *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &cancel_match_request__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t cancel_match_request__pack_to_buffer
+                     (const CancelMatchRequest *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &cancel_match_request__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+CancelMatchRequest *
+       cancel_match_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (CancelMatchRequest *)
+     protobuf_c_message_unpack (&cancel_match_request__descriptor,
+                                allocator, len, data);
+}
+void   cancel_match_request__free_unpacked
+                     (CancelMatchRequest *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &cancel_match_request__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
 void   move_request__init
                      (MoveRequest         *message)
 {
@@ -500,6 +545,51 @@ void   match_game_response__free_unpacked
   if(!message)
     return;
   assert(message->base.descriptor == &match_game_response__descriptor);
+  protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
+}
+void   cancel_match_response__init
+                     (CancelMatchResponse         *message)
+{
+  static const CancelMatchResponse init_value = CANCEL_MATCH_RESPONSE__INIT;
+  *message = init_value;
+}
+size_t cancel_match_response__get_packed_size
+                     (const CancelMatchResponse *message)
+{
+  assert(message->base.descriptor == &cancel_match_response__descriptor);
+  return protobuf_c_message_get_packed_size ((const ProtobufCMessage*)(message));
+}
+size_t cancel_match_response__pack
+                     (const CancelMatchResponse *message,
+                      uint8_t       *out)
+{
+  assert(message->base.descriptor == &cancel_match_response__descriptor);
+  return protobuf_c_message_pack ((const ProtobufCMessage*)message, out);
+}
+size_t cancel_match_response__pack_to_buffer
+                     (const CancelMatchResponse *message,
+                      ProtobufCBuffer *buffer)
+{
+  assert(message->base.descriptor == &cancel_match_response__descriptor);
+  return protobuf_c_message_pack_to_buffer ((const ProtobufCMessage*)message, buffer);
+}
+CancelMatchResponse *
+       cancel_match_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data)
+{
+  return (CancelMatchResponse *)
+     protobuf_c_message_unpack (&cancel_match_response__descriptor,
+                                allocator, len, data);
+}
+void   cancel_match_response__free_unpacked
+                     (CancelMatchResponse *message,
+                      ProtobufCAllocator *allocator)
+{
+  if(!message)
+    return;
+  assert(message->base.descriptor == &cancel_match_response__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 void   resign_response__init
@@ -862,7 +952,7 @@ void   error_response__free_unpacked
   assert(message->base.descriptor == &error_response__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
-static const ProtobufCFieldDescriptor client_message__field_descriptors[7] =
+static const ProtobufCFieldDescriptor client_message__field_descriptors[8] =
 {
   {
     "version",
@@ -913,8 +1003,20 @@ static const ProtobufCFieldDescriptor client_message__field_descriptors[7] =
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "move",
+    "cancel_match",
     21,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(ClientMessage, msg_case),
+    offsetof(ClientMessage, cancel_match),
+    &cancel_match_request__descriptor,
+    NULL,
+    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "move",
+    22,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(ClientMessage, msg_case),
@@ -926,7 +1028,7 @@ static const ProtobufCFieldDescriptor client_message__field_descriptors[7] =
   },
   {
     "resign",
-    22,
+    23,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(ClientMessage, msg_case),
@@ -938,7 +1040,7 @@ static const ProtobufCFieldDescriptor client_message__field_descriptors[7] =
   },
   {
     "chat",
-    23,
+    24,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(ClientMessage, msg_case),
@@ -950,12 +1052,13 @@ static const ProtobufCFieldDescriptor client_message__field_descriptors[7] =
   },
 };
 static const unsigned client_message__field_indices_by_name[] = {
-  6,   /* field[6] = chat */
+  4,   /* field[4] = cancel_match */
+  7,   /* field[7] = chat */
   2,   /* field[2] = echo */
   3,   /* field[3] = match_game */
-  4,   /* field[4] = move */
+  5,   /* field[5] = move */
   1,   /* field[1] = ping */
-  5,   /* field[5] = resign */
+  6,   /* field[6] = resign */
   0,   /* field[0] = version */
 };
 static const ProtobufCIntRange client_message__number_ranges[3 + 1] =
@@ -963,7 +1066,7 @@ static const ProtobufCIntRange client_message__number_ranges[3 + 1] =
   { 1, 0 },
   { 10, 1 },
   { 20, 3 },
-  { 0, 7 }
+  { 0, 8 }
 };
 const ProtobufCMessageDescriptor client_message__descriptor =
 {
@@ -973,7 +1076,7 @@ const ProtobufCMessageDescriptor client_message__descriptor =
   "ClientMessage",
   "",
   sizeof(ClientMessage),
-  7,
+  8,
   client_message__field_descriptors,
   client_message__field_indices_by_name,
   3,  client_message__number_ranges,
@@ -1105,6 +1208,44 @@ const ProtobufCMessageDescriptor match_game_request__descriptor =
   match_game_request__field_indices_by_name,
   1,  match_game_request__number_ranges,
   (ProtobufCMessageInit) match_game_request__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor cancel_match_request__field_descriptors[1] =
+{
+  {
+    "player_id",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(CancelMatchRequest, player_id),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned cancel_match_request__field_indices_by_name[] = {
+  0,   /* field[0] = player_id */
+};
+static const ProtobufCIntRange cancel_match_request__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 1 }
+};
+const ProtobufCMessageDescriptor cancel_match_request__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "CancelMatchRequest",
+  "CancelMatchRequest",
+  "CancelMatchRequest",
+  "",
+  sizeof(CancelMatchRequest),
+  1,
+  cancel_match_request__field_descriptors,
+  cancel_match_request__field_indices_by_name,
+  1,  cancel_match_request__number_ranges,
+  (ProtobufCMessageInit) cancel_match_request__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
 static const ProtobufCFieldDescriptor move_request__field_descriptors[3] =
@@ -1260,7 +1401,7 @@ const ProtobufCMessageDescriptor chat_request__descriptor =
   (ProtobufCMessageInit) chat_request__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor server_message__field_descriptors[12] =
+static const ProtobufCFieldDescriptor server_message__field_descriptors[13] =
 {
   {
     "version",
@@ -1311,8 +1452,20 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[12] =
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
   {
-    "move_res",
+    "cancel_match_res",
     21,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    offsetof(ServerMessage, msg_case),
+    offsetof(ServerMessage, cancel_match_res),
+    &cancel_match_response__descriptor,
+    NULL,
+    0 | PROTOBUF_C_FIELD_FLAG_ONEOF,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "move_res",
+    22,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(ServerMessage, msg_case),
@@ -1324,7 +1477,7 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[12] =
   },
   {
     "move_broadcast",
-    22,
+    23,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(ServerMessage, msg_case),
@@ -1336,7 +1489,7 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[12] =
   },
   {
     "check_broadcast",
-    23,
+    24,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(ServerMessage, msg_case),
@@ -1348,7 +1501,7 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[12] =
   },
   {
     "game_end",
-    24,
+    25,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(ServerMessage, msg_case),
@@ -1360,7 +1513,7 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[12] =
   },
   {
     "chat_broadcast",
-    25,
+    26,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(ServerMessage, msg_case),
@@ -1372,7 +1525,7 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[12] =
   },
   {
     "resign_res",
-    26,
+    27,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(ServerMessage, msg_case),
@@ -1384,7 +1537,7 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[12] =
   },
   {
     "resign_broadcast",
-    27,
+    28,
     PROTOBUF_C_LABEL_NONE,
     PROTOBUF_C_TYPE_MESSAGE,
     offsetof(ServerMessage, msg_case),
@@ -1408,17 +1561,18 @@ static const ProtobufCFieldDescriptor server_message__field_descriptors[12] =
   },
 };
 static const unsigned server_message__field_indices_by_name[] = {
-  8,   /* field[8] = chat_broadcast */
-  6,   /* field[6] = check_broadcast */
+  4,   /* field[4] = cancel_match_res */
+  9,   /* field[9] = chat_broadcast */
+  7,   /* field[7] = check_broadcast */
   2,   /* field[2] = echo_res */
-  11,   /* field[11] = error */
-  7,   /* field[7] = game_end */
+  12,   /* field[12] = error */
+  8,   /* field[8] = game_end */
   3,   /* field[3] = match_game_res */
-  5,   /* field[5] = move_broadcast */
-  4,   /* field[4] = move_res */
+  6,   /* field[6] = move_broadcast */
+  5,   /* field[5] = move_res */
   1,   /* field[1] = ping_res */
-  10,   /* field[10] = resign_broadcast */
-  9,   /* field[9] = resign_res */
+  11,   /* field[11] = resign_broadcast */
+  10,   /* field[10] = resign_res */
   0,   /* field[0] = version */
 };
 static const ProtobufCIntRange server_message__number_ranges[4 + 1] =
@@ -1426,8 +1580,8 @@ static const ProtobufCIntRange server_message__number_ranges[4 + 1] =
   { 1, 0 },
   { 10, 1 },
   { 20, 3 },
-  { 99, 11 },
-  { 0, 12 }
+  { 99, 12 },
+  { 0, 13 }
 };
 const ProtobufCMessageDescriptor server_message__descriptor =
 {
@@ -1437,7 +1591,7 @@ const ProtobufCMessageDescriptor server_message__descriptor =
   "ServerMessage",
   "",
   sizeof(ServerMessage),
-  12,
+  13,
   server_message__field_descriptors,
   server_message__field_indices_by_name,
   4,  server_message__number_ranges,
@@ -1660,6 +1814,70 @@ const ProtobufCMessageDescriptor match_game_response__descriptor =
   match_game_response__field_indices_by_name,
   1,  match_game_response__number_ranges,
   (ProtobufCMessageInit) match_game_response__init,
+  NULL,NULL,NULL    /* reserved[123] */
+};
+static const ProtobufCFieldDescriptor cancel_match_response__field_descriptors[3] =
+{
+  {
+    "player_id",
+    1,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(CancelMatchResponse, player_id),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "success",
+    2,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_BOOL,
+    0,   /* quantifier_offset */
+    offsetof(CancelMatchResponse, success),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "message",
+    3,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_STRING,
+    0,   /* quantifier_offset */
+    offsetof(CancelMatchResponse, message),
+    NULL,
+    &protobuf_c_empty_string,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+};
+static const unsigned cancel_match_response__field_indices_by_name[] = {
+  2,   /* field[2] = message */
+  0,   /* field[0] = player_id */
+  1,   /* field[1] = success */
+};
+static const ProtobufCIntRange cancel_match_response__number_ranges[1 + 1] =
+{
+  { 1, 0 },
+  { 0, 3 }
+};
+const ProtobufCMessageDescriptor cancel_match_response__descriptor =
+{
+  PROTOBUF_C__MESSAGE_DESCRIPTOR_MAGIC,
+  "CancelMatchResponse",
+  "CancelMatchResponse",
+  "CancelMatchResponse",
+  "",
+  sizeof(CancelMatchResponse),
+  3,
+  cancel_match_response__field_descriptors,
+  cancel_match_response__field_indices_by_name,
+  1,  cancel_match_response__number_ranges,
+  (ProtobufCMessageInit) cancel_match_response__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
 static const ProtobufCFieldDescriptor resign_response__field_descriptors[5] =

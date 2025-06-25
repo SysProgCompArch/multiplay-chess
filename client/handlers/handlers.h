@@ -10,6 +10,7 @@ typedef int (*server_message_handler_t)(ServerMessage *msg);
 int handle_ping_response(ServerMessage *msg);
 int handle_echo_response(ServerMessage *msg);
 int handle_match_game_response(ServerMessage *msg);
+int handle_cancel_match_response(ServerMessage *msg);
 int handle_chat_broadcast(ServerMessage *msg);
 int handle_game_end_broadcast(ServerMessage *msg);
 int handle_error_response(ServerMessage *msg);

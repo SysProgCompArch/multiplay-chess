@@ -20,6 +20,7 @@ typedef struct _ClientMessage ClientMessage;
 typedef struct _PingRequest PingRequest;
 typedef struct _EchoRequest EchoRequest;
 typedef struct _MatchGameRequest MatchGameRequest;
+typedef struct _CancelMatchRequest CancelMatchRequest;
 typedef struct _MoveRequest MoveRequest;
 typedef struct _ResignRequest ResignRequest;
 typedef struct _ChatRequest ChatRequest;
@@ -27,6 +28,7 @@ typedef struct _ServerMessage ServerMessage;
 typedef struct _PingResponse PingResponse;
 typedef struct _EchoResponse EchoResponse;
 typedef struct _MatchGameResponse MatchGameResponse;
+typedef struct _CancelMatchResponse CancelMatchResponse;
 typedef struct _ResignResponse ResignResponse;
 typedef struct _MoveResponse MoveResponse;
 typedef struct _MoveBroadcast MoveBroadcast;
@@ -111,9 +113,10 @@ typedef enum {
   CLIENT_MESSAGE__MSG_PING = 10,
   CLIENT_MESSAGE__MSG_ECHO = 11,
   CLIENT_MESSAGE__MSG_MATCH_GAME = 20,
-  CLIENT_MESSAGE__MSG_MOVE = 21,
-  CLIENT_MESSAGE__MSG_RESIGN = 22,
-  CLIENT_MESSAGE__MSG_CHAT = 23
+  CLIENT_MESSAGE__MSG_CANCEL_MATCH = 21,
+  CLIENT_MESSAGE__MSG_MOVE = 22,
+  CLIENT_MESSAGE__MSG_RESIGN = 23,
+  CLIENT_MESSAGE__MSG_CHAT = 24
     PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(CLIENT_MESSAGE__MSG)
 } ClientMessage__MsgCase;
 
@@ -132,6 +135,7 @@ struct  _ClientMessage
     PingRequest *ping;
     EchoRequest *echo;
     MatchGameRequest *match_game;
+    CancelMatchRequest *cancel_match;
     MoveRequest *move;
     ResignRequest *resign;
     ChatRequest *chat;
@@ -181,6 +185,22 @@ struct  _MatchGameRequest
 #define MATCH_GAME_REQUEST__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&match_game_request__descriptor) \
     , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string }
+
+
+/*
+ * 매칭 취소 요청
+ */
+struct  _CancelMatchRequest
+{
+  ProtobufCMessage base;
+  /*
+   * 매칭을 취소하려는 플레이어 ID
+   */
+  char *player_id;
+};
+#define CANCEL_MATCH_REQUEST__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&cancel_match_request__descriptor) \
+    , (char *)protobuf_c_empty_string }
 
 
 /*
@@ -239,13 +259,14 @@ typedef enum {
   SERVER_MESSAGE__MSG_PING_RES = 10,
   SERVER_MESSAGE__MSG_ECHO_RES = 11,
   SERVER_MESSAGE__MSG_MATCH_GAME_RES = 20,
-  SERVER_MESSAGE__MSG_MOVE_RES = 21,
-  SERVER_MESSAGE__MSG_MOVE_BROADCAST = 22,
-  SERVER_MESSAGE__MSG_CHECK_BROADCAST = 23,
-  SERVER_MESSAGE__MSG_GAME_END = 24,
-  SERVER_MESSAGE__MSG_CHAT_BROADCAST = 25,
-  SERVER_MESSAGE__MSG_RESIGN_RES = 26,
-  SERVER_MESSAGE__MSG_RESIGN_BROADCAST = 27,
+  SERVER_MESSAGE__MSG_CANCEL_MATCH_RES = 21,
+  SERVER_MESSAGE__MSG_MOVE_RES = 22,
+  SERVER_MESSAGE__MSG_MOVE_BROADCAST = 23,
+  SERVER_MESSAGE__MSG_CHECK_BROADCAST = 24,
+  SERVER_MESSAGE__MSG_GAME_END = 25,
+  SERVER_MESSAGE__MSG_CHAT_BROADCAST = 26,
+  SERVER_MESSAGE__MSG_RESIGN_RES = 27,
+  SERVER_MESSAGE__MSG_RESIGN_BROADCAST = 28,
   SERVER_MESSAGE__MSG_ERROR = 99
     PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(SERVER_MESSAGE__MSG)
 } ServerMessage__MsgCase;
@@ -265,6 +286,7 @@ struct  _ServerMessage
     PingResponse *ping_res;
     EchoResponse *echo_res;
     MatchGameResponse *match_game_res;
+    CancelMatchResponse *cancel_match_res;
     MoveResponse *move_res;
     MoveBroadcast *move_broadcast;
     CheckBroadcast *check_broadcast;
@@ -347,6 +369,30 @@ struct  _MatchGameResponse
 #define MATCH_GAME_RESPONSE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&match_game_response__descriptor) \
     , (char *)protobuf_c_empty_string, 0, (char *)protobuf_c_empty_string, TEAM__TEAM_UNSPECIFIED, (char *)protobuf_c_empty_string, 0, NULL, 0, 0 }
+
+
+/*
+ * 매칭 취소 요청에 대한 응답
+ */
+struct  _CancelMatchResponse
+{
+  ProtobufCMessage base;
+  /*
+   * 취소 요청한 플레이어 ID
+   */
+  char *player_id;
+  /*
+   * 취소 성공 여부
+   */
+  protobuf_c_boolean success;
+  /*
+   * 실패 시 이유 등
+   */
+  char *message;
+};
+#define CANCEL_MATCH_RESPONSE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&cancel_match_response__descriptor) \
+    , (char *)protobuf_c_empty_string, 0, (char *)protobuf_c_empty_string }
 
 
 /*
@@ -650,6 +696,25 @@ MatchGameRequest *
 void   match_game_request__free_unpacked
                      (MatchGameRequest *message,
                       ProtobufCAllocator *allocator);
+/* CancelMatchRequest methods */
+void   cancel_match_request__init
+                     (CancelMatchRequest         *message);
+size_t cancel_match_request__get_packed_size
+                     (const CancelMatchRequest   *message);
+size_t cancel_match_request__pack
+                     (const CancelMatchRequest   *message,
+                      uint8_t             *out);
+size_t cancel_match_request__pack_to_buffer
+                     (const CancelMatchRequest   *message,
+                      ProtobufCBuffer     *buffer);
+CancelMatchRequest *
+       cancel_match_request__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   cancel_match_request__free_unpacked
+                     (CancelMatchRequest *message,
+                      ProtobufCAllocator *allocator);
 /* MoveRequest methods */
 void   move_request__init
                      (MoveRequest         *message);
@@ -782,6 +847,25 @@ MatchGameResponse *
                       const uint8_t       *data);
 void   match_game_response__free_unpacked
                      (MatchGameResponse *message,
+                      ProtobufCAllocator *allocator);
+/* CancelMatchResponse methods */
+void   cancel_match_response__init
+                     (CancelMatchResponse         *message);
+size_t cancel_match_response__get_packed_size
+                     (const CancelMatchResponse   *message);
+size_t cancel_match_response__pack
+                     (const CancelMatchResponse   *message,
+                      uint8_t             *out);
+size_t cancel_match_response__pack_to_buffer
+                     (const CancelMatchResponse   *message,
+                      ProtobufCBuffer     *buffer);
+CancelMatchResponse *
+       cancel_match_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   cancel_match_response__free_unpacked
+                     (CancelMatchResponse *message,
                       ProtobufCAllocator *allocator);
 /* ResignResponse methods */
 void   resign_response__init
@@ -949,6 +1033,9 @@ typedef void (*EchoRequest_Closure)
 typedef void (*MatchGameRequest_Closure)
                  (const MatchGameRequest *message,
                   void *closure_data);
+typedef void (*CancelMatchRequest_Closure)
+                 (const CancelMatchRequest *message,
+                  void *closure_data);
 typedef void (*MoveRequest_Closure)
                  (const MoveRequest *message,
                   void *closure_data);
@@ -969,6 +1056,9 @@ typedef void (*EchoResponse_Closure)
                   void *closure_data);
 typedef void (*MatchGameResponse_Closure)
                  (const MatchGameResponse *message,
+                  void *closure_data);
+typedef void (*CancelMatchResponse_Closure)
+                 (const CancelMatchResponse *message,
                   void *closure_data);
 typedef void (*ResignResponse_Closure)
                  (const ResignResponse *message,
@@ -1008,6 +1098,7 @@ extern const ProtobufCMessageDescriptor client_message__descriptor;
 extern const ProtobufCMessageDescriptor ping_request__descriptor;
 extern const ProtobufCMessageDescriptor echo_request__descriptor;
 extern const ProtobufCMessageDescriptor match_game_request__descriptor;
+extern const ProtobufCMessageDescriptor cancel_match_request__descriptor;
 extern const ProtobufCMessageDescriptor move_request__descriptor;
 extern const ProtobufCMessageDescriptor resign_request__descriptor;
 extern const ProtobufCMessageDescriptor chat_request__descriptor;
@@ -1015,6 +1106,7 @@ extern const ProtobufCMessageDescriptor server_message__descriptor;
 extern const ProtobufCMessageDescriptor ping_response__descriptor;
 extern const ProtobufCMessageDescriptor echo_response__descriptor;
 extern const ProtobufCMessageDescriptor match_game_response__descriptor;
+extern const ProtobufCMessageDescriptor cancel_match_response__descriptor;
 extern const ProtobufCMessageDescriptor resign_response__descriptor;
 extern const ProtobufCMessageDescriptor move_response__descriptor;
 extern const ProtobufCMessageDescriptor move_broadcast__descriptor;

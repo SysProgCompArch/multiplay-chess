@@ -269,8 +269,26 @@ void start_matching() {
 void cancel_matching() {
     LOG_INFO("Cancelling matchmaking");
     client_state_t *client = get_client_state();
+
+    // 서버에 매칭 취소 요청 전송
+    if (client->connected) {
+        LOG_INFO("Sending cancel match request for player: %s", client->username);
+        ClientMessage      cancel_msg = CLIENT_MESSAGE__INIT;
+        CancelMatchRequest cancel_req = CANCEL_MATCH_REQUEST__INIT;
+        cancel_req.player_id          = client->username;
+        cancel_msg.msg_case           = CLIENT_MESSAGE__MSG_CANCEL_MATCH;
+        cancel_msg.cancel_match       = &cancel_req;
+
+        if (send_client_message(client->socket_fd, &cancel_msg) < 0) {
+            LOG_ERROR("Failed to send cancel match request");
+        } else {
+            LOG_INFO("Cancel match request sent successfully");
+        }
+    } else {
+        LOG_WARN("Cannot send cancel match request: not connected to server");
+    }
+
     client->current_screen = SCREEN_MAIN;
-    // TODO: 서버에 매칭 취소 요청 전송 (필요시 구현)
 }
 
 // 네트워크 정리
