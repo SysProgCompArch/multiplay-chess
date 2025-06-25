@@ -317,6 +317,11 @@ int main(int argc, char *argv[]) {
                     client->current_screen                   = SCREEN_MAIN;
                     prev_screen                              = SCREEN_MAIN;  // 이전 상태도 업데이트
                     LOG_INFO("User acknowledged opponent disconnected dialog, returned to main screen");
+                } else {
+                    // 기타 다이얼로그 (게임 종료, 기권 등)의 경우 메인 화면으로 돌아가기
+                    client->current_screen = SCREEN_MAIN;
+                    prev_screen            = SCREEN_MAIN;
+                    LOG_INFO("User acknowledged dialog, returned to main screen");
                 }
 
                 // 화면을 초기화하고 즉시 메인 화면 그리기
@@ -454,6 +459,16 @@ int main(int argc, char *argv[]) {
 
             // 연결 끊김 다이얼로그 표시 (키 입력 처리 없음)
             draw_dialog("Connection Lost", client->disconnect_message, "OK");
+            pthread_mutex_unlock(&screen_mutex);
+            refresh();  // 다이얼로그를 즉시 화면에 표시
+            continue;   // 다른 처리를 건너뛰고 다시 루프 시작
+        } else if (client->resign_result_dialog_pending && !client->dialog_active) {
+            client->dialog_active                = true;
+            client->resign_result_dialog_pending = false;
+            LOG_INFO("Showing resign result dialog");
+
+            // 기권 결과 다이얼로그 표시 (키 입력 처리 없음)
+            draw_dialog(client->resign_result_title, client->resign_result_message, "OK");
             pthread_mutex_unlock(&screen_mutex);
             refresh();  // 다이얼로그를 즉시 화면에 표시
             continue;   // 다른 처리를 건너뛰고 다시 루프 시작

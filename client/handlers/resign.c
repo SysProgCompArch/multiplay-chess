@@ -61,15 +61,16 @@ int handle_resign_broadcast(ServerMessage *msg) {
 
     pthread_mutex_lock(&screen_mutex);
 
-    if (i_resigned) {
-        snprintf(client->game_state.opponent_disconnect_message, sizeof(client->game_state.opponent_disconnect_message),
-                 "You resigned the game.\nYou lose by resignation!");
-    } else {
-        snprintf(client->game_state.opponent_disconnect_message, sizeof(client->game_state.opponent_disconnect_message),
-                 "Opponent resigned the game.\nYou win by resignation!");
-    }
+    // 기권 전용 다이얼로그 설정
+    client->resign_result_dialog_pending = true;
 
-    client->game_state.opponent_disconnected = true;  // 게임 종료 상태를 나타내는 플래그로 재사용
+    if (i_resigned) {
+        strcpy(client->resign_result_title, "Game Over - Resignation");
+        strcpy(client->resign_result_message, "You resigned the game.\nYou lose by resignation!");
+    } else {
+        strcpy(client->resign_result_title, "Game Over - Victory");
+        strcpy(client->resign_result_message, "Opponent resigned the game.\nYou win by resignation!");
+    }
 
     // 화면 업데이트 요청
     client->screen_update_requested = true;

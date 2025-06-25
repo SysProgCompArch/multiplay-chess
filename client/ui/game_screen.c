@@ -553,7 +553,7 @@ void draw_game_screen() {
 
     // 조작법 안내 (화면 하단)
     int help_y = rows - 2;
-    mvprintw(help_y, 2, "Controls: Arrow keys + Space/Enter | ESC: cancel | Q: quit | Enter: chat | move:e2e4");
+    mvprintw(help_y, 2, "Controls: Arrow keys + Space/Enter | 1: resign | ESC: cancel | Q: quit | Enter: chat | move:e2e4");
 
     // 연결 상태 표시
     draw_connection_status();
