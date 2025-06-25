@@ -1,5 +1,5 @@
-// common/pgn_save.c
 #include "pgn_save.h"
+
 #include <stdio.h>
 #include <time.h>
 
@@ -8,7 +8,7 @@ int write_pgn(const char* filename, game_state_t* state) {
     if (!fp) return -1;
 
     // 날짜 생성
-    time_t t = time(NULL);
+    time_t    t = time(NULL);
     struct tm tm_info;
     localtime_r(&t, &tm_info);
     char date[11];
@@ -32,7 +32,7 @@ int write_pgn(const char* filename, game_state_t* state) {
     // LAN(예: e2e4) 형식의 수 출력
     for (int i = 0; i < state->pgn_move_count; ++i) {
         if (i % 2 == 0)
-            fprintf(fp, "%d. %s", i/2+1, state->pgn_moves[i]);
+            fprintf(fp, "%d. %s", i / 2 + 1, state->pgn_moves[i]);
         else
             fprintf(fp, " %s\n", state->pgn_moves[i]);
     }

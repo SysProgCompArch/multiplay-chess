@@ -11,8 +11,10 @@
 #include "client_state.h"
 #include "game_save.h"
 #include "logger.h"
-#include "replay_menu.h"
 #include "ui/ui.h"
+
+// Function declarations
+void replay_menu(void);
 
 // 터미널 크기 변경 플래그
 volatile sig_atomic_t terminal_resized = 0;

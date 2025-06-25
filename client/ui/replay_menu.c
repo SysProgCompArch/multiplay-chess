@@ -1,6 +1,4 @@
-// client/replay_menu.c
-
-#include "replay_menu.h"  // void replay_menu(void);
+// client/ui/replay_menu.c
 
 #include <dirent.h>
 #include <errno.h>
@@ -10,8 +8,12 @@
 #include <sys/stat.h>
 #include <unistd.h>  // usleep
 
-#include "logger.h"  // LOG_INFO, LOG_ERROR, LOG_DEBUG
-#include "replay.h"  // void start_replay(const char*);
+#include "../logger.h"  // LOG_INFO, LOG_ERROR, LOG_DEBUG
+#include "../replay.h"  // void start_replay(const char*);
+
+// Function declarations
+void replay_menu(void);
+void show_replay_files(void);
 
 void replay_menu(void) {
     LOG_INFO("replay_menu(): entered");

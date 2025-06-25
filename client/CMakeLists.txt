@@ -4,8 +4,6 @@ add_executable(client
     game_save.h
     replay.c
     replay.h
-    replay_menu.c
-    replay_menu.h
     pgn_save.c
     pgn_save.h
     game_state.c
@@ -19,6 +17,7 @@ add_executable(client
     ui/input.c
     ui/chat.c
     ui/colors.c
+    ui/replay_menu.c
     handlers/ping.c
     handlers/echo.c
     handlers/match.c

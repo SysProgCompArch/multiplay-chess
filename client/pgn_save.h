@@ -1,4 +1,3 @@
-// common/pgn_save.h
 #ifndef PGN_SAVE_H
 #define PGN_SAVE_H
 
@@ -10,4 +9,4 @@
  */
 int write_pgn(const char* filename, game_state_t* state);
 
-#endif // PGN_SAVE_H
+#endif  // PGN_SAVE_H
