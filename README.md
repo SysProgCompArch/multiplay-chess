@@ -99,27 +99,45 @@ multiplay-chess/
 
 - 라이브러리 설치 필요
   ```sh
-  sudo apt install pkg-config protobuf-compiler protobuf-c-compiler libprotobuf-dev libprotobuf-c-dev libncurses-dev
+  sudo apt install build-essential pkg-config protobuf-compiler protobuf-c-compiler libprotobuf-dev libprotobuf-c-dev libncurses-dev
   ```
 
-### 2. 전체 빌드 및 개별 타겟 빌드 (build.sh 사용)
+### 2. 빌드 (make 또는 build.sh 사용)
 
-`build.sh` 스크립트는 인자에 따라 아래와 같이 동작합니다:
+아래와 같이 make 명령어 또는 build.sh 스크립트를 사용하여 빌드할 수 있습니다.
 
 - **전체 빌드 (client, server 모두):**
   ```sh
+  make
+
+  # 또는
   ./build.sh
   ```
 - **클라이언트만 빌드:**
   ```sh
+  make client
+
+  # 또는
   ./build.sh client
   ```
 - **서버만 빌드:**
   ```sh
+  make server
+
+  # 또는
   ./build.sh server
   ```
 
-빌드가 완료되면 `build/client/client`, `build/server/server` 실행 파일이 생성됩니다.
+- **빌드 파일 삭제**
+  ```sh
+  make clean
+
+  # 또는
+  rm -rf build/
+  ```
+
+
+빌드가 완료되면 `build/client/client`, `build/server/server`에 실행 파일이 생성됩니다.
 
 ---
 
@@ -128,10 +146,16 @@ multiplay-chess/
 - 클라이언트 실행:
   ```sh
   ./run.sh client
+
+  # 또는
+  ./build/client/client
   ```
 - 서버 실행:
   ```sh
   ./run.sh server
+
+  # 또는
+  ./build/server/server
   ```
 
 클라이언트/서버 기본 포트는 8080입니다. 포트를 변경하려면 명령행 인자 `-p`를 사용하세요.
@@ -145,7 +169,7 @@ multiplay-chess/
   ./run.sh server -p 8081
   ```
 
-클라이언트의 경우, 게임서버의 호스트명(IP주소, 도메인 이름 등)도 변경할 수 있습니다. 기본값은 `localhost`입니다. 호스트명을 변경하려면 명령행 인자 `-h`를 사용하세요.
+클라이언트의 경우, 게임서버의 호스트명(IP주소, 도메인 이름 등)도 변경할 수 있습니다. 기본값은 `localhost`(`127.0.0.1`)입니다. 호스트명을 변경하려면 명령행 인자 `-h`를 사용하세요.
 
 - 클라이언트 실행 (8081 포트, 192.168.0.100 호스트) 예시:
   ```sh
