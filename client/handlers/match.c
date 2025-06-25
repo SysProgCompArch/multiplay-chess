@@ -63,6 +63,32 @@ int handle_match_game_response(ServerMessage *msg) {
                 reset_game_for_player(&client->game_state.game, client->game_state.local_team);
                 client->game_state.game.side_to_move = TEAM_WHITE;
 
+                // 타이머 정보 설정 (서버에서 받은 정보가 있으면 사용, 없으면 기본값)
+                if (msg->match_game_res->time_limit_per_player > 0) {
+                    client->game_state.white_time_remaining = msg->match_game_res->white_time_remaining;
+                    client->game_state.black_time_remaining = msg->match_game_res->black_time_remaining;
+                    LOG_INFO("Timer initialized: white=%d, black=%d",
+                             client->game_state.white_time_remaining,
+                             client->game_state.black_time_remaining);
+                } else {
+                    // 기본값 (10분)
+                    client->game_state.white_time_remaining = 600;
+                    client->game_state.black_time_remaining = 600;
+                    LOG_INFO("Timer initialized with default values: 600 seconds each");
+                }
+
+                // 게임 시작 시간 설정 (서버에서 받은 시간이 있으면 사용)
+                if (msg->match_game_res->game_start_time) {
+                    client->game_state.game_start_time = msg->match_game_res->game_start_time->seconds;
+                } else {
+                    client->game_state.game_start_time = time(NULL);
+                }
+
+                // 실시간 타이머 필드 초기화
+                client->game_state.last_timer_update       = client->game_state.game_start_time;
+                client->game_state.white_time_at_last_sync = client->game_state.white_time_remaining;
+                client->game_state.black_time_at_last_sync = client->game_state.black_time_remaining;
+
                 // 네트워크 스레드에서 상태가 변경되었음을 메인 루프에 알림
                 client->screen_update_requested = true;
 

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "../match_manager.h"
 #include "handlers.h"
@@ -71,7 +72,8 @@ int send_move_success(int fd, const char *game_id, const char *player_id, const 
 int broadcast_move_with_state(int fd, const char *game_id, const char *player_id,
                               const char *from, const char *to,
                               bool game_ends, Team winner_team, GameEndType end_type,
-                              bool is_check, Team checked_team) {
+                              bool is_check, Team checked_team,
+                              int32_t white_time_remaining, int32_t black_time_remaining) {
     ServerMessage broadcast      = SERVER_MESSAGE__INIT;
     MoveBroadcast move_broadcast = MOVE_BROADCAST__INIT;
 
@@ -86,10 +88,29 @@ int broadcast_move_with_state(int fd, const char *game_id, const char *player_id
     move_broadcast.is_check     = is_check;
     move_broadcast.checked_team = checked_team;
 
+    // 타이머 정보 추가
+    move_broadcast.white_time_remaining = white_time_remaining;
+    move_broadcast.black_time_remaining = black_time_remaining;
+
+    // 이동 시점 타임스탬프 설정
+    move_broadcast.move_timestamp = malloc(sizeof(Google__Protobuf__Timestamp));
+    if (move_broadcast.move_timestamp) {
+        google__protobuf__timestamp__init(move_broadcast.move_timestamp);
+        move_broadcast.move_timestamp->seconds = time(NULL);
+        move_broadcast.move_timestamp->nanos   = 0;
+    }
+
     broadcast.msg_case       = SERVER_MESSAGE__MSG_MOVE_BROADCAST;
     broadcast.move_broadcast = &move_broadcast;
 
-    return send_server_message(fd, &broadcast);
+    int result = send_server_message(fd, &broadcast);
+
+    // 메모리 해제
+    if (move_broadcast.move_timestamp) {
+        free(move_broadcast.move_timestamp);
+    }
+
+    return result;
 }
 
 // 헬퍼 함수: 이동 브로드캐스트 (하위 호환성을 위한 간단 버전)
@@ -97,7 +118,7 @@ int broadcast_move(int fd, const char *game_id, const char *player_id,
                    const char *from, const char *to) {
     return broadcast_move_with_state(fd, game_id, player_id, from, to,
                                      false, TEAM__TEAM_UNSPECIFIED, GAME_END_TYPE__GAME_END_UNKNOWN,
-                                     false, TEAM__TEAM_UNSPECIFIED);
+                                     false, TEAM__TEAM_UNSPECIFIED, 0, 0);
 }
 
 // 헬퍼 함수: 게임 종료 브로드캐스트
@@ -203,6 +224,43 @@ int handle_move_message(int fd, ClientMessage *req) {
 
     LOG_INFO("Move applied successfully for fd=%d: %s -> %s", fd, move_req->from, move_req->to);
 
+    // 타이머 업데이트
+    time_t current_time = time(NULL);
+    time_t elapsed_time = current_time - game->last_move_time;
+
+    // 이전 플레이어의 남은 시간에서 경과 시간 차감
+    if (player_team == WHITE) {
+        game->white_time_remaining -= (int32_t)elapsed_time;
+        if (game->white_time_remaining < 0) {
+            game->white_time_remaining = 0;
+        }
+    } else {
+        game->black_time_remaining -= (int32_t)elapsed_time;
+        if (game->black_time_remaining < 0) {
+            game->black_time_remaining = 0;
+        }
+    }
+
+    // 다음 턴을 위해 마지막 이동 시간 업데이트
+    game->last_move_time = current_time;
+
+    LOG_DEBUG("Timer updated for game %s: white=%d, black=%d",
+              game->game_id, game->white_time_remaining, game->black_time_remaining);
+
+    // 시간 초과 체크
+    bool timeout_occurred = false;
+    Team timeout_winner   = TEAM__TEAM_UNSPECIFIED;
+
+    if (game->white_time_remaining <= 0) {
+        LOG_INFO("White player timeout in game %s", game->game_id);
+        timeout_occurred = true;
+        timeout_winner   = TEAM__TEAM_BLACK;
+    } else if (game->black_time_remaining <= 0) {
+        LOG_INFO("Black player timeout in game %s", game->game_id);
+        timeout_occurred = true;
+        timeout_winner   = TEAM__TEAM_WHITE;
+    }
+
     // TODO: FEN 문자열 생성 (현재는 간단한 메시지로 대체)
     char fen_placeholder[256];
     snprintf(fen_placeholder, sizeof(fen_placeholder), "move_%d_to_%d",
@@ -229,7 +287,12 @@ int handle_move_message(int fd, ClientMessage *req) {
     }
 
     // 게임 종료 조건 확인
-    if (is_checkmate(&game->game_state)) {
+    if (timeout_occurred) {
+        LOG_INFO("Game %s ended by timeout", game->game_id);
+        game_ends   = true;
+        winner_team = timeout_winner;
+        end_type    = GAME_END_TYPE__GAME_END_TIMEOUT;
+    } else if (is_checkmate(&game->game_state)) {
         LOG_INFO("Game %s ended by checkmate", game->game_id);
         game_ends   = true;
         winner_team = (current_side == TEAM_WHITE) ? TEAM__TEAM_BLACK : TEAM__TEAM_WHITE;
@@ -250,7 +313,8 @@ int handle_move_message(int fd, ClientMessage *req) {
     if (broadcast_move_with_state(opponent_fd, game->game_id, player_id,
                                   move_req->from, move_req->to,
                                   game_ends, winner_team, end_type,
-                                  is_check_situation, checked_team) < 0) {
+                                  is_check_situation, checked_team,
+                                  game->white_time_remaining, game->black_time_remaining) < 0) {
         LOG_ERROR("Failed to broadcast move to opponent fd=%d", opponent_fd);
         // 이미 이동은 적용되었으므로, 브로드캐스트 실패만 로그하고 계속 진행
     }
@@ -259,7 +323,8 @@ int handle_move_message(int fd, ClientMessage *req) {
     if (broadcast_move_with_state(fd, game->game_id, player_id,
                                   move_req->from, move_req->to,
                                   game_ends, winner_team, end_type,
-                                  is_check_situation, checked_team) < 0) {
+                                  is_check_situation, checked_team,
+                                  game->white_time_remaining, game->black_time_remaining) < 0) {
         LOG_ERROR("Failed to broadcast move to requester fd=%d", fd);
         // 이미 이동은 적용되었으므로, 브로드캐스트 실패만 로그하고 계속 진행
     }

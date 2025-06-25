@@ -1520,7 +1520,7 @@ const ProtobufCMessageDescriptor echo_response__descriptor =
   (ProtobufCMessageInit) echo_response__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor match_game_response__field_descriptors[5] =
+static const ProtobufCFieldDescriptor match_game_response__field_descriptors[9] =
 {
   {
     "game_id",
@@ -1582,18 +1582,70 @@ static const ProtobufCFieldDescriptor match_game_response__field_descriptors[5] 
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "time_limit_per_player",
+    6,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_INT32,
+    0,   /* quantifier_offset */
+    offsetof(MatchGameResponse, time_limit_per_player),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "game_start_time",
+    7,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(MatchGameResponse, game_start_time),
+    &google__protobuf__timestamp__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "white_time_remaining",
+    8,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_INT32,
+    0,   /* quantifier_offset */
+    offsetof(MatchGameResponse, white_time_remaining),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "black_time_remaining",
+    9,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_INT32,
+    0,   /* quantifier_offset */
+    offsetof(MatchGameResponse, black_time_remaining),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned match_game_response__field_indices_by_name[] = {
   3,   /* field[3] = assigned_team */
+  8,   /* field[8] = black_time_remaining */
   0,   /* field[0] = game_id */
+  6,   /* field[6] = game_start_time */
   2,   /* field[2] = message */
   4,   /* field[4] = opponent_name */
   1,   /* field[1] = success */
+  5,   /* field[5] = time_limit_per_player */
+  7,   /* field[7] = white_time_remaining */
 };
 static const ProtobufCIntRange match_game_response__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 5 }
+  { 0, 9 }
 };
 const ProtobufCMessageDescriptor match_game_response__descriptor =
 {
@@ -1603,7 +1655,7 @@ const ProtobufCMessageDescriptor match_game_response__descriptor =
   "MatchGameResponse",
   "",
   sizeof(MatchGameResponse),
-  5,
+  9,
   match_game_response__field_descriptors,
   match_game_response__field_indices_by_name,
   1,  match_game_response__number_ranges,
@@ -1803,7 +1855,7 @@ const ProtobufCMessageDescriptor move_response__descriptor =
   (ProtobufCMessageInit) move_response__init,
   NULL,NULL,NULL    /* reserved[123] */
 };
-static const ProtobufCFieldDescriptor move_broadcast__field_descriptors[11] =
+static const ProtobufCFieldDescriptor move_broadcast__field_descriptors[14] =
 {
   {
     "game_id",
@@ -1937,24 +1989,63 @@ static const ProtobufCFieldDescriptor move_broadcast__field_descriptors[11] =
     0,             /* flags */
     0,NULL,NULL    /* reserved1,reserved2, etc */
   },
+  {
+    "white_time_remaining",
+    12,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_INT32,
+    0,   /* quantifier_offset */
+    offsetof(MoveBroadcast, white_time_remaining),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "black_time_remaining",
+    13,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_INT32,
+    0,   /* quantifier_offset */
+    offsetof(MoveBroadcast, black_time_remaining),
+    NULL,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
+  {
+    "move_timestamp",
+    14,
+    PROTOBUF_C_LABEL_NONE,
+    PROTOBUF_C_TYPE_MESSAGE,
+    0,   /* quantifier_offset */
+    offsetof(MoveBroadcast, move_timestamp),
+    &google__protobuf__timestamp__descriptor,
+    NULL,
+    0,             /* flags */
+    0,NULL,NULL    /* reserved1,reserved2, etc */
+  },
 };
 static const unsigned move_broadcast__field_indices_by_name[] = {
+  12,   /* field[12] = black_time_remaining */
   10,   /* field[10] = checked_team */
   8,   /* field[8] = end_type */
   2,   /* field[2] = from */
   6,   /* field[6] = game_ends */
   0,   /* field[0] = game_id */
   9,   /* field[9] = is_check */
+  13,   /* field[13] = move_timestamp */
   1,   /* field[1] = player_id */
   4,   /* field[4] = promotion */
   5,   /* field[5] = timestamp */
   3,   /* field[3] = to */
+  11,   /* field[11] = white_time_remaining */
   7,   /* field[7] = winner_team */
 };
 static const ProtobufCIntRange move_broadcast__number_ranges[1 + 1] =
 {
   { 1, 0 },
-  { 0, 11 }
+  { 0, 14 }
 };
 const ProtobufCMessageDescriptor move_broadcast__descriptor =
 {
@@ -1964,7 +2055,7 @@ const ProtobufCMessageDescriptor move_broadcast__descriptor =
   "MoveBroadcast",
   "",
   sizeof(MoveBroadcast),
-  11,
+  14,
   move_broadcast__field_descriptors,
   move_broadcast__field_indices_by_name,
   1,  move_broadcast__number_ranges,

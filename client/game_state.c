@@ -1,5 +1,7 @@
 #include "game_state.h"
+
 #include <pthread.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -10,7 +12,7 @@
 #include "utils.h"  // clear_board, fen_parse 함수를 위해 추가
 
 game_state_t *g_game_state = NULL;
-#define CURRENT_STATE  (g_game_state)
+#define CURRENT_STATE (g_game_state)
 
 // piece_table 외부 선언 (common/piece.c에 정의됨)
 extern piece_t *piece_table[2][6];
@@ -32,6 +34,11 @@ void init_game_state(game_state_t *state) {
     state->white_time_remaining  = 600;  // 10분
     state->black_time_remaining  = 600;  // 10분
     state->opponent_disconnected = false;
+
+    // 실시간 타이머 필드 초기화
+    state->last_timer_update       = 0;
+    state->white_time_at_last_sync = 600;
+    state->black_time_at_last_sync = 600;
 
     // 체크 상태 초기화
     state->white_in_check = false;
@@ -205,12 +212,77 @@ bool apply_move_from_server(game_t *game, const char *from, const char *to) {
 
     // PGN move 기록
     if (CURRENT_STATE && CURRENT_STATE->pgn_move_count < MAX_PGN_MOVES) {
-        char *buf = CURRENT_STATE->pgn_moves[ CURRENT_STATE->pgn_move_count++ ];
-        buf[0] = from[0];
-        buf[1] = from[1];
-        buf[2] = to[0];
-        buf[3] = to[1];
-        buf[4] = '\0';
+        char *buf = CURRENT_STATE->pgn_moves[CURRENT_STATE->pgn_move_count++];
+        buf[0]    = from[0];
+        buf[1]    = from[1];
+        buf[2]    = to[0];
+        buf[3]    = to[1];
+        buf[4]    = '\0';
     }
     return true;
+}
+
+// 실시간 타이머 업데이트 함수
+void update_game_timer(game_state_t *state) {
+    if (!state || !state->game_in_progress) {
+        return;
+    }
+
+    time_t current_time = time(NULL);
+
+    // 처음 호출되는 경우 초기화
+    if (state->last_timer_update == 0) {
+        state->last_timer_update = current_time;
+        return;
+    }
+
+    // 마지막 업데이트 이후 경과 시간 계산
+    time_t elapsed_time = current_time - state->last_timer_update;
+
+    // 1초 이상 경과한 경우에만 업데이트 (너무 빈번한 업데이트 방지)
+    if (elapsed_time < 1) {
+        return;
+    }
+
+    // 현재 턴인 플레이어의 시간을 실시간으로 차감
+    team_t current_player = state->game.side_to_move;
+
+    if (current_player == TEAM_WHITE) {
+        // 현재 턴이 백 팀인 경우 백 팀 시간 차감
+        state->white_time_remaining -= (int)elapsed_time;
+        if (state->white_time_remaining < 0) {
+            state->white_time_remaining = 0;
+        }
+    } else {
+        // 현재 턴이 흑 팀인 경우 흑 팀 시간 차감
+        state->black_time_remaining -= (int)elapsed_time;
+        if (state->black_time_remaining < 0) {
+            state->black_time_remaining = 0;
+        }
+    }
+
+    // 마지막 업데이트 시간 갱신
+    state->last_timer_update = current_time;
+
+    LOG_DEBUG("Timer updated: white=%d, black=%d (current_player=%s, elapsed=%ld)",
+              state->white_time_remaining, state->black_time_remaining,
+              (current_player == TEAM_WHITE) ? "WHITE" : "BLACK", elapsed_time);
+}
+
+// 타이머 정보 업데이트 (서버로부터 받은 정확한 정보로 동기화)
+void sync_timer_from_server(game_state_t *state, int32_t white_time, int32_t black_time, time_t move_time) {
+    if (!state) {
+        return;
+    }
+
+    state->white_time_remaining = white_time;
+    state->black_time_remaining = black_time;
+    state->game_start_time      = move_time;  // 마지막 동기화 시점으로 업데이트
+
+    // 실시간 타이머 동기화를 위한 필드 업데이트
+    state->last_timer_update       = move_time;
+    state->white_time_at_last_sync = white_time;
+    state->black_time_at_last_sync = black_time;
+
+    LOG_DEBUG("Timer synced from server: white=%d, black=%d", white_time, black_time);
 }

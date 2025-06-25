@@ -1,6 +1,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "../client_state.h"
 #include "../game_state.h"  // apply_move_from_server 함수를 위해 추가
@@ -136,6 +137,22 @@ int handle_move_broadcast(ServerMessage *msg) {
                 // 체크 상태 해제
                 client->game_state.white_in_check = false;
                 client->game_state.black_in_check = false;
+            }
+
+            // 타이머 정보 업데이트 (서버에서 받은 정확한 시간으로 동기화)
+            if (broadcast->white_time_remaining >= 0 && broadcast->black_time_remaining >= 0) {
+                time_t sync_time = time(NULL);
+                if (broadcast->move_timestamp) {
+                    sync_time = broadcast->move_timestamp->seconds;
+                }
+
+                sync_timer_from_server(&client->game_state,
+                                       broadcast->white_time_remaining,
+                                       broadcast->black_time_remaining,
+                                       sync_time);
+
+                LOG_DEBUG("Timer synced from move broadcast: white=%d, black=%d",
+                          broadcast->white_time_remaining, broadcast->black_time_remaining);
             }
 
             client->screen_update_requested = true;

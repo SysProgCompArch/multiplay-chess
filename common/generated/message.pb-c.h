@@ -324,10 +324,29 @@ struct  _MatchGameResponse
    * 상대방 이름 (게임 시작 시)
    */
   char *opponent_name;
+  /*
+   * 타이머 관련 정보 추가
+   */
+  /*
+   * 각 플레이어별 제한시간 (초 단위)
+   */
+  int32_t time_limit_per_player;
+  /*
+   * 게임 시작 시간
+   */
+  Google__Protobuf__Timestamp *game_start_time;
+  /*
+   * 백 팀 남은 시간 (초)
+   */
+  int32_t white_time_remaining;
+  /*
+   * 흑 팀 남은 시간 (초)
+   */
+  int32_t black_time_remaining;
 };
 #define MATCH_GAME_RESPONSE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&match_game_response__descriptor) \
-    , (char *)protobuf_c_empty_string, 0, (char *)protobuf_c_empty_string, TEAM__TEAM_UNSPECIFIED, (char *)protobuf_c_empty_string }
+    , (char *)protobuf_c_empty_string, 0, (char *)protobuf_c_empty_string, TEAM__TEAM_UNSPECIFIED, (char *)protobuf_c_empty_string, 0, NULL, 0, 0 }
 
 
 /*
@@ -418,10 +437,25 @@ struct  _MoveBroadcast
    * 체크 당한 색 (is_check가 true일 때만 의미있음)
    */
   Team checked_team;
+  /*
+   * 타이머 정보 추가
+   */
+  /*
+   * 백 팀 남은 시간 (초)
+   */
+  int32_t white_time_remaining;
+  /*
+   * 흑 팀 남은 시간 (초)
+   */
+  int32_t black_time_remaining;
+  /*
+   * 이동 시점 타임스탬프
+   */
+  Google__Protobuf__Timestamp *move_timestamp;
 };
 #define MOVE_BROADCAST__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&move_broadcast__descriptor) \
-    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, PIECE_TYPE__PT_NONE, NULL, 0, TEAM__TEAM_UNSPECIFIED, GAME_END_TYPE__GAME_END_UNKNOWN, 0, TEAM__TEAM_UNSPECIFIED }
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, PIECE_TYPE__PT_NONE, NULL, 0, TEAM__TEAM_UNSPECIFIED, GAME_END_TYPE__GAME_END_UNKNOWN, 0, TEAM__TEAM_UNSPECIFIED, 0, 0, NULL }
 
 
 struct  _CheckBroadcast

@@ -94,6 +94,12 @@ MatchResult add_player_to_matching(int fd, const char *player_id) {
                     // 체스판 초기화 (표준 시작 위치)
                     init_startpos(&game->game_state);
 
+                    // 타이머 설정 (기본 10분 = 600초)
+                    game->time_limit_per_player = 600;  // 10분
+                    game->white_time_remaining  = 600;
+                    game->black_time_remaining  = 600;
+                    game->last_move_time        = game->game_start_time;
+
                     if (current_is_white) {
                         game->white_player_fd = fd;
                         game->black_player_fd = waiting_player->fd;

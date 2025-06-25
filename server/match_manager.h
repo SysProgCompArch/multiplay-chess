@@ -3,6 +3,7 @@
 
 #include <pthread.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <time.h>
 
 #include "message.pb-c.h"
@@ -39,6 +40,12 @@ typedef struct
     time_t game_start_time;              // 게임 시작 시간
     bool   is_active;                    // 게임 활성 상태
     game_t game_state;                   // 체스 게임 보드 상태
+
+    // 타이머 관련 정보
+    int32_t time_limit_per_player;  // 각 플레이어별 제한시간 (초)
+    int32_t white_time_remaining;   // 백 팀 남은 시간 (초)
+    int32_t black_time_remaining;   // 흑 팀 남은 시간 (초)
+    time_t  last_move_time;         // 마지막 이동 시간 (턴 시간 계산용)
 } ActiveGame;
 
 // 매칭 결과 구조체

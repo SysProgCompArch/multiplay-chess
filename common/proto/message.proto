@@ -135,6 +135,12 @@ message MatchGameResponse {
   // 상대 ID나 색(WHITE/BLACK)도 함께 알려줄 수 있음
   Team   assigned_team = 4;
   string opponent_name = 5;  // 상대방 이름 (게임 시작 시)
+
+  // 타이머 관련 정보 추가
+  int32                     time_limit_per_player = 6;  // 각 플레이어별 제한시간 (초 단위)
+  google.protobuf.Timestamp game_start_time       = 7;  // 게임 시작 시간
+  int32                     white_time_remaining  = 8;  // 백 팀 남은 시간 (초)
+  int32                     black_time_remaining  = 9;  // 흑 팀 남은 시간 (초)
 }
 
 // 기권 요청에 대한 응답
@@ -173,6 +179,11 @@ message MoveBroadcast {
   GameEndType end_type     = 9;   // 게임 종료 유형
   bool        is_check     = 10;  // 이 이동으로 체크 상황이 발생했는지 여부
   Team        checked_team = 11;  // 체크 당한 색 (is_check가 true일 때만 의미있음)
+
+  // 타이머 정보 추가
+  int32                     white_time_remaining = 12;  // 백 팀 남은 시간 (초)
+  int32                     black_time_remaining = 13;  // 흑 팀 남은 시간 (초)
+  google.protobuf.Timestamp move_timestamp       = 14;  // 이동 시점 타임스탬프
 }
 
 message CheckBroadcast {

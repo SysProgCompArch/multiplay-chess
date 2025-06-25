@@ -67,6 +67,13 @@ int handle_match_game_message(int fd, ClientMessage *req) {
             // 게임 시작 (두 플레이어 모두에게 알림)
             LOG_INFO("Match found! Game %s started for fd=%d", result.game_id, fd);
 
+            // 게임 정보 가져오기 (타이머 정보를 위해)
+            ActiveGame *game = find_game_by_player_fd(fd);
+            if (!game) {
+                LOG_ERROR("Failed to find game for fd=%d", fd);
+                return -1;
+            }
+
             // 현재 플레이어에게 응답
             match_resp.success       = true;
             match_resp.message       = "Match found! Game starting...";
@@ -74,16 +81,34 @@ int handle_match_game_message(int fd, ClientMessage *req) {
             match_resp.assigned_team = result.assigned_team;
             match_resp.opponent_name = result.opponent_name ? result.opponent_name : "";
 
+            // 타이머 정보 추가
+            match_resp.time_limit_per_player = game->time_limit_per_player;
+            match_resp.white_time_remaining  = game->white_time_remaining;
+            match_resp.black_time_remaining  = game->black_time_remaining;
+
+            // 게임 시작 시간 설정
+            match_resp.game_start_time = malloc(sizeof(Google__Protobuf__Timestamp));
+            if (match_resp.game_start_time) {
+                google__protobuf__timestamp__init(match_resp.game_start_time);
+                match_resp.game_start_time->seconds = game->game_start_time;
+                match_resp.game_start_time->nanos   = 0;
+            }
+
             response.msg_case       = SERVER_MESSAGE__MSG_MATCH_GAME_RES;
             response.match_game_res = &match_resp;
 
             int send_result = send_server_message(fd, &response);
 
+            // 메모리 해제
+            if (match_resp.game_start_time) {
+                free(match_resp.game_start_time);
+                match_resp.game_start_time = NULL;
+            }
+
             // 상대방에게도 게임 시작 알림 전송
             if (send_result >= 0 && result.opponent_fd >= 0) {
                 // 상대방의 상대방 이름은 현재 플레이어 이름
-                ActiveGame *game                = find_game_by_player_fd(fd);
-                char       *current_player_name = NULL;
+                char *current_player_name = NULL;
                 if (game) {
                     current_player_name = (game->white_player_fd == fd) ? game->white_player_id : game->black_player_id;
                 }
@@ -95,12 +120,30 @@ int handle_match_game_message(int fd, ClientMessage *req) {
                 opponent_resp.assigned_team     = (result.assigned_team == TEAM__TEAM_WHITE) ? TEAM__TEAM_BLACK : TEAM__TEAM_WHITE;
                 opponent_resp.opponent_name     = current_player_name ? current_player_name : "";
 
+                // 상대방에게도 타이머 정보 추가
+                opponent_resp.time_limit_per_player = game->time_limit_per_player;
+                opponent_resp.white_time_remaining  = game->white_time_remaining;
+                opponent_resp.black_time_remaining  = game->black_time_remaining;
+
+                // 게임 시작 시간 설정 (상대방)
+                opponent_resp.game_start_time = malloc(sizeof(Google__Protobuf__Timestamp));
+                if (opponent_resp.game_start_time) {
+                    google__protobuf__timestamp__init(opponent_resp.game_start_time);
+                    opponent_resp.game_start_time->seconds = game->game_start_time;
+                    opponent_resp.game_start_time->nanos   = 0;
+                }
+
                 ServerMessage opponent_msg  = SERVER_MESSAGE__INIT;
                 opponent_msg.msg_case       = SERVER_MESSAGE__MSG_MATCH_GAME_RES;
                 opponent_msg.match_game_res = &opponent_resp;
 
                 LOG_DEBUG("Sending game start notification to opponent (fd=%d)", result.opponent_fd);
                 send_server_message(result.opponent_fd, &opponent_msg);
+
+                // 메모리 해제
+                if (opponent_resp.game_start_time) {
+                    free(opponent_resp.game_start_time);
+                }
             }
 
             return send_result;

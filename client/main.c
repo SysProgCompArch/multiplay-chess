@@ -517,6 +517,13 @@ int main(int argc, char *argv[]) {
         bool          periodic_update_needed = ((current_screen == SCREEN_MATCHING || current_screen == SCREEN_GAME) &&
                                        current_time - last_update_time >= 1);  // 매칭 및 게임 화면에서는 1초마다 업데이트
 
+        // 게임 화면에서 타이머 업데이트
+        if (current_screen == SCREEN_GAME && periodic_update_needed) {
+            pthread_mutex_lock(&screen_mutex);
+            update_game_timer(&client->game_state);
+            pthread_mutex_unlock(&screen_mutex);
+        }
+
         // 네트워크 스레드에서 요청된 업데이트나 상태 변경이 있으면 즉시 업데이트
         if (need_screen_update || periodic_update_needed) {
             pthread_mutex_lock(&screen_mutex);
