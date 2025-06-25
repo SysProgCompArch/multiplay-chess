@@ -81,10 +81,10 @@ int handle_match_game_message(int fd, ClientMessage *req) {
             match_resp.assigned_team = result.assigned_team;
             match_resp.opponent_name = result.opponent_name ? result.opponent_name : "";
 
-            // 타이머 정보 추가
-            match_resp.time_limit_per_player = game->time_limit_per_player;
-            match_resp.white_time_remaining  = game->white_time_remaining;
-            match_resp.black_time_remaining  = game->black_time_remaining;
+            // 타이머 정보 추가 (밀리초를 초로 변환해서 전송)
+            match_resp.time_limit_per_player = game->time_limit_per_player / 1000;
+            match_resp.white_time_remaining  = game->white_time_remaining / 1000;
+            match_resp.black_time_remaining  = game->black_time_remaining / 1000;
 
             // 게임 시작 시간 설정
             match_resp.game_start_time = malloc(sizeof(Google__Protobuf__Timestamp));
@@ -120,10 +120,10 @@ int handle_match_game_message(int fd, ClientMessage *req) {
                 opponent_resp.assigned_team     = (result.assigned_team == TEAM__TEAM_WHITE) ? TEAM__TEAM_BLACK : TEAM__TEAM_WHITE;
                 opponent_resp.opponent_name     = current_player_name ? current_player_name : "";
 
-                // 상대방에게도 타이머 정보 추가
-                opponent_resp.time_limit_per_player = game->time_limit_per_player;
-                opponent_resp.white_time_remaining  = game->white_time_remaining;
-                opponent_resp.black_time_remaining  = game->black_time_remaining;
+                // 상대방에게도 타이머 정보 추가 (밀리초를 초로 변환해서 전송)
+                opponent_resp.time_limit_per_player = game->time_limit_per_player / 1000;
+                opponent_resp.white_time_remaining  = game->white_time_remaining / 1000;
+                opponent_resp.black_time_remaining  = game->black_time_remaining / 1000;
 
                 // 게임 시작 시간 설정 (상대방)
                 opponent_resp.game_start_time = malloc(sizeof(Google__Protobuf__Timestamp));

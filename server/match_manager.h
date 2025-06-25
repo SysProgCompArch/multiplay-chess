@@ -41,36 +41,41 @@ typedef struct
     bool   is_active;                    // 게임 활성 상태
     game_t game_state;                   // 체스 게임 보드 상태
 
-    // 타이머 관련 정보
-    int32_t time_limit_per_player;  // 각 플레이어별 제한시간 (초)
-    int32_t white_time_remaining;   // 백 팀 남은 시간 (초)
-    int32_t black_time_remaining;   // 흑 팀 남은 시간 (초)
-    time_t  last_move_time;         // 마지막 이동 시간 (턴 시간 계산용)
+    // 타이머 관련 정보 (밀리초 단위로 정밀도 향상)
+    int32_t time_limit_per_player;  // 각 플레이어별 제한시간 (밀리초)
+    int32_t white_time_remaining;   // 백 팀 남은 시간 (밀리초)
+    int32_t black_time_remaining;   // 흑 팀 남은 시간 (밀리초)
+    int64_t last_move_time_ms;      // 마지막 이동 시간 (밀리초, 턴 시간 계산용)
+    int64_t last_timer_check_ms;    // 마지막 타이머 체크 시간 (밀리초, 중복 차감 방지용)
 } ActiveGame;
 
 // 매칭 결과 구조체
 typedef struct
 {
     MatchStatus status;         // 매칭 상태
-    char       *game_id;        // 게임 ID (성공 시)
-    Team        assigned_team;  // 할당된 색상
+    char       *game_id;        // 게임 ID (게임 시작 시)
+    Team        assigned_team;  // 할당된 팀
     int         opponent_fd;    // 상대방 소켓 (게임 시작 시)
     char       *opponent_name;  // 상대방 이름 (게임 시작 시)
-    char       *error_message;  // 오류 메시지 (실패 시)
+    char       *error_message;  // 오류 메시지 (오류 시)
 } MatchResult;
 
-// 매칭 매니저 구조체
+// 매칭 매니저 메인 구조체
 typedef struct
 {
-    WaitingPlayer   waiting_players[MAX_WAITING_PLAYERS];
-    ActiveGame      active_games[MAX_ACTIVE_GAMES];
-    int             waiting_count;
-    int             active_game_count;
-    pthread_mutex_t mutex;  // 스레드 안전성을 위한 뮤텍스
+    WaitingPlayer   waiting_players[MAX_WAITING_PLAYERS];  // 대기 중인 플레이어들
+    ActiveGame      active_games[MAX_ACTIVE_GAMES];        // 활성 게임들
+    int             waiting_count;                         // 대기 중인 플레이어 수
+    int             active_game_count;                     // 활성 게임 수
+    pthread_mutex_t mutex;                                 // 스레드 안전성을 위한 뮤텍스
 } MatchManager;
 
 // 매칭 매니저 전역 변수
 extern MatchManager g_match_manager;
+
+// 타이머 체크 스레드 관련 변수
+extern bool      timer_thread_running;
+extern pthread_t timer_thread_id;
 
 // 함수 선언
 int         init_match_manager(void);
@@ -86,5 +91,13 @@ int         handle_player_disconnect(int fd);
 void print_match_manager_status(void);
 int  get_waiting_players_count(void);
 int  get_active_games_count(void);
+
+// 타이머 관리 함수들
+int     start_timer_thread(void);
+void    stop_timer_thread(void);
+void   *timer_check_thread(void *arg);
+void    check_game_timeouts(void);
+int     send_timeout_game_end_broadcast(ActiveGame *game, const char *timeout_player_id, Team winner_team);
+int64_t get_current_time_ms(void);  // 밀리초 단위 현재 시간 가져오기
 
 #endif  // MATCH_MANAGER_H

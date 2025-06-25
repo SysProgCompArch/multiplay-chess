@@ -224,42 +224,24 @@ int handle_move_message(int fd, ClientMessage *req) {
 
     LOG_INFO("Move applied successfully for fd=%d: %s -> %s", fd, move_req->from, move_req->to);
 
-    // 타이머 업데이트
-    time_t current_time = time(NULL);
-    time_t elapsed_time = current_time - game->last_move_time;
+    // 타이머 업데이트 - 밀리초 단위로 정밀하게 관리
+    // 타이머 스레드가 시간 차감을 담당하므로 여기서는 시간 기록만 업데이트
+    extern MatchManager g_match_manager;
+    extern int64_t      get_current_time_ms(void);  // 함수 선언
 
-    // 이전 플레이어의 남은 시간에서 경과 시간 차감
-    if (player_team == WHITE) {
-        game->white_time_remaining -= (int32_t)elapsed_time;
-        if (game->white_time_remaining < 0) {
-            game->white_time_remaining = 0;
-        }
-    } else {
-        game->black_time_remaining -= (int32_t)elapsed_time;
-        if (game->black_time_remaining < 0) {
-            game->black_time_remaining = 0;
-        }
-    }
+    pthread_mutex_lock(&g_match_manager.mutex);
 
-    // 다음 턴을 위해 마지막 이동 시간 업데이트
-    game->last_move_time = current_time;
+    // 다음 턴을 위해 마지막 이동 시간만 업데이트 (밀리초 단위)
+    // 시간 차감은 타이머 스레드가 지속적으로 처리하고 있음
+    game->last_move_time_ms = get_current_time_ms();
+
+    // last_timer_check_ms는 타이머 스레드에서만 업데이트하도록 함
+    // 이렇게 하면 타이머 스레드가 정확한 경과 시간을 계산할 수 있음
+
+    pthread_mutex_unlock(&g_match_manager.mutex);
 
     LOG_DEBUG("Timer updated for game %s: white=%d, black=%d",
               game->game_id, game->white_time_remaining, game->black_time_remaining);
-
-    // 시간 초과 체크
-    bool timeout_occurred = false;
-    Team timeout_winner   = TEAM__TEAM_UNSPECIFIED;
-
-    if (game->white_time_remaining <= 0) {
-        LOG_INFO("White player timeout in game %s", game->game_id);
-        timeout_occurred = true;
-        timeout_winner   = TEAM__TEAM_BLACK;
-    } else if (game->black_time_remaining <= 0) {
-        LOG_INFO("Black player timeout in game %s", game->game_id);
-        timeout_occurred = true;
-        timeout_winner   = TEAM__TEAM_WHITE;
-    }
 
     // TODO: FEN 문자열 생성 (현재는 간단한 메시지로 대체)
     char fen_placeholder[256];
@@ -286,13 +268,8 @@ int handle_move_message(int fd, ClientMessage *req) {
                  (current_side == TEAM_WHITE) ? "WHITE" : "BLACK", game->game_id);
     }
 
-    // 게임 종료 조건 확인
-    if (timeout_occurred) {
-        LOG_INFO("Game %s ended by timeout", game->game_id);
-        game_ends   = true;
-        winner_team = timeout_winner;
-        end_type    = GAME_END_TYPE__GAME_END_TIMEOUT;
-    } else if (is_checkmate(&game->game_state)) {
+    // 게임 종료 조건 확인 (시간 초과는 타이머 스레드에서 처리)
+    if (is_checkmate(&game->game_state)) {
         LOG_INFO("Game %s ended by checkmate", game->game_id);
         game_ends   = true;
         winner_team = (current_side == TEAM_WHITE) ? TEAM__TEAM_BLACK : TEAM__TEAM_WHITE;
@@ -310,21 +287,23 @@ int handle_move_message(int fd, ClientMessage *req) {
     }
 
     // 상대방에게 이동 브로드캐스트 (게임 상태 정보 포함)
+    // 밀리초를 초 단위로 변환해서 전송 (클라이언트 호환성 유지)
     if (broadcast_move_with_state(opponent_fd, game->game_id, player_id,
                                   move_req->from, move_req->to,
                                   game_ends, winner_team, end_type,
                                   is_check_situation, checked_team,
-                                  game->white_time_remaining, game->black_time_remaining) < 0) {
+                                  game->white_time_remaining / 1000, game->black_time_remaining / 1000) < 0) {
         LOG_ERROR("Failed to broadcast move to opponent fd=%d", opponent_fd);
         // 이미 이동은 적용되었으므로, 브로드캐스트 실패만 로그하고 계속 진행
     }
 
     // 요청자에게도 이동 브로드캐스트 (게임 상태 정보 포함)
+    // 밀리초를 초 단위로 변환해서 전송 (클라이언트 호환성 유지)
     if (broadcast_move_with_state(fd, game->game_id, player_id,
                                   move_req->from, move_req->to,
                                   game_ends, winner_team, end_type,
                                   is_check_situation, checked_team,
-                                  game->white_time_remaining, game->black_time_remaining) < 0) {
+                                  game->white_time_remaining / 1000, game->black_time_remaining / 1000) < 0) {
         LOG_ERROR("Failed to broadcast move to requester fd=%d", fd);
         // 이미 이동은 적용되었으므로, 브로드캐스트 실패만 로그하고 계속 진행
     }

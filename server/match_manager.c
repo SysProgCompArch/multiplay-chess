@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>  // gettimeofday를 위해 추가
 #include <unistd.h>
 
 #include "config.h"
@@ -11,8 +12,19 @@
 #include "network.h"
 #include "utils.h"  // 체스판 초기화를 위해 추가
 
+// 타이머 체크 스레드 관련 변수
+bool      timer_thread_running = false;
+pthread_t timer_thread_id      = 0;
+
 // 매칭 매니저 전역 인스턴스
 MatchManager g_match_manager;
+
+// 밀리초 단위 현재 시간 가져오기
+int64_t get_current_time_ms(void) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (int64_t)tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
 
 // 매칭 매니저 초기화
 int init_match_manager(void) {
@@ -26,12 +38,22 @@ int init_match_manager(void) {
     g_match_manager.waiting_count     = 0;
     g_match_manager.active_game_count = 0;
 
+    // 타이머 체크 스레드 시작
+    if (start_timer_thread() != 0) {
+        LOG_ERROR("Failed to start timer thread");
+        pthread_mutex_destroy(&g_match_manager.mutex);
+        return -1;
+    }
+
     LOG_INFO("Match manager initialized");
     return 0;
 }
 
 // 매칭 매니저 정리
 void cleanup_match_manager(void) {
+    // 타이머 스레드 먼저 종료
+    stop_timer_thread();
+
     pthread_mutex_lock(&g_match_manager.mutex);
 
     // 대기 중인 플레이어들 정리
@@ -46,6 +68,150 @@ void cleanup_match_manager(void) {
     pthread_mutex_destroy(&g_match_manager.mutex);
 
     LOG_INFO("Match manager cleaned up");
+}
+
+// 타이머 체크 스레드 시작
+int start_timer_thread(void) {
+    timer_thread_running = true;
+
+    if (pthread_create(&timer_thread_id, NULL, timer_check_thread, NULL) != 0) {
+        LOG_ERROR("Failed to create timer thread");
+        timer_thread_running = false;
+        return -1;
+    }
+
+    LOG_INFO("Timer check thread started");
+    return 0;
+}
+
+// 타이머 체크 스레드 종료
+void stop_timer_thread(void) {
+    if (timer_thread_running) {
+        timer_thread_running = false;
+
+        if (timer_thread_id != 0) {
+            pthread_join(timer_thread_id, NULL);
+            timer_thread_id = 0;
+            LOG_INFO("Timer check thread stopped");
+        }
+    }
+}
+
+// 타이머 체크 스레드 메인 함수 (100ms 간격으로 정밀하게 체크)
+void *timer_check_thread(void *arg) {
+    LOG_INFO("Timer check thread started");
+
+    while (timer_thread_running) {
+        check_game_timeouts();
+
+        // 100ms마다 체크 (더 정밀한 타이머)
+        usleep(100000);  // 100ms = 100,000 microseconds
+    }
+
+    LOG_INFO("Timer check thread terminated");
+    return NULL;
+}
+
+// 게임 타이머 체크 및 시간 초과 처리 (밀리초 단위로 정밀도 향상)
+void check_game_timeouts(void) {
+    int64_t current_time_ms = get_current_time_ms();
+
+    pthread_mutex_lock(&g_match_manager.mutex);
+
+    for (int i = 0; i < MAX_ACTIVE_GAMES; i++) {
+        ActiveGame *game = &g_match_manager.active_games[i];
+
+        if (!game->is_active) {
+            continue;
+        }
+
+        // 마지막 타이머 체크 이후 경과 시간만 차감 (중복 차감 방지)
+        int64_t time_since_last_check_ms = current_time_ms - game->last_timer_check_ms;
+
+        // 100ms 미만이면 건너뜀 (너무 빈번한 업데이트 방지)
+        if (time_since_last_check_ms < 100) {
+            continue;
+        }
+
+        team_t current_player = game->game_state.side_to_move;
+
+        bool        timeout_occurred  = false;
+        Team        timeout_winner    = TEAM__TEAM_UNSPECIFIED;
+        const char *timeout_player_id = NULL;
+
+        // 현재 턴인 플레이어의 시간만 차감 (밀리초 단위)
+        if (current_player == TEAM_WHITE) {
+            // 백 팀 턴인 경우
+            game->white_time_remaining -= (int32_t)time_since_last_check_ms;
+            if (game->white_time_remaining <= 0) {
+                LOG_INFO("White player timeout in game %s (elapsed_ms: %ld, remaining was: %d ms)",
+                         game->game_id, time_since_last_check_ms, game->white_time_remaining + (int32_t)time_since_last_check_ms);
+                timeout_occurred           = true;
+                timeout_winner             = TEAM__TEAM_BLACK;
+                timeout_player_id          = game->white_player_id;
+                game->white_time_remaining = 0;
+            }
+        } else {
+            // 흑 팀 턴인 경우
+            game->black_time_remaining -= (int32_t)time_since_last_check_ms;
+            if (game->black_time_remaining <= 0) {
+                LOG_INFO("Black player timeout in game %s (elapsed_ms: %ld, remaining was: %d ms)",
+                         game->game_id, time_since_last_check_ms, game->black_time_remaining + (int32_t)time_since_last_check_ms);
+                timeout_occurred           = true;
+                timeout_winner             = TEAM__TEAM_WHITE;
+                timeout_player_id          = game->black_player_id;
+                game->black_time_remaining = 0;
+            }
+        }
+
+        // 마지막 체크 시간 업데이트
+        game->last_timer_check_ms = current_time_ms;
+
+        if (timeout_occurred) {
+            LOG_INFO("Game %s ended by timeout - winner: %s",
+                     game->game_id,
+                     (timeout_winner == TEAM__TEAM_WHITE) ? "WHITE" : "BLACK");
+
+            // 게임 종료 브로드캐스트 전송
+            send_timeout_game_end_broadcast(game, timeout_player_id, timeout_winner);
+
+            // 게임 제거
+            game->is_active = false;
+            g_match_manager.active_game_count--;
+        }
+    }
+
+    pthread_mutex_unlock(&g_match_manager.mutex);
+}
+
+// 시간 초과로 인한 게임 종료 브로드캐스트 전송
+int send_timeout_game_end_broadcast(ActiveGame *game, const char *timeout_player_id, Team winner_team) {
+    ServerMessage    game_end_msg       = SERVER_MESSAGE__INIT;
+    GameEndBroadcast game_end_broadcast = GAME_END_BROADCAST__INIT;
+
+    game_end_broadcast.game_id     = game->game_id;
+    game_end_broadcast.player_id   = (char *)timeout_player_id;
+    game_end_broadcast.winner_team = winner_team;
+    game_end_broadcast.end_type    = GAME_END_TYPE__GAME_END_TIMEOUT;
+
+    game_end_msg.msg_case = SERVER_MESSAGE__MSG_GAME_END;
+    game_end_msg.game_end = &game_end_broadcast;
+
+    // 양쪽 플레이어 모두에게 게임 종료 브로드캐스트 전송
+    int result = 0;
+    if (send_server_message(game->white_player_fd, &game_end_msg) < 0) {
+        LOG_ERROR("Failed to send timeout game end broadcast to white player fd=%d", game->white_player_fd);
+        result = -1;
+    }
+    if (send_server_message(game->black_player_fd, &game_end_msg) < 0) {
+        LOG_ERROR("Failed to send timeout game end broadcast to black player fd=%d", game->black_player_fd);
+        result = -1;
+    }
+
+    LOG_INFO("Sent timeout game end broadcast for game %s (timeout_player=%s, winner_team=%d)",
+             game->game_id, timeout_player_id, winner_team);
+
+    return result;
 }
 
 // 게임 ID 생성
@@ -95,11 +261,12 @@ MatchResult add_player_to_matching(int fd, const char *player_id) {
                     // 체스판 초기화 (표준 시작 위치)
                     init_startpos(&game->game_state);
 
-                    // 타이머 설정
-                    game->time_limit_per_player = DEFAULT_GAME_TIME_LIMIT;
-                    game->white_time_remaining  = DEFAULT_GAME_TIME_LIMIT;
-                    game->black_time_remaining  = DEFAULT_GAME_TIME_LIMIT;
-                    game->last_move_time        = game->game_start_time;
+                    // 타이머 설정 (밀리초 단위)
+                    game->time_limit_per_player = DEFAULT_GAME_TIME_LIMIT * 1000;  // 초를 밀리초로 변환
+                    game->white_time_remaining  = DEFAULT_GAME_TIME_LIMIT * 1000;  // 초를 밀리초로 변환
+                    game->black_time_remaining  = DEFAULT_GAME_TIME_LIMIT * 1000;  // 초를 밀리초로 변환
+                    game->last_move_time_ms     = get_current_time_ms();
+                    game->last_timer_check_ms   = get_current_time_ms();
 
                     if (current_is_white) {
                         game->white_player_fd = fd;
