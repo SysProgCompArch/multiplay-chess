@@ -39,11 +39,6 @@ server: deps $(BUILD_DIR)/Makefile
 	cd $(BUILD_DIR) && make server
 	@echo "Server build completed: $(BUILD_DIR)/server/server"
 
-test-client: deps $(BUILD_DIR)/Makefile
-	@echo "Building test client..."
-	cd $(BUILD_DIR) && make test-client
-	@echo "Test client build completed: $(BUILD_DIR)/client/test-client"
-
 # Clean build artifacts
 clean:
 	@echo "Cleaning build artifacts..."
@@ -65,7 +60,6 @@ help:
 	@echo "  all         - Build all targets (client, server, test-client)"
 	@echo "  client      - Build client only"
 	@echo "  server      - Build server only"
-	@echo "  test-client - Build test client only"
 	@echo "  clean       - Clean build artifacts"
 	@echo "  deps        - Check dependencies"
 	@echo "  run-server  - Build and run server"
