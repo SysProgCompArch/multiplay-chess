@@ -3,8 +3,11 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
+#include "../client_network.h"
 #include "../client_state.h"
+#include "colors.h"
 #include "logger.h"
 #include "ui.h"
 
@@ -308,5 +311,94 @@ void close_dialog() {
     if (g_dialog) {
         delwin(g_dialog);
         g_dialog = NULL;
+    }
+}
+
+// 기권 확인 다이얼로그 표시
+void show_resign_dialog() {
+    client_state_t *client = get_client_state();
+
+    pthread_mutex_lock(&screen_mutex);
+    client->resign_dialog_active = true;
+    pthread_mutex_unlock(&screen_mutex);
+
+    LOG_INFO("Showing resign confirmation dialog");
+}
+
+// 기권 확인 다이얼로그 그리기
+void draw_resign_dialog() {
+    if (g_dialog) {
+        delwin(g_dialog);
+        g_dialog = NULL;
+    }
+
+    int rows, cols;
+    getmaxyx(stdscr, rows, cols);
+
+    int dialog_width  = 50;
+    int dialog_height = 8;
+    int start_y       = (rows - dialog_height) / 2;
+    int start_x       = (cols - dialog_width) / 2;
+
+    g_dialog = newwin(dialog_height, dialog_width, start_y, start_x);
+
+    // 배경을 어둡게 만들기 위해 색상 설정
+    wbkgd(g_dialog, COLOR_PAIR(COLOR_PAIR_DIALOG_BORDER));
+    draw_border(g_dialog);
+
+    // 제목 표시
+    mvwprintw(g_dialog, 1, (dialog_width - 18) / 2, "Resign Confirmation");
+
+    // 구분선
+    mvwprintw(g_dialog, 2, 2, "==============================================");
+
+    // 메시지 표시
+    mvwprintw(g_dialog, 3, (dialog_width - 32) / 2, "Are you sure you want to resign?");
+
+    // 선택 안내
+    mvwprintw(g_dialog, 5, (dialog_width - 30) / 2, "Y - Yes, resign the game");
+    mvwprintw(g_dialog, 6, (dialog_width - 30) / 2, "N - No, continue playing");
+
+    wrefresh(g_dialog);
+}
+
+// 기권 다이얼로그 입력 처리
+bool handle_resign_dialog_input(int ch) {
+    client_state_t *client = get_client_state();
+
+    switch (ch) {
+        case 'y':
+        case 'Y':
+            // 기권 확인
+            LOG_INFO("User confirmed resignation");
+            pthread_mutex_lock(&screen_mutex);
+            client->resign_dialog_active = false;
+            pthread_mutex_unlock(&screen_mutex);
+
+            close_dialog();
+
+            // 기권 요청 전송
+            if (send_resign_request() == 0) {
+                add_chat_message_safe("System", "Resignation request sent.");
+            } else {
+                add_chat_message_safe("System", "Failed to send resignation request.");
+            }
+            return true;
+
+        case 'n':
+        case 'N':
+        case 27:  // ESC
+            // 기권 취소
+            LOG_INFO("User cancelled resignation");
+            pthread_mutex_lock(&screen_mutex);
+            client->resign_dialog_active = false;
+            pthread_mutex_unlock(&screen_mutex);
+
+            close_dialog();
+            return true;
+
+        default:
+            // 다른 키는 무시
+            return false;
     }
 }

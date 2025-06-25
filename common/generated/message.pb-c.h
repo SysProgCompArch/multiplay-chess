@@ -27,9 +27,11 @@ typedef struct _ServerMessage ServerMessage;
 typedef struct _PingResponse PingResponse;
 typedef struct _EchoResponse EchoResponse;
 typedef struct _MatchGameResponse MatchGameResponse;
+typedef struct _ResignResponse ResignResponse;
 typedef struct _MoveResponse MoveResponse;
 typedef struct _MoveBroadcast MoveBroadcast;
 typedef struct _CheckBroadcast CheckBroadcast;
+typedef struct _ResignBroadcast ResignBroadcast;
 typedef struct _GameEndBroadcast GameEndBroadcast;
 typedef struct _ChatBroadcast ChatBroadcast;
 typedef struct _ErrorResponse ErrorResponse;
@@ -242,6 +244,8 @@ typedef enum {
   SERVER_MESSAGE__MSG_CHECK_BROADCAST = 23,
   SERVER_MESSAGE__MSG_GAME_END = 24,
   SERVER_MESSAGE__MSG_CHAT_BROADCAST = 25,
+  SERVER_MESSAGE__MSG_RESIGN_RES = 26,
+  SERVER_MESSAGE__MSG_RESIGN_BROADCAST = 27,
   SERVER_MESSAGE__MSG_ERROR = 99
     PROTOBUF_C__FORCE_ENUM_TO_BE_INT_SIZE(SERVER_MESSAGE__MSG)
 } ServerMessage__MsgCase;
@@ -266,6 +270,8 @@ struct  _ServerMessage
     CheckBroadcast *check_broadcast;
     GameEndBroadcast *game_end;
     ChatBroadcast *chat_broadcast;
+    ResignResponse *resign_res;
+    ResignBroadcast *resign_broadcast;
     /*
      * 그 외 새 기능 추가 시 확장 가능
      */
@@ -322,6 +328,29 @@ struct  _MatchGameResponse
 #define MATCH_GAME_RESPONSE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&match_game_response__descriptor) \
     , (char *)protobuf_c_empty_string, 0, (char *)protobuf_c_empty_string, TEAM__TEAM_UNSPECIFIED, (char *)protobuf_c_empty_string }
+
+
+/*
+ * 기권 요청에 대한 응답
+ */
+struct  _ResignResponse
+{
+  ProtobufCMessage base;
+  char *game_id;
+  /*
+   * 기권 요청한 플레이어
+   */
+  char *player_id;
+  protobuf_c_boolean success;
+  /*
+   * 실패 시 이유
+   */
+  char *message;
+  Google__Protobuf__Timestamp *timestamp;
+};
+#define RESIGN_RESPONSE__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&resign_response__descriptor) \
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, 0, (char *)protobuf_c_empty_string, NULL }
 
 
 /*
@@ -411,6 +440,31 @@ struct  _CheckBroadcast
 };
 #define CHECK_BROADCAST__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&check_broadcast__descriptor) \
+    , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, TEAM__TEAM_UNSPECIFIED, NULL }
+
+
+/*
+ * 모든 관련 클라이언트에게 브로드캐스트되는 "기권 알림"
+ */
+struct  _ResignBroadcast
+{
+  ProtobufCMessage base;
+  /*
+   * 게임 ID
+   */
+  char *game_id;
+  /*
+   * 기권한 플레이어 ID
+   */
+  char *player_id;
+  /*
+   * 승리자 색 (기권하지 않은 쪽)
+   */
+  Team winner_team;
+  Google__Protobuf__Timestamp *timestamp;
+};
+#define RESIGN_BROADCAST__INIT \
+ { PROTOBUF_C_MESSAGE_INIT (&resign_broadcast__descriptor) \
     , (char *)protobuf_c_empty_string, (char *)protobuf_c_empty_string, TEAM__TEAM_UNSPECIFIED, NULL }
 
 
@@ -695,6 +749,25 @@ MatchGameResponse *
 void   match_game_response__free_unpacked
                      (MatchGameResponse *message,
                       ProtobufCAllocator *allocator);
+/* ResignResponse methods */
+void   resign_response__init
+                     (ResignResponse         *message);
+size_t resign_response__get_packed_size
+                     (const ResignResponse   *message);
+size_t resign_response__pack
+                     (const ResignResponse   *message,
+                      uint8_t             *out);
+size_t resign_response__pack_to_buffer
+                     (const ResignResponse   *message,
+                      ProtobufCBuffer     *buffer);
+ResignResponse *
+       resign_response__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   resign_response__free_unpacked
+                     (ResignResponse *message,
+                      ProtobufCAllocator *allocator);
 /* MoveResponse methods */
 void   move_response__init
                      (MoveResponse         *message);
@@ -751,6 +824,25 @@ CheckBroadcast *
                       const uint8_t       *data);
 void   check_broadcast__free_unpacked
                      (CheckBroadcast *message,
+                      ProtobufCAllocator *allocator);
+/* ResignBroadcast methods */
+void   resign_broadcast__init
+                     (ResignBroadcast         *message);
+size_t resign_broadcast__get_packed_size
+                     (const ResignBroadcast   *message);
+size_t resign_broadcast__pack
+                     (const ResignBroadcast   *message,
+                      uint8_t             *out);
+size_t resign_broadcast__pack_to_buffer
+                     (const ResignBroadcast   *message,
+                      ProtobufCBuffer     *buffer);
+ResignBroadcast *
+       resign_broadcast__unpack
+                     (ProtobufCAllocator  *allocator,
+                      size_t               len,
+                      const uint8_t       *data);
+void   resign_broadcast__free_unpacked
+                     (ResignBroadcast *message,
                       ProtobufCAllocator *allocator);
 /* GameEndBroadcast methods */
 void   game_end_broadcast__init
@@ -844,6 +936,9 @@ typedef void (*EchoResponse_Closure)
 typedef void (*MatchGameResponse_Closure)
                  (const MatchGameResponse *message,
                   void *closure_data);
+typedef void (*ResignResponse_Closure)
+                 (const ResignResponse *message,
+                  void *closure_data);
 typedef void (*MoveResponse_Closure)
                  (const MoveResponse *message,
                   void *closure_data);
@@ -852,6 +947,9 @@ typedef void (*MoveBroadcast_Closure)
                   void *closure_data);
 typedef void (*CheckBroadcast_Closure)
                  (const CheckBroadcast *message,
+                  void *closure_data);
+typedef void (*ResignBroadcast_Closure)
+                 (const ResignBroadcast *message,
                   void *closure_data);
 typedef void (*GameEndBroadcast_Closure)
                  (const GameEndBroadcast *message,
@@ -883,9 +981,11 @@ extern const ProtobufCMessageDescriptor server_message__descriptor;
 extern const ProtobufCMessageDescriptor ping_response__descriptor;
 extern const ProtobufCMessageDescriptor echo_response__descriptor;
 extern const ProtobufCMessageDescriptor match_game_response__descriptor;
+extern const ProtobufCMessageDescriptor resign_response__descriptor;
 extern const ProtobufCMessageDescriptor move_response__descriptor;
 extern const ProtobufCMessageDescriptor move_broadcast__descriptor;
 extern const ProtobufCMessageDescriptor check_broadcast__descriptor;
+extern const ProtobufCMessageDescriptor resign_broadcast__descriptor;
 extern const ProtobufCMessageDescriptor game_end_broadcast__descriptor;
 extern const ProtobufCMessageDescriptor chat_broadcast__descriptor;
 extern const ProtobufCMessageDescriptor error_response__descriptor;

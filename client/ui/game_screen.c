@@ -557,4 +557,9 @@ void draw_game_screen() {
 
     // 연결 상태 표시
     draw_connection_status();
+
+    // 기권 다이얼로그 표시
+    if (client->resign_dialog_active) {
+        draw_resign_dialog();
+    }
 }

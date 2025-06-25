@@ -412,3 +412,32 @@ int send_move_request(const char *from, const char *to) {
     LOG_DEBUG("Move request sent successfully: %s -> %s", from, to);
     return 0;
 }
+
+// 기권 요청 전송
+int send_resign_request() {
+    client_state_t *client = get_client_state();
+
+    if (!client->connected) {
+        LOG_ERROR("Cannot send resign request: not connected to server");
+        return -1;
+    }
+
+    LOG_INFO("Sending resign request for player: %s", client->username);
+
+    ClientMessage resign_msg = CLIENT_MESSAGE__INIT;
+    ResignRequest resign_req = RESIGN_REQUEST__INIT;
+
+    resign_req.player_id = client->username;
+    resign_msg.msg_case  = CLIENT_MESSAGE__MSG_RESIGN;
+    resign_msg.resign    = &resign_req;
+
+    int result = send_client_message(client->socket_fd, &resign_msg);
+    if (result < 0) {
+        LOG_ERROR("Failed to send resign request");
+        add_chat_message_safe("System", "Failed to send resignation request");
+        return -1;
+    }
+
+    LOG_INFO("Resign request sent successfully");
+    return 0;
+}

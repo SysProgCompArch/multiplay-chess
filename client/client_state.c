@@ -38,6 +38,9 @@ void init_client_state() {
     // 에러 다이얼로그 상태 초기화
     g_client.dialog_active = false;
 
+    // 기권 확인 다이얼로그 상태 초기화
+    g_client.resign_dialog_active = false;
+
     // 게임 종료 다이얼로그 상태 초기화
     g_client.game_end_dialog_pending = false;
     memset(g_client.game_end_message, 0, sizeof(g_client.game_end_message));

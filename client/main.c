@@ -9,10 +9,10 @@
 
 #include "client_network.h"
 #include "client_state.h"
-#include "logger.h"
-#include "ui/ui.h"
-#include "replay_menu.h"
 #include "game_save.h"
+#include "logger.h"
+#include "replay_menu.h"
+#include "ui/ui.h"
 
 // 터미널 크기 변경 플래그
 volatile sig_atomic_t terminal_resized = 0;
@@ -375,6 +375,12 @@ int main(int argc, char *argv[]) {
                         break;
 
                     case SCREEN_GAME:
+                        // 기권 다이얼로그가 활성화되어 있으면 다이얼로그 입력 처리
+                        if (client->resign_dialog_active) {
+                            handle_resign_dialog_input(ch);
+                            break;
+                        }
+
                         // 채팅 입력 모드가 아닌 경우 키보드 조작 시도
                         if (!client->chat_input_mode && handle_keyboard_board_input(ch)) {
                             // 키보드 조작이 처리됨
@@ -383,11 +389,11 @@ int main(int argc, char *argv[]) {
 
                         switch (ch) {
                             case '1':
-                                // 기권 처리
-                                LOG_INFO("User resigned the game");
-                                add_chat_message_safe("System", "You resigned the game.");
-                                client->current_screen = SCREEN_MAIN;
-                                prev_screen            = SCREEN_MAIN;  // 상태 변경 반영
+                                // 기권 다이얼로그 표시
+                                if (!client->resign_dialog_active) {
+                                    LOG_INFO("User requested resignation confirmation");
+                                    show_resign_dialog();
+                                }
                                 break;
                             case '2':
                                 // 무승부 제안

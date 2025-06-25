@@ -103,15 +103,17 @@ message ServerMessage {
   ProtocolVersion version = 1;  // 프로토콜 버전
 
   oneof msg {
-    PingResponse      ping_res        = 10;
-    EchoResponse      echo_res        = 11;
-    MatchGameResponse match_game_res  = 20;
-    MoveResponse      move_res        = 21;
-    MoveBroadcast     move_broadcast  = 22;
-    CheckBroadcast    check_broadcast = 23;
-    GameEndBroadcast  game_end        = 24;
-    ChatBroadcast     chat_broadcast  = 25;
-    ErrorResponse     error           = 99;
+    PingResponse      ping_res         = 10;
+    EchoResponse      echo_res         = 11;
+    MatchGameResponse match_game_res   = 20;
+    MoveResponse      move_res         = 21;
+    MoveBroadcast     move_broadcast   = 22;
+    CheckBroadcast    check_broadcast  = 23;
+    GameEndBroadcast  game_end         = 24;
+    ChatBroadcast     chat_broadcast   = 25;
+    ResignResponse    resign_res       = 26;
+    ResignBroadcast   resign_broadcast = 27;
+    ErrorResponse     error            = 99;
     // 그 외 새 기능 추가 시 확장 가능
   }
 }
@@ -133,6 +135,15 @@ message MatchGameResponse {
   // 상대 ID나 색(WHITE/BLACK)도 함께 알려줄 수 있음
   Team   assigned_team = 4;
   string opponent_name = 5;  // 상대방 이름 (게임 시작 시)
+}
+
+// 기권 요청에 대한 응답
+message ResignResponse {
+  string                    game_id   = 1;
+  string                    player_id = 2;  // 기권 요청한 플레이어
+  bool                      success   = 3;
+  string                    message   = 4;  // 실패 시 이유
+  google.protobuf.Timestamp timestamp = 5;
 }
 
 // 단일 클라이언트에게 보내는 "내가 보낸 MoveRequest에 대한 결과"
@@ -169,6 +180,14 @@ message CheckBroadcast {
   string                    player_id = 2;  // 체크 당한 플레이어
   Team                      by_team   = 3;  // 체크 당한 색
   google.protobuf.Timestamp timestamp = 4;
+}
+
+// 모든 관련 클라이언트에게 브로드캐스트되는 "기권 알림"
+message ResignBroadcast {
+  string                    game_id     = 1;  // 게임 ID
+  string                    player_id   = 2;  // 기권한 플레이어 ID
+  Team                      winner_team = 3;  // 승리자 색 (기권하지 않은 쪽)
+  google.protobuf.Timestamp timestamp   = 4;
 }
 
 // 게임 종료 브로드캐스트 (모든 관련 클라이언트에게 알림)

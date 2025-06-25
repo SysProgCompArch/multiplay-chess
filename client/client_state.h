@@ -43,6 +43,9 @@ typedef struct
     // 에러 다이얼로그 상태
     bool dialog_active;
 
+    // 기권 확인 다이얼로그 상태
+    bool resign_dialog_active;
+
     // 게임 종료 다이얼로그 상태
     bool game_end_dialog_pending;
     char game_end_message[256];

@@ -41,6 +41,12 @@ int dispatch_server_message(ServerMessage *msg) {
         case SERVER_MESSAGE__MSG_CHECK_BROADCAST:
             return handle_check_broadcast(msg);
 
+        case SERVER_MESSAGE__MSG_RESIGN_RES:
+            return handle_resign_response(msg);
+
+        case SERVER_MESSAGE__MSG_RESIGN_BROADCAST:
+            return handle_resign_broadcast(msg);
+
         default:
             LOG_WARN("Unknown server message type: %d", msg->msg_case);
             add_chat_message_safe("System", "Unknown server message");

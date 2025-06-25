@@ -8,6 +8,7 @@ add_executable(server
     handlers/match.c
     handlers/chat.c
     handlers/move.c
+    handlers/resign.c
 )
 target_link_libraries(server PRIVATE common pthread)
 target_include_directories(server PRIVATE ${CMAKE_SOURCE_DIR}/common)
