@@ -44,6 +44,16 @@ void handle_sigint(int sig) {
     shutdown_requested = 1;
     LOG_INFO("SIGINT received, requesting graceful shutdown");
     // ungetch(KEY_RESIZE) 제거 - SA_RESTART가 제거되었으므로 getch()가 자동으로 중단됨
+
+    // 데드락 방지를 위해 mutex를 시도해보고 실패시 강제 종료
+    if (pthread_mutex_trylock(&screen_mutex) == 0) {
+        // mutex를 성공적으로 획득했으면 unlock
+        pthread_mutex_unlock(&screen_mutex);
+    } else {
+        // mutex 획득 실패 (다른 스레드가 잡고 있음) - 강제 종료
+        LOG_WARN("Failed to acquire screen_mutex in signal handler, forcing exit");
+        _exit(1);  // 즉시 종료 (cleanup 건너뛰기)
+    }
 }
 
 void handle_sigtstp(int sig) {

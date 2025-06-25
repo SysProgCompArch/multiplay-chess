@@ -62,7 +62,7 @@ int handle_game_end_broadcast(ServerMessage *msg) {
     // 채팅 알림 추가 (기권 제외)
     snprintf(notification, sizeof(notification),
              "Game ended by %s. %s team wins!", end_reason, winner_text);
-    add_chat_message_safe("System", notification);
+    add_chat_message(&client->game_state, "System", notification);
 
     // 화면 업데이트 요청
     client->screen_update_requested = true;
