@@ -455,8 +455,21 @@ void draw_player_info(WINDOW *player_win, const char *player_name, bool is_me, t
             wattroff(player_win, A_BOLD);
         }
 
-        // 타이머 표시
-        mvwprintw(player_win, 0, timer_x, "%s", timer_str);
+        // 타이머 색상 결정 및 표시 (체크 상태 - 빨간 배경)
+        if (time_remaining <= 30) {
+            // 30초 이하: 빨간색 글자, 빨간 배경 (거의 안 보이므로 굵게 표시)
+            wattron(player_win, COLOR_PAIR(COLOR_PAIR_TIMER_CRITICAL_CHECK) | A_BOLD);
+            mvwprintw(player_win, 0, timer_x, "%s", timer_str);
+            wattroff(player_win, COLOR_PAIR(COLOR_PAIR_TIMER_CRITICAL_CHECK) | A_BOLD);
+        } else if (time_remaining <= 60) {
+            // 60초 이하: 주황색/노란색 글자, 빨간 배경
+            wattron(player_win, COLOR_PAIR(COLOR_PAIR_TIMER_WARNING_CHECK));
+            mvwprintw(player_win, 0, timer_x, "%s", timer_str);
+            wattroff(player_win, COLOR_PAIR(COLOR_PAIR_TIMER_WARNING_CHECK));
+        } else {
+            // 정상: 기본 색상
+            mvwprintw(player_win, 0, timer_x, "%s", timer_str);
+        }
     } else {
         // 체크 상태가 아닐 때는 타이머만 표시
         int  minutes = time_remaining / 60;
@@ -466,7 +479,34 @@ void draw_player_info(WINDOW *player_win, const char *player_name, bool is_me, t
 
         int timer_x = width - strlen(timer_str) - 1;
         if (timer_x > strlen(display_name) + 4) {
-            mvwprintw(player_win, 0, timer_x, "%s", timer_str);
+            // 타이머 색상 결정 및 표시 (일반 상태 - 배경색에 따라 선택)
+            int timer_warning_pair, timer_critical_pair;
+
+            // 현재 플레이어 정보창의 배경색에 따라 타이머 색상 쌍 선택
+            if (color_pair == COLOR_PAIR_WHITE_PLAYER) {
+                // 흰 배경
+                timer_warning_pair  = COLOR_PAIR_TIMER_WARNING_WHITE;
+                timer_critical_pair = COLOR_PAIR_TIMER_CRITICAL_WHITE;
+            } else {
+                // 검은 배경
+                timer_warning_pair  = COLOR_PAIR_TIMER_WARNING;
+                timer_critical_pair = COLOR_PAIR_TIMER_CRITICAL;
+            }
+
+            if (time_remaining <= 30) {
+                // 30초 이하: 빨간색
+                wattron(player_win, COLOR_PAIR(timer_critical_pair));
+                mvwprintw(player_win, 0, timer_x, "%s", timer_str);
+                wattroff(player_win, COLOR_PAIR(timer_critical_pair));
+            } else if (time_remaining <= 60) {
+                // 60초 이하: 주황색(경고색)
+                wattron(player_win, COLOR_PAIR(timer_warning_pair));
+                mvwprintw(player_win, 0, timer_x, "%s", timer_str);
+                wattroff(player_win, COLOR_PAIR(timer_warning_pair));
+            } else {
+                // 정상: 기본 색상
+                mvwprintw(player_win, 0, timer_x, "%s", timer_str);
+            }
         }
     }
 

@@ -32,7 +32,7 @@ typedef struct {
 #define DEFAULT_CONNECTION_TIMEOUT 10
 
 // 기본 게임 설정
-#define DEFAULT_GAME_TIME_LIMIT     30  // 초 단위
+#define DEFAULT_GAME_TIME_LIMIT     600  // 초 단위
 #define DEFAULT_MAX_CHAT_MESSAGES   50
 #define DEFAULT_CHAT_MESSAGE_LENGTH 256
 

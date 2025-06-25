@@ -114,24 +114,30 @@
 #define GRAY_LEVEL(c) ((c)-232)
 
 // 색상 쌍 정의
-#define COLOR_PAIR_BORDER          1
-#define COLOR_PAIR_DIALOG_BORDER   2
-#define COLOR_PAIR_SELECTED        3
-#define COLOR_PAIR_BOARD_WHITE     4
-#define COLOR_PAIR_BOARD_BLACK     5
-#define COLOR_PAIR_SELECTED_SQUARE 6
-#define COLOR_PAIR_CURSOR_SQUARE   7
-#define COLOR_PAIR_WHITE_PLAYER    8
-#define COLOR_PAIR_BLACK_PLAYER    9
-#define COLOR_PAIR_CURRENT_TURN    10
-#define COLOR_PAIR_POSSIBLE_MOVE   11
-#define COLOR_PAIR_CAPTURE_MOVE    12
-#define COLOR_PAIR_MY_PIECE        13
-#define COLOR_PAIR_OPPONENT_PIECE  14
-#define COLOR_PAIR_RED             15  // 체크 상태 표시용
-#define COLOR_PAIR_CHECK_WHITE     16  // 흰색 플레이어 배경에서의 체크 표시
-#define COLOR_PAIR_CHECK_BLACK     17  // 검은색 플레이어 배경에서의 체크 표시
-#define COLOR_PAIR_CHECK_PLAYER    18  // 체크 상태 플레이어 정보창 (흰 글자 + 빨간 배경)
-#define COLOR_PAIR_CHECK_KING      19  // 체크 상태 킹 하이라이트 (확장 컬러 88 배경)
+#define COLOR_PAIR_BORDER               1
+#define COLOR_PAIR_DIALOG_BORDER        2
+#define COLOR_PAIR_SELECTED             3
+#define COLOR_PAIR_BOARD_WHITE          4
+#define COLOR_PAIR_BOARD_BLACK          5
+#define COLOR_PAIR_SELECTED_SQUARE      6
+#define COLOR_PAIR_CURSOR_SQUARE        7
+#define COLOR_PAIR_WHITE_PLAYER         8
+#define COLOR_PAIR_BLACK_PLAYER         9
+#define COLOR_PAIR_CURRENT_TURN         10
+#define COLOR_PAIR_POSSIBLE_MOVE        11
+#define COLOR_PAIR_CAPTURE_MOVE         12
+#define COLOR_PAIR_MY_PIECE             13
+#define COLOR_PAIR_OPPONENT_PIECE       14
+#define COLOR_PAIR_RED                  15  // 체크 상태 표시용
+#define COLOR_PAIR_CHECK_WHITE          16  // 흰색 플레이어 배경에서의 체크 표시
+#define COLOR_PAIR_CHECK_BLACK          17  // 검은색 플레이어 배경에서의 체크 표시
+#define COLOR_PAIR_CHECK_PLAYER         18  // 체크 상태 플레이어 정보창 (흰 글자 + 빨간 배경)
+#define COLOR_PAIR_CHECK_KING           19  // 체크 상태 킹 하이라이트 (확장 컬러 88 배경)
+#define COLOR_PAIR_TIMER_WARNING        20  // 1분 이하 타이머 (주황색, 검은 배경)
+#define COLOR_PAIR_TIMER_CRITICAL       21  // 30초 이하 타이머 (빨간색, 검은 배경)
+#define COLOR_PAIR_TIMER_WARNING_WHITE  22  // 1분 이하 타이머 (주황색, 흰 배경)
+#define COLOR_PAIR_TIMER_CRITICAL_WHITE 23  // 30초 이하 타이머 (빨간색, 흰 배경)
+#define COLOR_PAIR_TIMER_WARNING_CHECK  24  // 1분 이하 타이머 (주황색, 체크 배경)
+#define COLOR_PAIR_TIMER_CRITICAL_CHECK 25  // 30초 이하 타이머 (빨간색, 체크 배경)
 
 #endif  // EXTENDED_COLORS_H

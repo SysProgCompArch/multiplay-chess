@@ -36,6 +36,14 @@ void init_colors() {
         init_pair(COLOR_PAIR_CHECK_BLACK, UI_ERROR, COLOR_BLACK);              // 검은 배경에서 체크 표시
         init_pair(COLOR_PAIR_CHECK_PLAYER, EXT_COLOR_BRIGHT_WHITE, UI_ERROR);  // 체크 상태 플레이어 정보창
         init_pair(COLOR_PAIR_CHECK_KING, EXT_COLOR_BRIGHT_WHITE, 88);          // 체크 상태 킹 하이라이트 (확장 컬러 88 배경)
+
+        // 타이머 색상 쌍
+        init_pair(COLOR_PAIR_TIMER_WARNING, UI_WARNING, COLOR_BLACK);                   // 1분 이하: 주황색 글자, 검은 배경
+        init_pair(COLOR_PAIR_TIMER_CRITICAL, COLOR_RED, COLOR_BLACK);                   // 30초 이하: 빨간색 글자, 검은 배경
+        init_pair(COLOR_PAIR_TIMER_WARNING_WHITE, UI_WARNING, EXT_COLOR_BRIGHT_WHITE);  // 1분 이하: 주황색 글자, 흰 배경
+        init_pair(COLOR_PAIR_TIMER_CRITICAL_WHITE, COLOR_RED, EXT_COLOR_BRIGHT_WHITE);  // 30초 이하: 빨간색 글자, 흰 배경
+        init_pair(COLOR_PAIR_TIMER_WARNING_CHECK, UI_WARNING, COLOR_RED);               // 1분 이하: 주황색 글자, 빨간 배경
+        init_pair(COLOR_PAIR_TIMER_CRITICAL_CHECK, COLOR_RED, COLOR_RED);               // 30초 이하: 빨간색 글자, 빨간 배경
     } else {
         init_pair(COLOR_PAIR_BORDER, COLOR_CYAN, COLOR_BLACK);
         init_pair(COLOR_PAIR_DIALOG_BORDER, COLOR_CYAN, COLOR_BLACK);
@@ -62,5 +70,13 @@ void init_colors() {
         init_pair(COLOR_PAIR_CHECK_BLACK, COLOR_RED, COLOR_BLACK);   // 검은 배경에서 체크 표시
         init_pair(COLOR_PAIR_CHECK_PLAYER, COLOR_WHITE, COLOR_RED);  // 체크 상태 플레이어 정보창
         init_pair(COLOR_PAIR_CHECK_KING, COLOR_WHITE, 88);           // 체크 상태 킹 하이라이트 (확장 컬러 88 배경)
+
+        // 타이머 색상 쌍 (기본 색상)
+        init_pair(COLOR_PAIR_TIMER_WARNING, COLOR_YELLOW, COLOR_BLACK);        // 1분 이하: 노란색 글자, 검은 배경
+        init_pair(COLOR_PAIR_TIMER_CRITICAL, COLOR_RED, COLOR_BLACK);          // 30초 이하: 빨간색 글자, 검은 배경
+        init_pair(COLOR_PAIR_TIMER_WARNING_WHITE, COLOR_YELLOW, COLOR_WHITE);  // 1분 이하: 노란색 글자, 흰 배경
+        init_pair(COLOR_PAIR_TIMER_CRITICAL_WHITE, COLOR_RED, COLOR_WHITE);    // 30초 이하: 빨간색 글자, 흰 배경
+        init_pair(COLOR_PAIR_TIMER_WARNING_CHECK, COLOR_YELLOW, COLOR_RED);    // 1분 이하: 노란색 글자, 빨간 배경
+        init_pair(COLOR_PAIR_TIMER_CRITICAL_CHECK, COLOR_RED, COLOR_RED);      // 30초 이하: 빨간색 글자, 빨간 배경
     }
 }
