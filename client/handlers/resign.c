@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "../client_state.h"
+#include "../game_save.h"
 #include "handlers.h"
 #include "logger.h"
 
@@ -60,6 +61,24 @@ int handle_resign_broadcast(ServerMessage *msg) {
     }
 
     pthread_mutex_lock(&screen_mutex);
+
+    // 게임 종료 상태 설정 전에 PGN 저장
+    // PGN 결과 설정
+    if (i_resigned) {
+        // 내가 기권한 경우
+        strcpy(client->game_state.pgn_result,
+               client->game_state.local_team == TEAM_WHITE ? "0-1" : "1-0");
+    } else {
+        // 상대가 기권한 경우
+        strcpy(client->game_state.pgn_result,
+               client->game_state.local_team == TEAM_WHITE ? "1-0" : "0-1");
+    }
+
+    // PGN 파일로 저장 (game_in_progress가 true인 상태에서)
+    save_current_game(&client->game_state);
+
+    // 게임 종료 상태 설정
+    client->game_state.game_in_progress = false;
 
     // 기권 전용 다이얼로그 설정
     client->resign_result_dialog_pending = true;

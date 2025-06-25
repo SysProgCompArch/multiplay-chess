@@ -1,13 +1,15 @@
 #include "game_state.h"
 
+#include <errno.h>
 #include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <time.h>
 
 #include "config.h"
-#include "logger.h"  // LOG_DEBUG 함수를 위해 추가
+#include "logger.h"  // LOG_DEBUG, LOG_INFO, LOG_ERROR 매크로 사용을 위해
 #include "piece.h"
 #include "types.h"
 #include "utils.h"  // clear_board, fen_parse 함수를 위해 추가
@@ -23,36 +25,42 @@ extern pthread_mutex_t screen_mutex;
 
 // 게임 상태 초기화
 void init_game_state(game_state_t *state) {
+    // 전체 상태 초기화
     memset(state, 0, sizeof(game_state_t));
 
-    // game_t 초기화
+    // replays 폴더가 없으면 생성
+    if (mkdir("replays", 0755) && errno != EEXIST) {
+        LOG_ERROR("Failed to create replays directory: %s", strerror(errno));
+    }
+
+    // 통합된 game_t 초기화
     init_game(&state->game);
 
-    state->chat_count            = 0;
-    state->local_team            = TEAM_WHITE;
-    state->game_in_progress      = false;
-    state->game_start_time       = 0;
-    state->white_time_remaining  = DEFAULT_GAME_TIME_LIMIT;  // 10분
-    state->black_time_remaining  = DEFAULT_GAME_TIME_LIMIT;  // 10분
-    state->opponent_disconnected = false;
+    // 기본값 설정
+    state->game_in_progress = false;
+    state->chat_count       = 0;
+    state->local_team       = TEAM_WHITE;  // 기본값
 
-    // 실시간 타이머 필드 초기화
+    // 타이머 초기화
+    state->white_time_remaining    = 600;  // 10분
+    state->black_time_remaining    = 600;  // 10분
+    state->white_time_at_last_sync = 600;
+    state->black_time_at_last_sync = 600;
     state->last_timer_update       = 0;
-    state->white_time_at_last_sync = DEFAULT_GAME_TIME_LIMIT;
-    state->black_time_at_last_sync = DEFAULT_GAME_TIME_LIMIT;
+
+    // 상대방 연결 상태 초기화
+    state->opponent_disconnected          = false;
+    state->opponent_disconnect_message[0] = '\0';
 
     // 체크 상태 초기화
     state->white_in_check = false;
     state->black_in_check = false;
 
-    // 이동 가능 위치 배열 초기화
-    memset(state->possible_moves, false, sizeof(state->possible_moves));
-    memset(state->capture_moves, false, sizeof(state->capture_moves));
-
-    // PGN 관련 초기화
+    // PGN 관련 필드 초기화
     state->pgn_move_count = 0;
-    state->pgn_result[0]  = '\0';
+    strcpy(state->pgn_result, "*");  // 결과 미정
 
+    // 전역 포인터 설정
     g_game_state = state;
 }
 
@@ -211,15 +219,7 @@ bool apply_move_from_server(game_t *game, const char *from, const char *to) {
               to_x, to_y, (void *)dst_xy->piece, dst_xy->is_dead);
     LOG_DEBUG("=== MOVE DEBUG END ===");
 
-    // PGN move 기록
-    if (CURRENT_STATE && CURRENT_STATE->pgn_move_count < MAX_PGN_MOVES) {
-        char *buf = CURRENT_STATE->pgn_moves[CURRENT_STATE->pgn_move_count++];
-        buf[0]    = from[0];
-        buf[1]    = from[1];
-        buf[2]    = to[0];
-        buf[3]    = to[1];
-        buf[4]    = '\0';
-    }
+    // PGN 기록은 move.c에서 처리 (중복 방지)
     return true;
 }
 

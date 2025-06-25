@@ -4,6 +4,7 @@
 #include <time.h>
 
 #include "../client_state.h"
+#include "../game_save.h"   // save_current_game 함수를 위해 추가
 #include "../game_state.h"  // apply_move_from_server 함수를 위해 추가
 #include "../ui/ui.h"       // show_dialog 함수를 위해 추가
 #include "handlers.h"
@@ -53,6 +54,9 @@ int handle_move_response(ServerMessage *msg) {
              result->message ? result->message : "");
 
     if (result->success) {
+        // 성공적인 이동 시 클라이언트의 마지막 이동 요청을 PGN에 기록할 수 있도록
+        // 하지만 이미 브로드캐스트에서 처리하므로 여기서는 화면 업데이트만 수행
+
         // 화면 업데이트 요청
         client_state_t *client = get_client_state();
         pthread_mutex_lock(&screen_mutex);
@@ -106,6 +110,28 @@ int handle_move_broadcast(ServerMessage *msg) {
 
         if (apply_move_from_server(&client->game_state.game, broadcast->from, broadcast->to)) {
             LOG_DEBUG("Board updated successfully: %s -> %s", broadcast->from, broadcast->to);
+
+            // PGN 형식으로 이동 기록 - 각 이동은 한 번만 기록
+            // 브로드캐스트를 요청자와 상대방 모두에게 보내므로 중복 기록 방지
+            if (client->game_state.pgn_move_count < MAX_PGN_MOVES) {
+                // 이미 같은 이동이 기록되어 있는지 확인
+                bool already_recorded = false;
+                if (client->game_state.pgn_move_count > 0) {
+                    char move_str[MAX_COORD_STR];
+                    snprintf(move_str, sizeof(move_str), "%s%s", broadcast->from, broadcast->to);
+                    char *last_move = client->game_state.pgn_moves[client->game_state.pgn_move_count - 1];
+                    if (strcmp(last_move, move_str) == 0) {
+                        already_recorded = true;
+                    }
+                }
+
+                if (!already_recorded) {
+                    snprintf(client->game_state.pgn_moves[client->game_state.pgn_move_count],
+                             MAX_COORD_STR, "%s%s", broadcast->from, broadcast->to);
+                    client->game_state.pgn_move_count++;
+                    LOG_DEBUG("Recorded move %d: %s%s", client->game_state.pgn_move_count, broadcast->from, broadcast->to);
+                }
+            }
 
             pthread_mutex_lock(&screen_mutex);
 
@@ -207,13 +233,19 @@ int handle_move_broadcast(ServerMessage *msg) {
         snprintf(end_msg, sizeof(end_msg), "Game Over: %s by %s", winner_str, end_type_str);
         add_chat_message_safe("Game", end_msg);
 
+        // 게임 종료 전에 PGN 저장
+        LOG_INFO("Saving game before ending...");
+        client_state_t *client_save = get_client_state();
+        save_current_game(&client_save->game_state);
+
         // 게임 상태를 종료 상태로 설정 및 다이얼로그 플래그 설정
-        client_state_t *client = get_client_state();
+        client_state_t *client_end = get_client_state();
         pthread_mutex_lock(&screen_mutex);
-        client->game_state.game_in_progress = false;
-        client->game_end_dialog_pending     = true;
-        strncpy(client->game_end_message, end_msg, sizeof(client->game_end_message) - 1);
-        client->screen_update_requested = true;
+        client_end->game_state.game_in_progress = false;
+
+        client_end->game_end_dialog_pending = true;
+        strncpy(client_end->game_end_message, end_msg, sizeof(client_end->game_end_message) - 1);
+        client_end->screen_update_requested = true;
         pthread_mutex_unlock(&screen_mutex);
     }
 

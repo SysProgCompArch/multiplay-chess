@@ -89,6 +89,10 @@ int handle_match_game_response(ServerMessage *msg) {
                 client->game_state.white_time_at_last_sync = client->game_state.white_time_remaining;
                 client->game_state.black_time_at_last_sync = client->game_state.black_time_remaining;
 
+                // PGN 기록 초기화
+                client->game_state.pgn_move_count = 0;
+                strcpy(client->game_state.pgn_result, "*");
+
                 // 네트워크 스레드에서 상태가 변경되었음을 메인 루프에 알림
                 client->screen_update_requested = true;
 

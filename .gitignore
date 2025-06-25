@@ -87,4 +87,7 @@ build/
 # log files
 logs/
 
+# replay files
+replays/
+
 .cursor/
