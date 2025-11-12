@@ -12,6 +12,16 @@
   </p>
 </div>
 
+![Main Screenshot](images/screenshots/game_matched.png)
+
+<div>
+  <p align="center">
+    <small>
+      <a href="images/screenshots">스크린샷 더보기</a>
+    </small>
+  </p>
+</div>
+
 ## 📌 프로젝트 개요
 
 Linux에서 C로 구현된 터미널 기반 멀티플레이어 체스 게임입니다. 컴파일하는 동안 가벼운 체스 게임을 즐기고 싶은 개발자를 위해 설계되었습니다 — GUI 오버헤드 없이 순수한 CLI의 매력을 경험하세요!
@@ -22,10 +32,9 @@ Linux에서 C로 구현된 터미널 기반 멀티플레이어 체스 게임입�
 ## 📝 팀원 정보
 
 | [<img src="https://github.com/LAPLACE4A.png" width="150">](https://github.com/LAPLACE4A) | [<img src="https://github.com/moongi05.png" width="150">](https://github.com/moongi05) | [<img src="https://github.com/ArpaAP.png" width="150">](https://github.com/ArpaAP) |
-| :--------------: | :--------------: | :--------------: |
-| **[권영준](https://github.com/LAPLACE4A)** | **[김문기](https://github.com/moongi05)** |  **[황부연](https://github.com/ArpaAP)** |
-|    **24인컴**<br/>체스 룰, 기물 정의, PGN 파서 등 구현    |   **24글솝**<br/>UI 구현, 리플레이 구현   |   **24글솝**<br/>PM, 프로젝트 세팅, UI/서버/통신 구현     |
-
+| :--------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------: |
+|                        **[권영준](https://github.com/LAPLACE4A)**                        |                       **[김문기](https://github.com/moongi05)**                        |                      **[황부연](https://github.com/ArpaAP)**                       |
+|                   **24인컴**<br/>체스 룰, 기물 정의, PGN 파서 등 구현                    |                         **24글솝**<br/>UI 구현, 리플레이 구현                          |                **24글솝**<br/>PM, 프로젝트 세팅, UI/서버/통신 구현                 |
 
 ## 🎮 주요 기능
 
@@ -48,10 +57,11 @@ Linux에서 C로 구현된 터미널 기반 멀티플레이어 체스 게임입�
 
 ### 🛠 기타 기능
 
-- 마우스 클릭을 통한 체스판 조작 지원 (ncurses 활용)   
+- 마우스 클릭을 통한 체스판 조작 지원 (ncurses 활용)  
   체스판에서 옮길 기물을 클릭한 후, 옮길 위치를 클릭하여 움직일 수 있습니다.
 
 ### 📼 리플레이 기능 관련
+
 - 리플레이는 게임 종료 시 자동으로 현재 작업 디렉토리의 `replays` 폴더에 저장됩니다.
 - 리플레이 파일은 확장자가 `.pgn`인 파일로 저장됩니다.
 - 클라이언트 실행 후 `2. Replay` 메뉴를 통해 리플레이 파일을 확인할 수 있습니다.
@@ -119,6 +129,7 @@ multiplay-chess/
 ### 1. 의존성 설치
 
 - Cmake 설치 필요
+
   ```sh
   sudo apt install cmake
   ```
@@ -133,20 +144,25 @@ multiplay-chess/
 아래와 같이 make 명령어 또는 build.sh 스크립트를 사용하여 빌드할 수 있습니다.
 
 - **전체 빌드 (client, server 모두):**
+
   ```sh
   make
 
   # 또는
   ./build.sh
   ```
+
 - **클라이언트만 빌드:**
+
   ```sh
   make client
 
   # 또는
   ./build.sh client
   ```
+
 - **서버만 빌드:**
+
   ```sh
   make server
 
@@ -155,13 +171,13 @@ multiplay-chess/
   ```
 
 - **빌드 파일 삭제**
+
   ```sh
   make clean
 
   # 또는
   rm -rf build/
   ```
-
 
 빌드가 완료되면 `build/client/client`, `build/server/server`에 실행 파일이 생성됩니다.
 
@@ -170,13 +186,16 @@ multiplay-chess/
 ### 3. 실행 방법
 
 - 클라이언트 실행:
+
   ```sh
   ./run.sh client
 
   # 또는
   ./build/client/client
   ```
+
 - 서버 실행:
+
   ```sh
   ./run.sh server
 
@@ -204,14 +223,15 @@ multiplay-chess/
 
 ---
 
-
 #### 로그 파일 위치
+
 - **클라이언트 로그**: `logs/chess_client_[PID].log` (PID별로 파일 출력)
 - **서버 로그**: 콘솔에 색상과 함께 직접 출력
 
 #### 로그 레벨
+
 - `DEBUG`: 상세한 디버그 정보
-- `INFO`: 일반 정보 메시지  
+- `INFO`: 일반 정보 메시지
 - `WARN`: 경고 메시지
 - `ERROR`: 오류 메시지
 - `FATAL`: 심각한 오류 메시지
@@ -229,18 +249,19 @@ multiplay-chess/
 #### 🔍 실시간 로그 모니터링
 
 1. **클라이언트 로그 모니터링** (권장):
+
    ```bash
    # 모든 클라이언트 로그를 색상과 함께 표시
    ./watch_logs.sh
-   
+
    # 단일 로그 파일만 모니터링
    ./watch_logs.sh --single
-   
+
    # 에러/경고만 보기
    ./watch_logs.sh --error    # ERROR, FATAL만
    ./watch_logs.sh --warn     # WARN 이상
    ./watch_logs.sh --info     # INFO 이상
-   
+
    # 도움말 보기
    ./watch_logs.sh --help
    ```
